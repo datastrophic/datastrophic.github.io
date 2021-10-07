@@ -18,6 +18,50 @@
     font-size: 4rem;
 }
 
+.intro-header .site-heading a {
+    font-style: normal;
+    text-decoration: none;
+    color: inherit;
+}
+
+.post-preview .site-heading a:focus {
+    color:rgba(255,255,255,.8)
+}
+
+
+/* Post header */
+.intro-header .post-heading {
+    padding: 40px 0 0 0 !important;
+}
+
+.intro-header .post-heading h1 {
+    font-size: 2.75rem;
+    margin-bottom: 0;
+    margin: 10px 0 0 0;
+}
+
+.intro-header .post-heading h2 {
+    font-size: 2rem;
+    margin-bottom: 0;
+}
+
+.intro-header .post-heading .meta {
+    font-style: normal;
+    display: block;
+    margin: 15px 0;
+    font-family: "Open Sans", sans-serif;
+    font-size: 1.3rem;
+    line-height: 2.2rem;
+}
+
+/* Navbar */
+@media only screen and (min-width: 768px){
+    .navbar-custom .nav li a {
+        color: #fff;
+        padding: 10px 10px 0 10px;
+    }
+}
+
 /* Side panel */
 .avatar {
     width: 75px;
@@ -69,5 +113,3 @@
 .post-preview  .post-meta a:hover {
     text-decoration: underline;
 }
-
-/* Pager */

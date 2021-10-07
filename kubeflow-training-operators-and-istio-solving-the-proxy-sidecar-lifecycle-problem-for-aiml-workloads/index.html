@@ -22,7 +22,7 @@
 <link rel=stylesheet href=/css/hugo-theme-cleanwhite.min.css>
 <link rel=stylesheet href=/css/zanshang.css>
 <link href=//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css rel=stylesheet type=text/css>
-<link rel=stylesheet href=https://datastrophic.github.io/css/overrides.css><link rel=stylesheet href=https://datastrophic.github.io/css/footer.css><link rel=stylesheet href=https://datastrophic.github.io/css/pager.css>
+<link rel=stylesheet href=https://datastrophic.github.io/css/footer.css><link rel=stylesheet href=https://datastrophic.github.io/css/pager.css><link rel=stylesheet href=https://datastrophic.github.io/css/overrides.css>
 <script src=/js/jquery.min.js></script>
 <script src=/js/bootstrap.min.js></script>
 <script src=/js/hux-blog.min.js></script>
@@ -52,10 +52,11 @@
 </nav>
 <script>var $body=document.body,$toggle=document.querySelector('.navbar-toggle'),$navbar=document.querySelector('#huxblog_navbar'),$collapse=document.querySelector('.navbar-collapse');$toggle.addEventListener('click',handleMagic);function handleMagic(a){$navbar.className.indexOf('in')>0?($navbar.className=" ",setTimeout(function(){$navbar.className.indexOf('in')<0&&($collapse.style.height="0px")},400)):($collapse.style.height="auto",$navbar.className+=" in")}</script>
 <style type=text/css>header.intro-header{background-image:url(/img/datastrophic-strip-1.png);color:#3a4145}</style>
-<header class=intro-header>
+<header class=intro-header style=background-image:url(/img/datastrophic-strip-1.png)>
 <div class=container>
 <div class=row>
-<div class=site-heading>
+<div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+<div class=post-heading>
 <div class=tags>
 <a class=tag href=/tags/kubernetes title=kubernetes>
 kubernetes
@@ -74,11 +75,11 @@ mlops
 </a>
 </div>
 <h1>Kubeflow Training Operators and Istio: solving the proxy sidecar lifecycle problem for AI/ML workloads</h1>
-<h2 class=subheading></h2>
 <span class=meta>
 Posted on
 October 4, 2021
 </span>
+</div>
 </div>
 </div>
 </div>
