@@ -60,7 +60,7 @@ Intro Spark is a generalized framework for distributed data processing providing
       <pubDate>Thu, 03 Sep 2015 00:00:00 +0000</pubDate>
       
       <guid>https://datastrophic.github.io/evaluating-cassandra-2-1-counters-consistency/</guid>
-      <description>For some cases such as AdServing counters are really handy to accumulate totals for events coming into a system compared to batch aggregates. While distributed counters consistency is a well-known problem Cassandra counters in version 2.1 are claimed to be more accurate compared to the prior ones. This post describes the approach and the results of Cassandra counters consistency testing in different failure scenarios such as rolling restarts, abnormal termination of nodes, and network splits.</description>
+      <description>For some cases such as arise in AdServing, the counters are really handy to accumulate totals for events coming into a system compared to batch aggregates. While distributed counters consistency is a well-known problem Cassandra counters in version 2.1 are claimed to be more accurate compared to the prior ones. This post describes the approach and the results of Cassandra counters consistency testing in different failure scenarios such as rolling restarts, abnormal termination of nodes, and network splits.</description>
     </item>
     
   </channel>
