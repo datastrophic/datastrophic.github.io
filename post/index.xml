@@ -26,5 +26,14 @@
 Spark JobServer Spark JobServer is widely used across a variety of reporting and aggregating systems.</description>
     </item>
     
+    <item>
+      <title>Resource Allocation in Mesos: Dominant Resource Fairness</title>
+      <link>https://datastrophic.github.io/resource-allocation-in-mesos-dominant-resource-fairness-explained/</link>
+      <pubDate>Sun, 27 Mar 2016 00:00:00 +0000</pubDate>
+      
+      <guid>https://datastrophic.github.io/resource-allocation-in-mesos-dominant-resource-fairness-explained/</guid>
+      <description>Apache Mesos provides a unique approach to cluster resource management called two-level scheduling: instead of storing information about available cluster resources in a centralized manner it operates with a notion of resource offers which slave nodes advertise to running frameworks via Mesos master, thus keeping the whole system architecture concise and scalable. Master&amp;rsquo;s allocation module is responsible for making the decisions about which application should receive the next resource offer and it relies on Dominant Resource Fairness(DRF) algorithm for making these decisions.</description>
+    </item>
+    
   </channel>
 </rss>
