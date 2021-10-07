@@ -1,2 +1,48 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>datastrophic</title><link>https://datastrophic.github.io/</link><description>Recent content on datastrophic</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Mon, 04 Oct 2021 00:00:00 +0000</lastBuildDate><atom:link href="https://datastrophic.github.io/index.xml" rel="self" type="application/rss+xml"/><item><title>Kubeflow Training Operators and Istio: solving the proxy sidecar lifecycle problem for AI/ML workloads</title><link>https://datastrophic.github.io/kubeflow-training-operators-and-istio-solving-the-proxy-sidecar-lifecycle-problem-for-aiml-workloads/</link><pubDate>Mon, 04 Oct 2021 00:00:00 +0000</pubDate><guid>https://datastrophic.github.io/kubeflow-training-operators-and-istio-solving-the-proxy-sidecar-lifecycle-problem-for-aiml-workloads/</guid><description>With Kubeflow gaining traction in the community and its early adoption in enterprises, security and observability concerns become more and more important. Many organizations that are running AI/ML workloads, operate with sensitive personal or financial data and have stricter requirements for data encryption, traceability, and access control. Quite often, we can see the use of the Istio service mesh for solving these problems and gaining other benefits of the rich functionality it provides.</description></item><item><title>Spark JobServer: from Spark Standalone to Mesos, Marathon and Docker</title><link>https://datastrophic.github.io/spark-jobserver-from-spark-standalone-to-mesos-marathon-and-docker-part-i/</link><pubDate>Thu, 12 Oct 2017 00:00:00 +0000</pubDate><guid>https://datastrophic.github.io/spark-jobserver-from-spark-standalone-to-mesos-marathon-and-docker-part-i/</guid><description>After several years of running Spark JobServer workloads, the need for better availability and multi-tenancy emerged across several projects author was involved in. This blog post covers design decisions made to provide higher availability and fault tolerance of JobServer installations, multi-tenancy for Spark workloads, scalability and failure recovery automation, and software choices made in order to reach these goals.
-Spark JobServer Spark JobServer is widely used across a variety of reporting and aggregating systems.</description></item><item><title/><link>https://datastrophic.github.io/top/about/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://datastrophic.github.io/top/about/</guid><description>About Hi! It&amp;rsquo;s Anton here and I&amp;rsquo;m the author of datastrophic.io. I&amp;rsquo;m a technical leader and a software engineer specializing on distributed systems, data platforms, and AI infrastructure. You can call me a veteran as my tenure in the industry passed the mark of 15 years during which I was working on high-load, distributed, big data, workload and container orchestration systems. If you&amp;rsquo;d like to connect or to learn more about my background - the best way to do it is via LinkedIn.</description></item><item><title>Posts Archive</title><link>https://datastrophic.github.io/top/archive/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://datastrophic.github.io/top/archive/</guid><description/></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>datastrophic</title>
+    <link>https://datastrophic.github.io/</link>
+    <description>Recent content on datastrophic</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 04 Oct 2021 00:00:00 +0000</lastBuildDate><atom:link href="https://datastrophic.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Kubeflow Training Operators and Istio: solving the proxy sidecar lifecycle problem for AI/ML workloads</title>
+      <link>https://datastrophic.github.io/kubeflow-training-operators-and-istio-solving-the-proxy-sidecar-lifecycle-problem-for-aiml-workloads/</link>
+      <pubDate>Mon, 04 Oct 2021 00:00:00 +0000</pubDate>
+      
+      <guid>https://datastrophic.github.io/kubeflow-training-operators-and-istio-solving-the-proxy-sidecar-lifecycle-problem-for-aiml-workloads/</guid>
+      <description>With Kubeflow gaining traction in the community and its early adoption in enterprises, security and observability concerns become more and more important. Many organizations that are running AI/ML workloads, operate with sensitive personal or financial data and have stricter requirements for data encryption, traceability, and access control. Quite often, we can see the use of the Istio service mesh for solving these problems and gaining other benefits of the rich functionality it provides.</description>
+    </item>
+    
+    <item>
+      <title>Spark JobServer: from Spark Standalone to Mesos, Marathon and Docker</title>
+      <link>https://datastrophic.github.io/spark-jobserver-from-spark-standalone-to-mesos-marathon-and-docker-part-i/</link>
+      <pubDate>Thu, 12 Oct 2017 00:00:00 +0000</pubDate>
+      
+      <guid>https://datastrophic.github.io/spark-jobserver-from-spark-standalone-to-mesos-marathon-and-docker-part-i/</guid>
+      <description>After several years of running Spark JobServer workloads, the need for better availability and multi-tenancy emerged across several projects author was involved in. This blog post covers design decisions made to provide higher availability and fault tolerance of JobServer installations, multi-tenancy for Spark workloads, scalability and failure recovery automation, and software choices made in order to reach these goals.
+Spark JobServer Spark JobServer is widely used across a variety of reporting and aggregating systems.</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>https://datastrophic.github.io/top/about/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://datastrophic.github.io/top/about/</guid>
+      <description>About Hi! It&amp;rsquo;s Anton here and I&amp;rsquo;m the author of datastrophic.io. I&amp;rsquo;m a technical leader and a software engineer specializing on distributed systems, data platforms, and AI infrastructure. You can call me a veteran as my tenure in the industry passed the mark of 15 years during which I was working on high-load, distributed, big data, workload and container orchestration systems. If you&amp;rsquo;d like to connect or to learn more about my background - the best way to do it is via LinkedIn.</description>
+    </item>
+    
+    <item>
+      <title>Posts Archive</title>
+      <link>https://datastrophic.github.io/top/archive/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://datastrophic.github.io/top/archive/</guid>
+      <description></description>
+    </item>
+    
+  </channel>
+</rss>
