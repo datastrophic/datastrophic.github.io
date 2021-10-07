@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    
+    <meta property="og:site_name" content="datastrophic">
+    <meta property="og:type" content="article">
+
+    
+    <meta property="og:image" content="https://datastrophic.github.io//img/datastrophic-strip-1.png">
+    <meta property="twitter:image" content="https://datastrophic.github.io//img/datastrophic-strip-1.png" />
+    
+
+    
+    <meta name="title" content="Data processing platforms architectures with SMACK: Spark, Mesos, Akka, Cassandra and Kafka" />
+    <meta property="og:title" content="Data processing platforms architectures with SMACK: Spark, Mesos, Akka, Cassandra and Kafka" />
+    <meta property="twitter:title" content="Data processing platforms architectures with SMACK: Spark, Mesos, Akka, Cassandra and Kafka" />
+    
+
+    
+    <meta name="description" content="A blog about distributed systems, data platforms and AI infranstructure">
+    <meta property="og:description" content="A blog about distributed systems, data platforms and AI infranstructure" />
+    <meta property="twitter:description" content="A blog about distributed systems, data platforms and AI infranstructure" />
+    
+
+    
+    <meta property="twitter:card" content="summary" />
+    
+    
+
+    <meta name="keyword"  content="Spark, Mesos, Kubernetes, Kubeflow, Istio, SMACK stack, Cassandra, Kafka">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <title>Data processing platforms architectures with SMACK: Spark, Mesos, Akka, Cassandra and Kafka</title>
+
+    <link rel="canonical" href="/data-processing-platforms-architectures-with-spark-mesos-akka-cassandra-and-kafka/">
+
+    
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    
+    <link rel="stylesheet" href="/css/hugo-theme-cleanwhite.min.css">
+
+    
+    <link rel="stylesheet" href="/css/zanshang.css">
+
+    
+    <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet" type="text/css">
+
+    
+    <link rel="stylesheet" href="https://datastrophic.github.io/css/footer.css"><link rel="stylesheet" href="https://datastrophic.github.io/css/pager.css"><link rel="stylesheet" href="https://datastrophic.github.io/css/overrides.css">
+
+    
+    
+    <script src="/js/jquery.min.js"></script>
+
+    
+    <script src="/js/bootstrap.min.js"></script>
+
+    
+    <script src="/js/hux-blog.min.js"></script>
+
+    
+    
+
+</head>
+
+
+
+
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+
+    <div class="container-fluid">
+        
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+        </div>
+
+        
+        
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+		            
+                        <li><a href="/top/archive/">ARCHIVE</a></li>
+                    
+                        <li><a href="/top/about/">ABOUT</a></li>
+                    
+                </ul>
+            </div>
+        </div>
+        
+    </div>
+    
+</nav>
+<script>
+    
+    
+    
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        
+            $navbar.className = " ";
+            
+            setTimeout(function(){
+                
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+
+
+<style type="text/css">
+    header.intro-header {
+        background-image: url('/img/datastrophic-strip-1.png');
+        color: #3A4145;
+    }
+</style>
+<header class="intro-header" style="background-image: url('/img/datastrophic-strip-1.png')">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 ">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/spark" title="spark">
+                            spark
+                        </a>
+                        
+                        <a class="tag" href="/tags/mesos" title="mesos">
+                            mesos
+                        </a>
+                        
+                        <a class="tag" href="/tags/akka" title="akka">
+                            akka
+                        </a>
+                        
+                        <a class="tag" href="/tags/cassandra" title="cassandra">
+                            cassandra
+                        </a>
+                        
+                        <a class="tag" href="/tags/kafka" title="kafka">
+                            kafka
+                        </a>
+                        
+                        <a class="tag" href="/tags/smack" title="SMACK">
+                            SMACK
+                        </a>
+                        
+                    </div>
+                    <h1>Data processing platforms architectures with SMACK: Spark, Mesos, Akka, Cassandra and Kafka</h1>
+                    
+                    <span class="meta">
+                        
+                            Posted on 
+                            September 16, 2015
+                            
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+
+
+
+
+<article>
+    <div class="container">
+        <div class="row">
+
+            
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+                
+                <p>This post is a follow-up of the <a href="http://www.slideshare.net/akirillov/data-processing-platforms-architectures-with-spark-mesos-akka-cassandra-and-kafka">talk given at Big Data AW meetup</a> in Stockholm and focused on different use cases and design approaches for building scalable data processing platforms with SMACK(Spark, Mesos, Akka, Cassandra, Kafka) stack. While stack is really concise and consists of only several components it is possible to implement different system designs which list not only purely batch or stream processing, but more complex Lambda and Kappa architectures as well. So let&rsquo;s start with a really short overview to be on the same page and continue with designs and examples coming from production projects experience.</p>
+<h2 id="recap">Recap</h2>
+<p>
+  <img src="/blog/2015-09-16/logos.jpeg" alt="">
+
+</p>
+<ul>
+<li>
+<p><a href="http://spark.apache.org/">Spark</a> - fast and general engine for distributed, large-scale data processing</p>
+</li>
+<li>
+<p><a href="http://mesos.apache.org/">Mesos</a> - cluster resource management system that provides efficient resource isolation and sharing across distributed applications</p>
+</li>
+<li>
+<p><a href="http://akka.io/">Akka</a> - a toolkit and runtime for building highly concurrent, distributed, and resilient message-driven applications on the JVM</p>
+</li>
+<li>
+<p><a href="http://cassandra.apache.org/">Cassandra</a> - distributed, a highly available database designed to handle large amounts of data across multiple datacenters</p>
+</li>
+<li>
+<p><a href="http://kafka.apache.org/">Kafka</a> - a high-throughput, low-latency distributed messaging system/commit log designed for handling real-time data feeds</p>
+</li>
+</ul>
+<h2 id="storage-layer-cassandra">Storage layer: Cassandra</h2>
+<p>
+  <img src="/blog/2015-09-16/cassadnra-xdcr.png" alt="">
+
+
+Cassandra is well-known for its high availability and high-throughput characteristics and is able to handle enormous write loads and survive cluster nodes failures. In terms of the CAP theorem, Cassandra provides tunable consistency/availability for operations.</p>
+<p>What is more interesting when it comes to data processing is that Cassandra is linearly scalable(increased loads could be addressed by just adding more nodes to a cluster) and it provides cross-datacenter replication(XDCR) capabilities. Actually, XDCR provides not only replication but a set of really interesting use cases to be used for:</p>
+<ul>
+<li>geo-distributed datacenters handling data specific for the region or located closer to customers</li>
+<li>data migration across datacenters: recovery after failures or moving data to a new DC</li>
+<li>separate operational and analytics workloads</li>
+</ul>
+<p>But all these features come for their own price and with Cassandra, this price is its data model, which could be thought of just as a nested sorted map that is distributed across cluster nodes by partition key, and entries are sorted/grouped by clustering columns. Here&rsquo;s a small example:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#ff79c6">CREATE</span> <span style="color:#ff79c6">TABLE</span> campaign(
+  id uuid,
+  <span style="color:#ff79c6">year</span> <span style="color:#8be9fd;font-style:italic">int</span>,
+  <span style="color:#ff79c6">month</span> <span style="color:#8be9fd;font-style:italic">int</span>,
+  <span style="color:#ff79c6">day</span> <span style="color:#8be9fd;font-style:italic">int</span>,
+  views <span style="color:#8be9fd;font-style:italic">bigint</span>,
+  clicks <span style="color:#8be9fd;font-style:italic">bigint</span>,
+  <span style="color:#ff79c6">PRIMARY</span> <span style="color:#ff79c6">KEY</span> (id, <span style="color:#ff79c6">year</span>, <span style="color:#ff79c6">month</span>, <span style="color:#ff79c6">day</span>)
+);
+
+<span style="color:#ff79c6">INSERT</span> <span style="color:#ff79c6">INTO</span> campaign(id, <span style="color:#ff79c6">year</span>, <span style="color:#ff79c6">month</span>, <span style="color:#ff79c6">day</span>, views, clicks)
+<span style="color:#ff79c6">VALUES</span>(<span style="color:#bd93f9">40</span>b08953<span style="color:#ff79c6">-</span>a…,<span style="color:#bd93f9">2015</span>, <span style="color:#bd93f9">9</span>, <span style="color:#bd93f9">10</span>, <span style="color:#bd93f9">1000</span>, <span style="color:#bd93f9">42</span>);
+
+<span style="color:#ff79c6">SELECT</span> views, clicks <span style="color:#ff79c6">FROM</span> campaign
+<span style="color:#ff79c6">WHERE</span> id<span style="color:#ff79c6">=</span><span style="color:#bd93f9">40</span>b08953<span style="color:#ff79c6">-</span>a… <span style="color:#ff79c6">and</span> <span style="color:#ff79c6">year</span><span style="color:#ff79c6">=</span><span style="color:#bd93f9">2015</span> <span style="color:#ff79c6">and</span> <span style="color:#ff79c6">month</span><span style="color:#ff79c6">&gt;</span><span style="color:#bd93f9">8</span>;
+</code></pre></div><p>To get specific data in some range the full key must be specified and no range clauses are allowed except for the last column in the list. This constraint is introduced to limit multiple scans for different ranges which will produce random access to disks and lower down the performance. This means that the data model should be carefully designed against the read queries to limit the number of reads/scans which leads to lesser flexibility when it comes to supporting new queries. <a href="http://slides.com/antonkirillov/cassandra-data-modelling-101#/">Here are C* data modeling 101</a> slides that provide several examples of how CQL tables are represented internally.</p>
+<p>But what if one has some tables that need to be joined somehow with other tables? Let&rsquo;s consider the next case: calculate total views per campaign for a given month for all campaigns.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#ff79c6">CREATE</span> <span style="color:#ff79c6">TABLE</span> event(
+  id uuid,
+  ad_id uuid,
+  campaign uuid,
+  ts <span style="color:#8be9fd;font-style:italic">bigint</span>,
+  <span style="color:#ff79c6">type</span> <span style="color:#8be9fd;font-style:italic">text</span>,
+  <span style="color:#ff79c6">PRIMARY</span> <span style="color:#ff79c6">KEY</span>(id)
+);
+</code></pre></div><p>With the given model, the only way to achieve this goal is to read all campaigns, read all events, sum the proper ones (with matched campaign id) and assign them to the campaign. And it looks really challenging to implement such a sort of application because the amount of data stored in Cassandra could be really huge and won&rsquo;t fit the memory. So the processing of such sort of data should be done in a distributed manner and Spark perfectly fits this use case.</p>
+<h2 id="processing-layer-spark">Processing layer: Spark</h2>
+<p>
+  <img src="/blog/2015-09-16/spark-basics-scheduler.png" alt="">
+
+
+The main abstraction Spark operates with is RDD(Resilient Distributed Dataset, a distributed collection of elements) and the workflow consists of four main phases:</p>
+<ul>
+<li>RDD operations(transformations and actions) form DAG (Direct Acyclic Graph)</li>
+<li>DAG is split into stages of tasks which are then submitted to the cluster manager</li>
+<li>stages combine tasks that don’t require shuffling/repartitioning</li>
+<li>tasks run on workers and results then return to the client</li>
+</ul>
+<p>Here&rsquo;s how one can solve the above problem with Spark and Cassandra:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scala" data-lang="scala"><span style="color:#ff79c6">val</span> sc <span style="color:#ff79c6">=</span> <span style="color:#ff79c6">new</span> <span style="color:#50fa7b">SparkContext</span><span style="color:#ff79c6">(</span>conf<span style="color:#ff79c6">)</span>
+
+<span style="color:#ff79c6">case</span> <span style="color:#ff79c6">class</span> <span style="color:#50fa7b">Event</span><span style="color:#ff79c6">(</span>id<span style="color:#ff79c6">:</span> <span style="color:#8be9fd">UUID</span><span style="color:#ff79c6">,</span> ad_id<span style="color:#ff79c6">:</span> <span style="color:#8be9fd">UUID</span><span style="color:#ff79c6">,</span> campaign<span style="color:#ff79c6">:</span> <span style="color:#8be9fd">UUID</span><span style="color:#ff79c6">,</span> ts<span style="color:#ff79c6">:</span> <span style="color:#8be9fd">Long</span><span style="color:#ff79c6">,</span> `type`<span style="color:#ff79c6">:</span> <span style="color:#8be9fd">String</span><span style="color:#ff79c6">)</span>
+
+sc<span style="color:#ff79c6">.</span>cassandraTable<span style="color:#ff79c6">[</span><span style="color:#8be9fd">Event</span><span style="color:#ff79c6">](</span><span style="color:#f1fa8c">&#34;keyspace&#34;</span><span style="color:#ff79c6">,</span> <span style="color:#f1fa8c">&#34;event&#34;</span><span style="color:#ff79c6">)</span>
+  <span style="color:#ff79c6">.</span>filter<span style="color:#ff79c6">(</span>e <span style="color:#ff79c6">=&gt;</span> e<span style="color:#ff79c6">.</span>`type` <span style="color:#ff79c6">==</span> <span style="color:#f1fa8c">&#34;view&#34;</span> <span style="color:#ff79c6">&amp;&amp;</span> checkMonth<span style="color:#ff79c6">(</span>e<span style="color:#ff79c6">.</span>ts<span style="color:#ff79c6">))</span>
+  <span style="color:#ff79c6">.</span>map<span style="color:#ff79c6">(</span>e <span style="color:#ff79c6">=&gt;</span> <span style="color:#ff79c6">(</span>e<span style="color:#ff79c6">.</span>campaign<span style="color:#ff79c6">,</span> <span style="color:#bd93f9">1</span><span style="color:#ff79c6">))</span>
+  <span style="color:#ff79c6">.</span>reduceByKey<span style="color:#ff79c6">(</span><span style="color:#ff79c6">_</span> <span style="color:#ff79c6">+</span> <span style="color:#ff79c6">_</span><span style="color:#ff79c6">)</span>
+  <span style="color:#ff79c6">.</span>collect<span style="color:#ff79c6">()</span>
+</code></pre></div><p>Interaction with Cassandra is performed via <a href="https://github.com/datastax/spark-cassandra-connector">spark-cassandra-connector</a> which makes it really easy and straightforward. There&rsquo;s one more interesting option to work with NoSQL stores - SparkSQL, which translates SQL statements into a series of RDD operations.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scala" data-lang="scala"><span style="color:#ff79c6">case</span> <span style="color:#ff79c6">class</span> <span style="color:#50fa7b">CampaignReport</span><span style="color:#ff79c6">(</span>id<span style="color:#ff79c6">:</span> <span style="color:#8be9fd">String</span><span style="color:#ff79c6">,</span> views<span style="color:#ff79c6">:</span> <span style="color:#8be9fd">Long</span><span style="color:#ff79c6">,</span> clicks<span style="color:#ff79c6">:</span> <span style="color:#8be9fd">Long</span><span style="color:#ff79c6">)</span>
+
+sql<span style="color:#ff79c6">(</span><span style="color:#f1fa8c">&#34;&#34;&#34;SELECT campaign.id as id, campaign.views as views, 
+</span><span style="color:#f1fa8c">   campaign.clicks as clicks, event.type as type
+</span><span style="color:#f1fa8c">        FROM campaign
+</span><span style="color:#f1fa8c">        JOIN event ON campaign.id = event.campaign
+</span><span style="color:#f1fa8c">    &#34;&#34;&#34;</span><span style="color:#ff79c6">).</span>rdd
+<span style="color:#ff79c6">.</span>groupBy<span style="color:#ff79c6">(</span>row <span style="color:#ff79c6">=&gt;</span> row<span style="color:#ff79c6">.</span>getAs<span style="color:#ff79c6">[</span><span style="color:#8be9fd">String</span><span style="color:#ff79c6">](</span><span style="color:#f1fa8c">&#34;id&#34;</span><span style="color:#ff79c6">))</span>
+<span style="color:#ff79c6">.</span>map<span style="color:#ff79c6">{</span> <span style="color:#ff79c6">case</span> <span style="color:#ff79c6">(</span>id<span style="color:#ff79c6">,</span> rows<span style="color:#ff79c6">)</span> <span style="color:#ff79c6">=&gt;</span>
+   <span style="color:#ff79c6">val</span> views <span style="color:#ff79c6">=</span> rows<span style="color:#ff79c6">.</span>head<span style="color:#ff79c6">.</span>getAs<span style="color:#ff79c6">[</span><span style="color:#8be9fd">Long</span><span style="color:#ff79c6">](</span><span style="color:#f1fa8c">&#34;views&#34;</span><span style="color:#ff79c6">)</span>
+   <span style="color:#ff79c6">val</span> clicks <span style="color:#ff79c6">=</span> rows<span style="color:#ff79c6">.</span>head<span style="color:#ff79c6">.</span>getAs<span style="color:#ff79c6">[</span><span style="color:#8be9fd">Long</span><span style="color:#ff79c6">](</span><span style="color:#f1fa8c">&#34;clicks&#34;</span><span style="color:#ff79c6">)</span>
+
+   <span style="color:#ff79c6">val</span> res <span style="color:#ff79c6">=</span> rows<span style="color:#ff79c6">.</span>groupBy<span style="color:#ff79c6">(</span>row <span style="color:#ff79c6">=&gt;</span> row<span style="color:#ff79c6">.</span>getAs<span style="color:#ff79c6">[</span><span style="color:#8be9fd">String</span><span style="color:#ff79c6">](</span><span style="color:#f1fa8c">&#34;type&#34;</span><span style="color:#ff79c6">)).</span>mapValues<span style="color:#ff79c6">(</span><span style="color:#ff79c6">_</span><span style="color:#ff79c6">.</span>size<span style="color:#ff79c6">)</span>
+   <span style="color:#50fa7b">CampaignReport</span><span style="color:#ff79c6">(</span>id<span style="color:#ff79c6">,</span> views <span style="color:#ff79c6">=</span> views <span style="color:#ff79c6">+</span> res<span style="color:#ff79c6">(</span><span style="color:#f1fa8c">&#34;view&#34;</span><span style="color:#ff79c6">),</span> clicks <span style="color:#ff79c6">=</span> clicks <span style="color:#ff79c6">+</span> res<span style="color:#ff79c6">(</span><span style="color:#f1fa8c">&#34;click&#34;</span><span style="color:#ff79c6">))</span>
+
+<span style="color:#ff79c6">}.</span>saveToCassandra<span style="color:#ff79c6">(</span>“keyspace”<span style="color:#ff79c6">,</span> “campaign_report”<span style="color:#ff79c6">)</span>
+</code></pre></div><p>With several lines of code, it&rsquo;s possible to implement naive Lamba design which of course could be much more sophisticated, but this example shows just how easy this can be achieved.</p>
+<h2 id="almost-mapreduce-bringing-processing-closer-to-data">Almost MapReduce: bringing processing closer to data</h2>
+<p>Spark-Cassandra connector is data locality aware and reads the data from the closest node in a cluster thus minimizing the amount of data transferred around the network. To fully facilitate Spark-C* connector data locality awareness, Spark workers should be collocated with Cassandra nodes.</p>
+<p>
+  <img src="/blog/2015-09-16/cassandra-spark.png" alt="">
+
+
+Alongside Spark collocation with Cassandra, it makes sense to separate your operational (or write-heavy) cluster from one for analytics:</p>
+<ul>
+<li>clusters can be scaled independently</li>
+<li>data is replicated by Cassandra, no extra work is needed</li>
+<li>analytics cluster has different Read/Write load patterns</li>
+<li>analytics cluster could contain additional data (e.g. dictionaries) and processing results</li>
+<li>Spark resource impact is limited to only one cluster</li>
+</ul>
+<p>Let&rsquo;s look at Spark applications deployment options one more time:
+
+  <img src="/blog/2015-09-16/spark-cluster-managers.png" alt="">
+
+
+There are three main options available for cluster resource managers:</p>
+<ul>
+<li>Spark Standalone - Spark master and Workers are installed and executed as standalone applications (which obviously introduces some ops overhead and support only static resource allocation per worker)</li>
+<li>YARN is really nice if you already have a Hadoop ecosystem</li>
+<li>Mesos which from the beginning was designed for dynamic allocation of cluster resources and not only for running Hadoop applications but for handling heterogeneous workloads</li>
+</ul>
+<h2 id="mesos-architecture">Mesos architecture</h2>
+<p>
+  <img src="/blog/2015-09-16/mesos-architecture.png" alt="">
+
+
+Mesos cluster consists of Master nodes that are responsible for resource offers and scheduling and Slave nodes which do the actual heavy lifting of tasks execution. In HA mode with multiple Masters ZooKeeper is used for leader election and service discovery. Applications executed on Mesos are called Frameworks and utilize API to handle resource offers and submit tasks to Mesos. Generally, the process of task execution consists of these steps:</p>
+<ul>
+<li>Slaves publish available resources to Master</li>
+<li>Master sends resource offers to Frameworks</li>
+<li>Scheduler replies with tasks and resources needed per task</li>
+<li>Master sends tasks to slaves</li>
+</ul>
+<h2 id="bringing-spark-mesos-and-cassandra-together">Bringing Spark, Mesos, and Cassandra together</h2>
+<p>As said before Spark workers should be collocated with Cassandra nodes to enforce data locality awareness thus lowering the amount of network traffic and Cassandra cluster load. Here&rsquo;s one of the possible deployment scenarios on how to achieve this with Mesos.
+
+  <img src="/blog/2015-09-16/spark-mesos-cassandra.png" alt="">
+
+</p>
+<ul>
+<li>Mesos Masters and ZooKeepers collocated</li>
+<li>Mesos Slaves and Cassandra nodes collocated to enforce better data locality for Spark</li>
+<li>Spark binaries deployed to all worker nodes and <code>spark-env.sh</code> is configured with proper master endpoints and executor jar location</li>
+<li>Spark Executor JAR uploaded to S3/HDFS</li>
+</ul>
+<p>With provided setup Spark job can be submitted to the cluster with simple <code>spark-submit</code> invocation from any worker nodes having Spark binaries installed and assembly jar containing actual job logic uploaded</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">spark-submit --class io.datastrophic.SparkJob /etc/jobs/spark-jobs.jar
+</code></pre></div><p>There exist options to run Dockerized Spark so that there&rsquo;s no need to distribute binaries across every single cluster node.</p>
+<h3 id="scheduled-long-running-tasks">Scheduled long-running tasks</h3>
+<p>Every data processing system sooner or later faces the necessity of running two types of jobs: scheduled/periodic jobs like periodic batch aggregations and long-running ones which are the case for stream processing. The main requirement for both of these types is fault tolerance -  jobs must continue running even in case of cluster nodes failures. Mesos ecosystem comes with two great frameworks supporting each of these types of jobs.</p>
+<p><strong>Marathon</strong> is a framework for fault-tolerant execution of long-running tasks supporting HA mode with ZooKeeper, able to run Docker, and having a nice REST API. Here&rsquo;s an example of a simple job configuration running <code>spark-submit</code> as a shell command:
+
+  <img src="/blog/2015-09-16/marathon.jpeg" alt="">
+
+</p>
+<p><strong>Chronos</strong> has the same characteristics as Marathon but is designed for running scheduled jobs and in general, it is distributed HA cron supporting graphs of jobs. Here&rsquo;s an example of an S3 compaction job configuration which is implemented as a simple bash script:
+
+  <img src="/blog/2015-09-16/chronos.jpeg" alt="">
+
+</p>
+<p>There are plenty of frameworks already available or under active development which targeted to integrate widely used systems with Mesos resource management capabilities. Just to name some of them:</p>
+<ul>
+<li>Hadoop</li>
+<li>Cassandra</li>
+<li>Kafka</li>
+<li>Myriad: YARN on Mesos</li>
+<li>Storm</li>
+<li>Samza</li>
+</ul>
+<h2 id="ingesting-the-data">Ingesting the data</h2>
+<p>So far so good: the storage layer is designed, resource management is set up and jobs are configured. The only thing which is not there yet is the data to process.
+
+  <img src="/blog/2015-09-16/architecture-ingestion.png" alt="">
+
+
+Assuming that incoming data will arrive at high rates the endpoints which will receive it should meet next requirements:</p>
+<ul>
+<li>provide high throughput/low latency</li>
+<li>being resilient</li>
+<li>allow easy scalability</li>
+<li>support back pressure</li>
+</ul>
+<p>Backpressure is not a must, but it would be nice to have this as an option to handle load spikes.</p>
+<p>Akka perfectly fits the requirements and basically, it was designed to provide this feature set. So what&rsquo;s is Akka:</p>
+<ul>
+<li>actor model implementation for JVM</li>
+<li>message-based and asynchronous</li>
+<li>enforces no shared mutable state</li>
+<li>easy scalable from one process to a cluster of machines</li>
+<li>actors form hierarchies with parental supervision</li>
+<li>not only concurrency framework: <code>akka-http</code>, <code>akka-streams</code>, and <code>akka-persistence</code></li>
+</ul>
+<p>Here&rsquo;s a simplified example of three actors which handle JSON HttpRequest, parse it into domain model case class and save it to Cassandra:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scala" data-lang="scala"><span style="color:#ff79c6">class</span> <span style="color:#50fa7b">HttpActor</span> <span style="color:#ff79c6">extends</span> <span style="color:#50fa7b">Actor</span> <span style="color:#ff79c6">{</span>
+  <span style="color:#ff79c6">def</span> receive <span style="color:#ff79c6">=</span> <span style="color:#ff79c6">{</span>
+    <span style="color:#ff79c6">case</span> req<span style="color:#ff79c6">:</span> <span style="color:#8be9fd">HttpRequest</span> <span style="color:#ff79c6">=&gt;</span> 
+      system<span style="color:#ff79c6">.</span>actorOf<span style="color:#ff79c6">(</span><span style="color:#50fa7b">Props</span><span style="color:#ff79c6">[</span><span style="color:#8be9fd">JsonParserActor</span><span style="color:#ff79c6">])</span> <span style="color:#ff79c6">!</span> req<span style="color:#ff79c6">.</span>body
+    <span style="color:#ff79c6">case</span> e<span style="color:#ff79c6">:</span> <span style="color:#8be9fd">Event</span> <span style="color:#ff79c6">=&gt;</span>
+      system<span style="color:#ff79c6">.</span>actorOf<span style="color:#ff79c6">(</span><span style="color:#50fa7b">Props</span><span style="color:#ff79c6">[</span><span style="color:#8be9fd">CassandraWriterActor</span><span style="color:#ff79c6">])</span> <span style="color:#ff79c6">!</span> e
+  <span style="color:#ff79c6">}</span>
+<span style="color:#ff79c6">}</span>
+
+<span style="color:#ff79c6">class</span> <span style="color:#50fa7b">JsonParserActor</span> <span style="color:#ff79c6">extends</span> <span style="color:#50fa7b">Actor</span> <span style="color:#ff79c6">{</span>
+  <span style="color:#ff79c6">def</span> receive <span style="color:#ff79c6">=</span> <span style="color:#ff79c6">{</span>
+    <span style="color:#ff79c6">case</span> s<span style="color:#ff79c6">:</span> <span style="color:#8be9fd">String</span> <span style="color:#ff79c6">=&gt;</span> <span style="color:#50fa7b">Try</span><span style="color:#ff79c6">(</span><span style="color:#50fa7b">Json</span><span style="color:#ff79c6">.</span>parse<span style="color:#ff79c6">(</span>s<span style="color:#ff79c6">).</span>as<span style="color:#ff79c6">[</span><span style="color:#8be9fd">Event</span><span style="color:#ff79c6">])</span> <span style="color:#ff79c6">match</span> <span style="color:#ff79c6">{</span>
+      <span style="color:#ff79c6">case</span> <span style="color:#50fa7b">Failure</span><span style="color:#ff79c6">(</span>ex<span style="color:#ff79c6">)</span> <span style="color:#ff79c6">=&gt;</span> <span style="color:#6272a4">//error handling code
+</span><span style="color:#6272a4"></span>      <span style="color:#ff79c6">case</span> <span style="color:#50fa7b">Success</span><span style="color:#ff79c6">(</span>event<span style="color:#ff79c6">)</span> <span style="color:#ff79c6">=&gt;</span> sender <span style="color:#ff79c6">!</span> event
+    <span style="color:#ff79c6">}</span>
+  <span style="color:#ff79c6">}</span>
+<span style="color:#ff79c6">}</span>
+
+<span style="color:#ff79c6">class</span> <span style="color:#50fa7b">CassandraWriterActor</span> <span style="color:#ff79c6">extends</span> <span style="color:#50fa7b">Actor</span> <span style="color:#ff79c6">with</span> <span style="color:#50fa7b">ActorLogging</span> <span style="color:#ff79c6">{</span>
+  <span style="color:#6272a4">//for demo purposes, session initialized here
+</span><span style="color:#6272a4"></span>  <span style="color:#ff79c6">val</span> session <span style="color:#ff79c6">=</span> <span style="color:#50fa7b">Cluster</span><span style="color:#ff79c6">.</span>builder<span style="color:#ff79c6">()</span>
+    <span style="color:#ff79c6">.</span>addContactPoint<span style="color:#ff79c6">(</span><span style="color:#f1fa8c">&#34;cassandra.host&#34;</span><span style="color:#ff79c6">)</span>
+    <span style="color:#ff79c6">.</span>build<span style="color:#ff79c6">()</span>
+    <span style="color:#ff79c6">.</span>connect<span style="color:#ff79c6">()</span>
+
+  <span style="color:#ff79c6">override</span> <span style="color:#ff79c6">def</span> receive<span style="color:#ff79c6">:</span> <span style="color:#8be9fd">Receive</span> <span style="color:#ff79c6">=</span> <span style="color:#ff79c6">{</span>
+    <span style="color:#ff79c6">case</span> event<span style="color:#ff79c6">:</span> <span style="color:#8be9fd">Event</span> <span style="color:#ff79c6">=&gt;</span>
+      <span style="color:#ff79c6">val</span> statement <span style="color:#ff79c6">=</span> <span style="color:#ff79c6">new</span> <span style="color:#50fa7b">SimpleStatement</span><span style="color:#ff79c6">(</span>event<span style="color:#ff79c6">.</span>createQuery<span style="color:#ff79c6">)</span>
+        <span style="color:#ff79c6">.</span>setConsistencyLevel<span style="color:#ff79c6">(</span><span style="color:#50fa7b">ConsistencyLevel</span><span style="color:#ff79c6">.</span><span style="color:#50fa7b">QUORUM</span><span style="color:#ff79c6">)</span>
+
+      <span style="color:#50fa7b">Try</span><span style="color:#ff79c6">(</span>session<span style="color:#ff79c6">.</span>execute<span style="color:#ff79c6">(</span>statement<span style="color:#ff79c6">))</span> <span style="color:#ff79c6">match</span> <span style="color:#ff79c6">{</span>
+        <span style="color:#ff79c6">case</span> <span style="color:#50fa7b">Failure</span><span style="color:#ff79c6">(</span>ex<span style="color:#ff79c6">)</span> <span style="color:#ff79c6">=&gt;</span> <span style="color:#6272a4">//error handling code
+</span><span style="color:#6272a4"></span>        <span style="color:#ff79c6">case</span> <span style="color:#50fa7b">Success</span> <span style="color:#ff79c6">=&gt;</span> sender <span style="color:#ff79c6">!</span> <span style="color:#50fa7b">WriteSuccessfull</span>
+      <span style="color:#ff79c6">}</span>
+  <span style="color:#ff79c6">}</span>
+<span style="color:#ff79c6">}</span>
+</code></pre></div><p>It looks like only several lines of code are needed to make everything work, but while writing raw data (events) to Cassandra with Akka is easy there is a number of gotchas:</p>
+<ul>
+<li>Cassandra is still designed for fast serving but not batch processing, so pre-aggregation of incoming data is needed</li>
+<li>computation time of aggregations/rollups will grow with the amount of data</li>
+<li>actors are not suitable for performing aggregation due to the stateless design model</li>
+<li>micro-batches could partially solve the problem</li>
+<li>some sort of reliable buffer for raw data is still needed</li>
+</ul>
+<h2 id="kafka-as-a-buffer-for-incoming-data">Kafka as a buffer for incoming data</h2>
+<p>
+  <img src="/blog/2015-09-16/architecture-ingestion-kafka.png" alt="">
+
+
+For keeping incoming data with some retention and its further pre-aggregation/processing some sort of distributed commit log could be used. In this case, consumers will read data in batches, process it, and store it into Cassandra in form of pre-aggregates. Here&rsquo;s an example of publishing JSON data coming over HTTP to Kafka with <code>akka-http</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scala" data-lang="scala"><span style="color:#ff79c6">val</span> config <span style="color:#ff79c6">=</span> <span style="color:#ff79c6">new</span> <span style="color:#50fa7b">ProducerConfig</span><span style="color:#ff79c6">(</span><span style="color:#50fa7b">KafkaConfig</span><span style="color:#ff79c6">())</span>
+<span style="color:#ff79c6">lazy</span> <span style="color:#ff79c6">val</span> producer <span style="color:#ff79c6">=</span> <span style="color:#ff79c6">new</span> <span style="color:#50fa7b">KafkaProducer</span><span style="color:#ff79c6">[</span><span style="color:#8be9fd">A</span>, <span style="color:#8be9fd">A</span><span style="color:#ff79c6">](</span>config<span style="color:#ff79c6">)</span>
+<span style="color:#ff79c6">val</span> topic <span style="color:#ff79c6">=</span> “raw_events”
+
+<span style="color:#ff79c6">val</span> routes<span style="color:#ff79c6">:</span> <span style="color:#8be9fd">Route</span> <span style="color:#ff79c6">=</span> <span style="color:#ff79c6">{</span>
+  post<span style="color:#ff79c6">{</span>
+    decodeRequest<span style="color:#ff79c6">{</span>
+      entity<span style="color:#ff79c6">(</span>as<span style="color:#ff79c6">[</span><span style="color:#8be9fd">String</span><span style="color:#ff79c6">]){</span> str <span style="color:#ff79c6">=&gt;</span>
+        <span style="color:#50fa7b">JsonParser</span><span style="color:#ff79c6">.</span>parse<span style="color:#ff79c6">(</span>str<span style="color:#ff79c6">).</span>validate<span style="color:#ff79c6">[</span><span style="color:#8be9fd">Event</span><span style="color:#ff79c6">]</span> <span style="color:#ff79c6">match</span> <span style="color:#ff79c6">{</span>
+          <span style="color:#ff79c6">case</span> s<span style="color:#ff79c6">:</span> <span style="color:#8be9fd">JsSuccess</span><span style="color:#ff79c6">[</span><span style="color:#8be9fd">String</span><span style="color:#ff79c6">]</span> <span style="color:#ff79c6">=&gt;</span> producer<span style="color:#ff79c6">.</span>send<span style="color:#ff79c6">(</span><span style="color:#ff79c6">new</span> <span style="color:#50fa7b">KeyedMessage</span><span style="color:#ff79c6">(</span>topic<span style="color:#ff79c6">,</span> str<span style="color:#ff79c6">))</span>
+          <span style="color:#ff79c6">case</span> e<span style="color:#ff79c6">:</span> <span style="color:#8be9fd">JsError</span> <span style="color:#ff79c6">=&gt;</span> <span style="color:#50fa7b">BadRequest</span> <span style="color:#ff79c6">-&gt;</span> <span style="color:#50fa7b">JsError</span><span style="color:#ff79c6">.</span>toFlatJson<span style="color:#ff79c6">(</span>e<span style="color:#ff79c6">).</span>toString<span style="color:#ff79c6">()</span>
+        <span style="color:#ff79c6">}</span>
+      <span style="color:#ff79c6">}</span>
+    <span style="color:#ff79c6">}</span>
+  <span style="color:#ff79c6">}</span>    
+<span style="color:#ff79c6">}</span>
+
+<span style="color:#ff79c6">object</span> <span style="color:#50fa7b">AkkaHttpMicroservice</span> <span style="color:#ff79c6">extends</span> <span style="color:#50fa7b">App</span> <span style="color:#ff79c6">with</span> <span style="color:#50fa7b">Service</span> <span style="color:#ff79c6">{</span>
+  <span style="color:#50fa7b">Http</span><span style="color:#ff79c6">().</span>bindAndHandle<span style="color:#ff79c6">(</span>routes<span style="color:#ff79c6">,</span> config<span style="color:#ff79c6">.</span>getString<span style="color:#ff79c6">(</span><span style="color:#f1fa8c">&#34;http.interface&#34;</span><span style="color:#ff79c6">),</span> config<span style="color:#ff79c6">.</span>getInt<span style="color:#ff79c6">(</span><span style="color:#f1fa8c">&#34;http.port&#34;</span><span style="color:#ff79c6">))</span>
+<span style="color:#ff79c6">}</span>
+</code></pre></div><h2 id="consuming-the-data-spark-streaming">Consuming the data: Spark Streaming</h2>
+<p>While Akka is still could be used for consuming stream data from Kafka, having Spark in your ecosystem brings Spark Streaming as an option to solve the problem:</p>
+<ul>
+<li>it supports a variety of data sources</li>
+<li>provides at-least-once semantics</li>
+<li>exactly-once semantics available with Kafka Direct and idempotent storage
+
+  <img src="/blog/2015-09-16/spark-streaming.png" alt="">
+
+</li>
+</ul>
+<p>Consuming event stream from Kinesis with Spark Streaming example:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scala" data-lang="scala"><span style="color:#ff79c6">val</span> ssc <span style="color:#ff79c6">=</span> <span style="color:#ff79c6">new</span> <span style="color:#50fa7b">StreamingContext</span><span style="color:#ff79c6">(</span>conf<span style="color:#ff79c6">,</span> <span style="color:#50fa7b">Seconds</span><span style="color:#ff79c6">(</span><span style="color:#bd93f9">10</span><span style="color:#ff79c6">))</span>
+
+<span style="color:#ff79c6">val</span> kinesisStream <span style="color:#ff79c6">=</span> <span style="color:#50fa7b">KinesisUtils</span><span style="color:#ff79c6">.</span>createStream<span style="color:#ff79c6">(</span>ssc<span style="color:#ff79c6">,</span>appName<span style="color:#ff79c6">,</span>streamName<span style="color:#ff79c6">,</span>
+   endpointURL<span style="color:#ff79c6">,</span>regionName<span style="color:#ff79c6">,</span> <span style="color:#50fa7b">InitialPositionInStream</span><span style="color:#ff79c6">.</span><span style="color:#50fa7b">LATEST</span><span style="color:#ff79c6">,</span>     
+   <span style="color:#50fa7b">Duration</span><span style="color:#ff79c6">(</span>checkpointInterval<span style="color:#ff79c6">),</span> <span style="color:#50fa7b">StorageLevel</span><span style="color:#ff79c6">.</span><span style="color:#50fa7b">MEMORY_ONLY</span><span style="color:#ff79c6">)</span>
+<span style="color:#ff79c6">}</span>
+
+<span style="color:#6272a4">//transforming given stream to Event and saving to C*
+</span><span style="color:#6272a4"></span>kinesisStream<span style="color:#ff79c6">.</span>map<span style="color:#ff79c6">(</span><span style="color:#50fa7b">JsonUtils</span><span style="color:#ff79c6">.</span>byteArrayToEvent<span style="color:#ff79c6">)</span>
+<span style="color:#ff79c6">.</span>saveToCassandra<span style="color:#ff79c6">(</span>keyspace<span style="color:#ff79c6">,</span> table<span style="color:#ff79c6">)</span>
+
+ssc<span style="color:#ff79c6">.</span>start<span style="color:#ff79c6">()</span>
+ssc<span style="color:#ff79c6">.</span>awaitTermination<span style="color:#ff79c6">()</span>
+</code></pre></div><h2 id="designing-for-failure-backups-and-patching">Designing for Failure: Backups and Patching</h2>
+<p>Usually, this is the most boring part of any system but it&rsquo;s really important when there exists any possibility that the data which came into the system could be invalid or when all the analytics data center crushes.
+
+  <img src="/blog/2015-09-16/architecture-ingestion-kafka-spark.png" alt="">
+
+</p>
+<p>So why not store the data in Kafka/Kinesis? For the moment of writing Kinesis has only one day of retention and without backups, in case of a failure, all processing results could be lost. While Kafka supports much larger retention periods, the cost of hardware ownership should be considered because for example, S3 storage is way cheaper than multiple instances running Kafka as well as S3 SLA are really good.</p>
+<p>Apart from having backups the restoring/patching strategies should be designed upfront and tested so that any problems with data could be quickly fixed. Programmer&rsquo;s mistake in aggregation job or duplicate data could break the accuracy of the computation results so fixing the error shouldn&rsquo;t be a big problem. One thing to make all these operations easier is to enforce idempotency in the data model so that multiple repetitions of the same operations produce the same results(e.g. an SQL update is an idempotent operation while the counter increment is not).</p>
+<p>Here is an example of a Spark job which reads S3 backup and loads it into Cassandra:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scala" data-lang="scala"><span style="color:#ff79c6">val</span> sc <span style="color:#ff79c6">=</span> <span style="color:#ff79c6">new</span> <span style="color:#50fa7b">SparkContext</span><span style="color:#ff79c6">(</span>conf<span style="color:#ff79c6">)</span>
+
+sc<span style="color:#ff79c6">.</span>textFile<span style="color:#ff79c6">(</span><span style="color:#f1fa8c">s&#34;s3n://bucket/2015/*/*.gz&#34;</span><span style="color:#ff79c6">)</span>
+  <span style="color:#ff79c6">.</span>map<span style="color:#ff79c6">(</span>s <span style="color:#ff79c6">=&gt;</span> <span style="color:#50fa7b">Try</span><span style="color:#ff79c6">(</span><span style="color:#50fa7b">JsonUtils</span><span style="color:#ff79c6">.</span>stringToEvent<span style="color:#ff79c6">(</span>s<span style="color:#ff79c6">)))</span>
+  <span style="color:#ff79c6">.</span>filter<span style="color:#ff79c6">(</span><span style="color:#ff79c6">_</span><span style="color:#ff79c6">.</span>isSuccess<span style="color:#ff79c6">).</span>map<span style="color:#ff79c6">(</span><span style="color:#ff79c6">_</span><span style="color:#ff79c6">.</span>get<span style="color:#ff79c6">)</span>
+  <span style="color:#ff79c6">.</span>saveToCassandra<span style="color:#ff79c6">(</span>config<span style="color:#ff79c6">.</span>keyspace<span style="color:#ff79c6">,</span> config<span style="color:#ff79c6">.</span>table<span style="color:#ff79c6">)</span>
+</code></pre></div><h2 id="the-big-picture">The Big picture</h2>
+<p>The high-level design of data platform built with SMACK
+
+  <img src="/blog/2015-09-16/architecture-big-picture.png" alt="">
+
+</p>
+<p>So what does the SMACK stack provide:</p>
+<ul>
+<li>a concise toolbox for a wide variety of data processing scenarios</li>
+<li>battle-tested and widely used software with large communities</li>
+<li>easy scalability and replication of data while preserving low latencies</li>
+<li>unified cluster management for heterogeneous loads</li>
+<li>single platform for any kind of applications</li>
+<li>implementation platform for different architecture designs (batch, streaming, Lambda, Kappa)</li>
+<li>fast time-to-market (e.g. for MVP verification)</li>
+</ul>
+
+                
+                <nav class="pagination" role="navigation">
+                    
+                        <a class="older-posts" href="/core-concepts-architecture-and-internals-of-apache-spark/">Next Post &rarr;</a>
+                    
+                    
+                    
+                </nav>                
+            </div>
+
+            
+            
+            <div class="
+                col-lg-2 col-lg-offset-0
+                visible-lg-block
+                sidebar-container
+                catalog-container">
+                <div class="side-catalog">
+                    <hr class="hidden-sm hidden-xs">
+                    <h5>
+                        <a class="catalog-toggle" href="#">CONTENTS</a>
+                    </h5>
+                    <ul class="catalog-body"></ul>
+                </div>
+            </div>
+            
+
+            
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        <a href="/tags/mesos" title="mesos">
+                            mesos
+                        </a>
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        <a href="/tags/sheduling" title="sheduling">
+                            sheduling
+                        </a>
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        <a href="/tags/spark" title="spark">
+                            spark
+                        </a>
+                        
+                        
+                    </div>
+                </section>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+<footer class="site-footer clearfix">
+    <section class="copyright"><a href="">datastrophic</a> &copy; 2021</section>
+    <section class="poweredby">Proudly generated by <a class="icon-hugo" href="http://gohugo.io">HUGO</a></section>
+</footer>
+
+
+<script>
+    function loadAsync(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+
+
+
+
+
+<script>
+    
+    if($('#tag_cloud').length !== 0){
+        loadAsync("/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+
+<script>
+    loadAsync("https://cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+
+
+<script type="text/javascript">
+    function generateCatalog(selector) {
+
+        
+        
+        
+        
+            _containerSelector = 'div.post-container'
+        
+
+        
+        var P = $(_containerSelector), a, n, t, l, i, c;
+        a = P.find('h1,h2,h3,h4,h5,h6');
+
+        
+        $(selector).html('')
+
+        
+        a.each(function () {
+            n = $(this).prop('tagName').toLowerCase();
+            i = "#" + $(this).prop('id');
+            t = $(this).text();
+            c = $('<a href="' + i + '" rel="nofollow">' + t + '</a>');
+            l = $('<li class="' + n + '_nav"></li>').append(c);
+            $(selector).append(l);
+        });
+        return true;
+    }
+
+    generateCatalog(".catalog-body");
+
+    
+    $(".catalog-toggle").click((function (e) {
+        e.preventDefault();
+        $('.side-catalog').toggleClass("fold")
+    }))
+
+    
+
+
+    loadAsync("\/js\/jquery.nav.js", function () {
+        $('.catalog-body').onePageNav({
+            currentClass: "active",
+            changeHash: !1,
+            easing: "swing",
+            filter: "",
+            scrollSpeed: 700,
+            scrollOffset: 0,
+            scrollThreshold: .2,
+            begin: null,
+            end: null,
+            scrollChange: null,
+            padding: 80
+        });
+    });
+</script>
+
+
+</body>
+</html>

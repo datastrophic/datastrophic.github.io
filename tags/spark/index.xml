@@ -27,5 +27,14 @@ Spark JobServer Spark JobServer is widely used across a variety of reporting and
 Intro Spark is a generalized framework for distributed data processing providing functional API for manipulating data at scale, in-memory data caching, and reuse across computations.</description>
     </item>
     
+    <item>
+      <title>Data processing platforms architectures with SMACK: Spark, Mesos, Akka, Cassandra and Kafka</title>
+      <link>https://datastrophic.github.io/data-processing-platforms-architectures-with-spark-mesos-akka-cassandra-and-kafka/</link>
+      <pubDate>Wed, 16 Sep 2015 00:00:00 +0000</pubDate>
+      
+      <guid>https://datastrophic.github.io/data-processing-platforms-architectures-with-spark-mesos-akka-cassandra-and-kafka/</guid>
+      <description>This post is a follow-up of the talk given at Big Data AW meetup in Stockholm and focused on different use cases and design approaches for building scalable data processing platforms with SMACK(Spark, Mesos, Akka, Cassandra, Kafka) stack. While stack is really concise and consists of only several components it is possible to implement different system designs which list not only purely batch or stream processing, but more complex Lambda and Kappa architectures as well.</description>
+    </item>
+    
   </channel>
 </rss>

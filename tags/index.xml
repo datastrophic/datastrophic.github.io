@@ -133,5 +133,41 @@
       <description></description>
     </item>
     
+    <item>
+      <title>akka</title>
+      <link>https://datastrophic.github.io/tags/akka/</link>
+      <pubDate>Wed, 16 Sep 2015 00:00:00 +0000</pubDate>
+      
+      <guid>https://datastrophic.github.io/tags/akka/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>cassandra</title>
+      <link>https://datastrophic.github.io/tags/cassandra/</link>
+      <pubDate>Wed, 16 Sep 2015 00:00:00 +0000</pubDate>
+      
+      <guid>https://datastrophic.github.io/tags/cassandra/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>kafka</title>
+      <link>https://datastrophic.github.io/tags/kafka/</link>
+      <pubDate>Wed, 16 Sep 2015 00:00:00 +0000</pubDate>
+      
+      <guid>https://datastrophic.github.io/tags/kafka/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>SMACK</title>
+      <link>https://datastrophic.github.io/tags/smack/</link>
+      <pubDate>Wed, 16 Sep 2015 00:00:00 +0000</pubDate>
+      
+      <guid>https://datastrophic.github.io/tags/smack/</guid>
+      <description></description>
+    </item>
+    
   </channel>
 </rss>
