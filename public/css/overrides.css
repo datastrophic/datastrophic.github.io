@@ -1,0 +1,73 @@
+/* Site header */
+.intro-header {
+    position: relative;
+    display: table;
+    width: 100%;
+    height: 25vh;
+    margin-bottom: 3rem;
+    text-align: center;
+    background: #222 no-repeat center center;
+    background-size: cover;
+    overflow: hidden;
+}
+.intro-header .site-heading {
+    padding: 66px;
+}
+
+.intro-header .site-heading h1 {
+    font-size: 4rem;
+}
+
+/* Side panel */
+.avatar {
+    width: 75px;
+    height: 75px;
+    background-size: cover;
+    background-position: top center;
+    border-radius: 50%;
+    margin-bottom: 10px;
+}
+
+.avatar-wrapper {
+    margin: auto;
+    width: 40%;
+    margin-bottom: -10px;
+}
+
+.social-wrapper {
+    display: flex;
+    justify-content: center;
+}
+
+/* Post Preview */
+.post-preview {
+    font-style: normal;
+}
+
+.post-content-preview  {
+    font-style: normal;
+    color: #616060;
+}
+
+.post-preview  .post-meta {
+    font-style: normal;
+    display: block;
+    margin: 1.75rem 0 0 0;
+    font-family: "Open Sans", sans-serif;
+    font-size: 1.3rem;
+    line-height: 2.2rem;
+}
+
+.post-preview  .post-meta a {
+    font-style: normal;
+    text-decoration: none;
+    font-family: "Open Sans", sans-serif;
+    font-size: 1.3rem;
+    line-height: 2.2rem;
+}
+
+.post-preview  .post-meta a:hover {
+    text-decoration: underline;
+}
+
+/* Pager */

@@ -1,0 +1,265 @@
+<!doctype html><html lang=en-us>
+<head>
+<meta charset=utf-8>
+<meta http-equiv=x-ua-compatible content="IE=edge">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta property="og:site_name" content="datastrophic">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://datastrophic.io/img/datastrophic-strip-1.png">
+<meta property="twitter:image" content="https://datastrophic.io/img/datastrophic-strip-1.png">
+<meta name=title content="Spark JobServer: from Spark Standalone to Mesos, Marathon and Docker">
+<meta property="og:title" content="Spark JobServer: from Spark Standalone to Mesos, Marathon and Docker">
+<meta property="twitter:title" content="Spark JobServer: from Spark Standalone to Mesos, Marathon and Docker">
+<meta name=description content="A blog about distributed systems, data platforms and AI infranstructure">
+<meta property="og:description" content="A blog about distributed systems, data platforms and AI infranstructure">
+<meta property="twitter:description" content="A blog about distributed systems, data platforms and AI infranstructure">
+<meta property="twitter:card" content="summary">
+<meta name=keyword content="Spark, Mesos, Kubernetes, Kubeflow, Istio, SMACK stack, Cassandra, Kafka">
+<link rel="shortcut icon" href=/img/favicon.ico>
+<title>Spark JobServer: from Spark Standalone to Mesos, Marathon and Docker</title>
+<link rel=canonical href=/spark-jobserver-from-spark-standalone-to-mesos-marathon-and-docker-part-i/>
+<link rel=stylesheet href=/css/iDisqus.min.css>
+<link rel=stylesheet href=/css/bootstrap.min.css>
+<link rel=stylesheet href=/css/hugo-theme-cleanwhite.min.css>
+<link rel=stylesheet href=/css/zanshang.css>
+<link href=//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css rel=stylesheet type=text/css>
+<link rel=stylesheet href=https://datastrophic.io/css/overrides.css><link rel=stylesheet href=https://datastrophic.io/css/footer.css><link rel=stylesheet href=https://datastrophic.io/css/pager.css>
+<script src=/js/jquery.min.js></script>
+<script src=/js/bootstrap.min.js></script>
+<script src=/js/hux-blog.min.js></script>
+</head>
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+<div class=container-fluid>
+<div class="navbar-header page-scroll">
+<button type=button class=navbar-toggle>
+<span class=sr-only>Toggle navigation</span>
+<span class=icon-bar></span>
+<span class=icon-bar></span>
+<span class=icon-bar></span>
+</button>
+</div>
+<div id=huxblog_navbar>
+<div class=navbar-collapse>
+<ul class="nav navbar-nav navbar-right">
+<li>
+<a href=/>Home</a>
+</li>
+<li><a href=/top/archive/>ARCHIVE</a></li>
+<li><a href=/top/about/>ABOUT</a></li>
+</ul>
+</div>
+</div>
+</div>
+</nav>
+<script>var $body=document.body,$toggle=document.querySelector('.navbar-toggle'),$navbar=document.querySelector('#huxblog_navbar'),$collapse=document.querySelector('.navbar-collapse');$toggle.addEventListener('click',handleMagic);function handleMagic(a){$navbar.className.indexOf('in')>0?($navbar.className=" ",setTimeout(function(){$navbar.className.indexOf('in')<0&&($collapse.style.height="0px")},400)):($collapse.style.height="auto",$navbar.className+=" in")}</script>
+<style type=text/css>header.intro-header{background-image:url(/img/datastrophic-strip-1.png);color:#3a4145}</style>
+<header class=intro-header>
+<div class=container>
+<div class=row>
+<div class=site-heading>
+<div class=tags>
+<a class=tag href=/tags/spark title=spark>
+spark
+</a>
+<a class=tag href=/tags/mesos title=mesos>
+mesos
+</a>
+<a class=tag href=/tags/marathon title=marathon>
+marathon
+</a>
+<a class=tag href=/tags/docker title=docker>
+docker
+</a>
+</div>
+<h1>Spark JobServer: from Spark Standalone to Mesos, Marathon and Docker</h1>
+<h2 class=subheading></h2>
+<span class=meta>
+Posted on
+October 12, 2017
+</span>
+</div>
+</div>
+</div>
+</header>
+<article>
+<div class=container>
+<div class=row>
+<div class="col-lg-8 col-lg-offset-2
+col-md-10 col-md-offset-1
+post-container">
+<p>After several years of running Spark JobServer workloads, the need for better availability and multi-tenancy
+emerged across several projects author was involved in. This blog post covers design decisions made to provide
+higher availability and fault tolerance of JobServer installations, multi-tenancy for Spark workloads,
+scalability and failure recovery automation, and software choices made in order to reach these goals.</p>
+<h2 id=spark-jobserver>Spark JobServer</h2>
+<p><a href=https://github.com/spark-jobserver/spark-jobserver>Spark JobServer</a> is widely used across a variety of
+reporting and aggregating systems. One of the valuable features among others is unified
+REST API to interact with Spark Contexts, execute jobs and retrieve results asynchronously from a cache.
+Unified API allows standardizing any Spark application and abstracts away the need for application developers
+to initialize and configure Spark Context every time a new application is developed.</p>
+<p>In most of the cases, Spark applications are developed to be used with <code>spark-submit</code> which in turn will
+create a context at the moment of execution. Context creation is a costly operation and takes time depending
+on cluster utilization and resources requested. JobServer addresses this issue by maintaining long-running
+contexts so any loaded application doesn’t have to wait for a context to be initialized which in turn results
+in faster response and execution times and allows to use Spark applications as backends for querying data.</p>
+<p>Originally, the JobServer was developed to run on Spark Standalone clusters and some of its design features address
+same problems as e.g. Application Master in YARN. This blog post is focused on design decisions targeted at
+increasing stability of the JobServer by utilizing Mesos as Spark cluster manager and Marathon as an orchestration
+system for providing high availability.</p>
+<p>Spark uses a Cluster Manager for scheduling tasks to run in distributed mode (<em>Figure 1</em>).
+Supported cluster managers are Spark Standalone, Mesos and YARN. Spark applications run as independent
+sets of processes on a cluster, coordinated by the SparkContext object in your main program
+(called the driver program)<a href=https://spark.apache.org/docs/latest/cluster-overview.html>[source]</a>.</p>
+<p>
+<img src=/blog/2017-10-12/spark-overview.png alt>
+<strong>Figure 1. Spark application execution flow</strong></p>
+<p>JobServer runs Spark Applications either being Spark Driver itself or spawning a separate JVM per
+context thus being out-of-the-box compatible with supported Cluster Managers (<em>Figure 2</em>).
+<img src=/blog/2017-10-12/spark-jobserver.png alt>
+<strong>Figure 2. JobServer top-level Architecture. Single JVM (left) and JVM per context (right)</strong></p>
+<h3 id=spark-jobserver-and-spark-standalone-limitations>Spark JobServer and Spark Standalone limitations</h3>
+<p>Spark Standalone as a cluster manager has several significant limitations making maintenance and operations
+harder for engineers:</p>
+<ul>
+<li>Spark master is a single point of failure when single instance is used. In situations when workers fail and/or restart they register back to Spark Master and a cluster continues its operations. However, when the master fails and/or restarts workers are unable to register automatically and whole cluster restart is needed. This problem can be solved by running Spark Master in HA mode and performing leader election and service discovery with ZooKeeper.</li>
+<li>Different Spark versions across applications. With growing number of Spark applications dependencies versions start to diverge and at some point, it’s hard to perform a big-bang upgrade and the need for different environments emerges. That is, applications using latter Spark major releases will need another cluster with the corresponding version when standalone mode is used and this situation is suboptimal: number of clusters, amount of hardware and engineering time needed for support will grow significantly.</li>
+<li>Heterogeneous environments and dependencies. Although multiple Spark versions could be considered as a special case of this problem it’s different and can arise even if same Spark version is used. Applications not only can depend on different third-party libraries (e.g. hadoop and/or file format families) but also be compiled with different Java versions (in case JVM languages are used). Managing classpaths and runtime class version conflicts (also known as ‘jar hell’) is a time-consuming task which is better to avoid by means of stronger isolation.</li>
+</ul>
+<p>So let’s look at the requirements expected to be met by a cluster manager (<a href=https://research.google.com/pubs/pub41684.html>Omega paper by Google</a> can be used as a reference):</p>
+<ul>
+<li>Efficiency
+<ul>
+<li>efficient sharing of resources across applications</li>
+<li>utilization of cluster resources in the most optimal manner</li>
+</ul>
+</li>
+<li>Flexibility
+<ul>
+<li>support of wide array of current and future frameworks</li>
+<li>dealing with hardware heterogeneity</li>
+<li>orchestration framework for applications providing high availability guarantees</li>
+<li>support of resource requests of different types (RAM, CPU, ports)</li>
+</ul>
+</li>
+<li>Scalability
+<ul>
+<li>scaling to clusters of hundreds of nodes</li>
+<li>scheduling system response times must remain acceptable while increasing number of machines and applications</li>
+</ul>
+</li>
+<li>Robustness
+<ul>
+<li>fault tolerance guarantees for the system and applications</li>
+<li>high availability of central scheduler component</li>
+</ul>
+</li>
+</ul>
+<p>While part of these requirements is met by <a href=https://hadoop.apache.org/docs/current/hadoop-yarn/hadoop-yarn-site/YARN.html>YARN</a> it won’t provide high availability guarantees for JobServer itself. Service failures can be addressed by means of <code>systemd</code> or <code>upstart</code> but a hardware failure will need a manual maintenance in most of the cases involving provisioning of a new machine if there’s no reserved one available and deployment of JobServer to it. Given that all these steps are automated with tools like Ansible or Chef the downtime for customer-facing applications is still unacceptable.</p>
+<p>Another solution available in the open-source world is Apache Mesos. While it can be used as Spark cluster manager out of the box, it’s also possible to execute standalone applications as long-running cluster tasks by means of Marathon - a container orchestration platform for Mesos.</p>
+<h2 id=mesos-overview>Mesos overview</h2>
+<p>Mesos is a cluster resource manager which provides linear scalability, high availability and container support
+with a unique approach of two-level scheduling. Official <a href=http://mesos.apache.org/documentation/latest/architecture/>documentation</a>
+provides a detailed overview of Mesos architecture and its components, and here’s a really quick recap to be on the same page (<em>Figure 3</em>).</p>
+<p>
+<img src=/blog/2017-10-12/mesos-overview.png alt>
+<strong>Figure 3. Mesos architecture overview</strong></p>
+<ul>
+<li>Master
+<ul>
+<li>a mediator between slave resources and frameworks</li>
+<li>enables fine-grained sharing of resources by making resource offers</li>
+<li>serves as master for Spark (not a single point of failure)</li>
+</ul>
+</li>
+<li>Slave (Agent)
+<ul>
+<li>manages resources on physical node and runs executors</li>
+</ul>
+</li>
+<li>Framework
+<ul>
+<li>application that solves a specific use case (e.g. Spark)</li>
+<li><em>Scheduler</em> negotiates with master and handles resource offers</li>
+<li><em>Executors</em> consume resources and run tasks on slaves</li>
+</ul>
+</li>
+</ul>
+<p>In Mesos terminology, Spark is a framework that acquires cluster resources to execute its jobs. Depending on job resource demands (RAM, CPU) Spark accepts or declines resource offers made by Mesos Master allocation module. Allocation module uses Dominant Resource Fairness algorithm which in simple words orders sending of offers to frameworks based on their cluster usage i.e. frameworks using fewer resources than the others will receive offers first. More details are available in <a href=http://datastrophic.io/resource-allocation-in-mesos-dominant-resource-fairness-explained/>Dominant Resource Fairness explained blog post</a>.</p>
+<h2 id=spark-on-mesos>Spark on Mesos</h2>
+<p>Spark supports two modes of running on Mesos: fine-grained(deprecated) and coarse-grained. To understand the difference let’s have a quick look into Mesos scheduling algorithm (<em>Figure 4</em>).</p>
+<p>
+<img src=/blog/2017-10-12/mesos-two-level-scheduling.png alt>
+<strong>Figure 4. Mesos scheduling overview</strong></p>
+<ul>
+<li>Agent nodes continuously report to Master amount and type of available resources: RAM, CPU, disk, ports</li>
+<li>Allocation module starts offering resources to frameworks
+Framework receives offers
+<ul>
+<li>if resources do not satisfy its needs - rejects the offer</li>
+<li>if resources satisfy its demands - creates list of tasks and sends to master</li>
+</ul>
+</li>
+<li>Master verifies tasks and forwards to executor (and launches the executor if it’s not running)</li>
+</ul>
+<p>A task in Mesos terminology is a single unit of work executed by a framework. In fine-grained mode Spark wraps its every task in Mesos task thus relying on Mesos scheduling, while in coarse-grained mode Spark only runs its executors (Spark workers) and executes tasks relying on its own scheduler and RPC mechanism (Akka or Netty, depending on Spark version) for submitting tasks to executors (<em>Figure 5</em>)</p>
+<p>
+<img src=/blog/2017-10-12/spark-coarse-grained-mode.png alt>
+<strong>Figure 5. Spark coarse-grained mode</strong></p>
+<h3 id=mesosspark-workloads-heterogeneity-and-multi-tenancy>Mesos/Spark workloads heterogeneity and multi-tenancy</h3>
+<p>Moving from Spark Standalone to Mesos addresses yet another problem of shrinking down a number of clusters being used and providing a better cluster utilization. While it’s a valid point that it’s possible to run multiple contexts on the same cluster even with Spark Standalone, it becomes impossible to manage incompatible Spark versions within the same installation not to mention Java versions. With proper packaging and environment setup, it’s easy to achieve these goals with Mesos which makes it possible to not only run heterogeneous Spark contexts on the same cluster but share it with other applications as well (<em>Figure 6</em>).</p>
+<p>
+<img src=/blog/2017-10-12/mesos-multi-tenancy.png alt>
+<strong>Figure 6. Mesos multi-tenancy</strong></p>
+<p>Let’s have a look at an example of running 4 Spark JobServer applications (<code>jobserver-bob</code> and <code>jobserver-alice</code> 2 instances each) on the same cluster. Each of JobServers creates Spark Context managed by driver program: <code>spark-driver-bob</code> with 14 CPU and <code>spark-driver-alice</code> with 21 CPU in total. Also, one can observe Marathon framework using 15% of cluster resources (<em>Figure 7</em>). Marathon is used to run JobServer instances which in turn use Mesos for running Spark Contexts. Details of running JobServer in Marathon will be covered in the next part of the blog post series.</p>
+<p>
+<img src=/blog/2017-10-12/spark-multi-tenancy.png alt>
+<img src=/blog/2017-10-12/mesos-tasks-screenshot.png alt>
+<strong>Figure 7. Spark on Mesos multi-tenancy</strong></p>
+<p>A naive way for supporting multiple Spark (and Java) versions would be installing all the necessary binaries on every machine in a cluster. While this allows to ramp up really quickly, usually after not so long time environments start to diverge and maintenance becomes tricky.</p>
+<p>The good news is that Spark-Mesos integration supports Docker: <code>spark.mesos.executor.docker.image</code> configuration parameter allows specifying a custom Docker image to use as an executor. Although it doesn’t look like the most important thing it provides a great flexibility when a number of environments and software versions being used grows.</p>
+<p>Yet another important feature worth mentioning is <a href=https://spark.apache.org/docs/latest/job-scheduling.html#dynamic-resource-allocation>Dynamic Resource Allocation</a> which allows Spark to return unused resources to a cluster manager and acquire more resource when application demands grow. This provides a better resource utilization in case of multi-tenant workloads but it should be used with caution in case of latency-critical applications because resource acquisition takes some time and in worst case, some other framework can use requested resources. Dynamic allocation is supported for any Spark cluster manager using coarse-grained mode and in Mesos it’s a responsibility of an engineer to run Spark External Shuffle service in order to make it work.</p>
+<h2 id=conclusion>Conclusion</h2>
+<p>With a minor tweaking of existing Spark jobs and Spark JobServer, it’s become possible to achieve better utilization of a single cluster instead of running multiple idling Standalone clusters (<em>Figure 8</em>). Given that a problem with incompatible versions is solved by means of isolation, it’s possible to migrate all of the existing Spark projects to Mesos without upgrading all of them and keep running different versions of Spark and Java which are currently in use.</p>
+<p>
+<img src=/blog/2017-10-12/mesos-cluster-utilization alt>
+<strong>Figure 8. Mesos cluster utilization</strong></p>
+<p>It’s worth mentioning that JobServer is running on the same cluster with the same fault tolerance and high availability guarantees provided by Mesos and Marathon. Another important aspect of installations running on any kind of orchestration platform is physical node characteristics and cluster layout which takes those aspects into account. This topic will be covered in the next part of the series together with migration of JobServer to Marathon and using Docker as a main tool for packaging and distribution of the applications running on Mesos.</p>
+<nav class=pagination role=navigation>
+<a class=older-posts href=/kubeflow-training-operators-and-istio-solving-the-proxy-sidecar-lifecycle-problem-for-aiml-workloads/>Next Post &rarr;</a>
+</nav>
+</div>
+<div class="col-lg-2 col-lg-offset-0
+visible-lg-block
+sidebar-container
+catalog-container">
+<div class=side-catalog>
+<hr class="hidden-sm hidden-xs">
+<h5>
+<a class=catalog-toggle href=#>CONTENTS</a>
+</h5>
+<ul class=catalog-body></ul>
+</div>
+</div>
+<div class="col-lg-8 col-lg-offset-2
+col-md-10 col-md-offset-1
+sidebar-container">
+<section>
+<hr class="hidden-sm hidden-xs">
+<h5><a href=/tags/>FEATURED TAGS</a></h5>
+<div class=tags>
+</div>
+</section>
+</div>
+</div>
+</div>
+</article>
+<footer class="site-footer clearfix">
+<section class=copyright><a href>datastrophic</a> &copy; 2021</section>
+<section class=poweredby>Proudly generated by <a class=icon-hugo href=http://gohugo.io>HUGO</a></section>
+</footer>
+<script>function loadAsync(f,b){var c=document,d='script',a=c.createElement(d),e=c.getElementsByTagName(d)[0];a.src=f,b&&a.addEventListener('load',function(a){b(null,a)},!1),e.parentNode.insertBefore(a,e)}</script>
+<script>$('#tag_cloud').length!==0&&loadAsync("/js/jquery.tagcloud.js",function(){$.fn.tagcloud.defaults={color:{start:'#bbbbee',end:'#0085a1'}},$('#tag_cloud a').tagcloud()})</script>
+<script>loadAsync("https://cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.js",function(){var a=document.querySelector("nav");a&&FastClick.attach(a)})</script>
+<script type=text/javascript>function generateCatalog(a){_containerSelector='div.post-container';var h=$(_containerSelector),c,d,e,f,g,b;return c=h.find('h1,h2,h3,h4,h5,h6'),$(a).html(''),c.each(function(){d=$(this).prop('tagName').toLowerCase(),g="#"+$(this).prop('id'),e=$(this).text(),b=$('<a href="'+g+'" rel="nofollow">'+e+'</a>'),f=$('<li class="'+d+'_nav"></li>').append(b),$(a).append(f)}),!0}generateCatalog(".catalog-body"),$(".catalog-toggle").click(function(a){a.preventDefault(),$('.side-catalog').toggleClass("fold")}),loadAsync("/js/jquery.nav.js",function(){$('.catalog-body').onePageNav({currentClass:"active",changeHash:!1,easing:"swing",filter:"",scrollSpeed:700,scrollOffset:0,scrollThreshold:.2,begin:null,end:null,scrollChange:null,padding:80})})</script>
+</body>
+</html>
