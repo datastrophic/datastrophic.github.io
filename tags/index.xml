@@ -106,5 +106,32 @@
       <description></description>
     </item>
     
+    <item>
+      <title>DAG</title>
+      <link>https://datastrophic.github.io/tags/dag/</link>
+      <pubDate>Thu, 03 Mar 2016 00:00:00 +0000</pubDate>
+      
+      <guid>https://datastrophic.github.io/tags/dag/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>RDD</title>
+      <link>https://datastrophic.github.io/tags/rdd/</link>
+      <pubDate>Thu, 03 Mar 2016 00:00:00 +0000</pubDate>
+      
+      <guid>https://datastrophic.github.io/tags/rdd/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>shuffle</title>
+      <link>https://datastrophic.github.io/tags/shuffle/</link>
+      <pubDate>Thu, 03 Mar 2016 00:00:00 +0000</pubDate>
+      
+      <guid>https://datastrophic.github.io/tags/shuffle/</guid>
+      <description></description>
+    </item>
+    
   </channel>
 </rss>
