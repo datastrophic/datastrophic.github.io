@@ -2,35 +2,35 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Categories on datastrophic</title>
-    <link>https://datastrophic.github.io/categories/</link>
+    <link>https://datastrophic.io/categories/</link>
     <description>Recent content in Categories on datastrophic</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Mon, 04 Oct 2021 00:00:00 +0000</lastBuildDate><atom:link href="https://datastrophic.github.io/categories/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Mon, 04 Oct 2021 00:00:00 +0000</lastBuildDate><atom:link href="https://datastrophic.io/categories/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Kubeflow</title>
-      <link>https://datastrophic.github.io/categories/kubeflow/</link>
+      <link>https://datastrophic.io/categories/kubeflow/</link>
       <pubDate>Mon, 04 Oct 2021 00:00:00 +0000</pubDate>
       
-      <guid>https://datastrophic.github.io/categories/kubeflow/</guid>
+      <guid>https://datastrophic.io/categories/kubeflow/</guid>
       <description></description>
     </item>
     
     <item>
       <title>Architecture</title>
-      <link>https://datastrophic.github.io/categories/architecture/</link>
+      <link>https://datastrophic.io/categories/architecture/</link>
       <pubDate>Thu, 12 Oct 2017 00:00:00 +0000</pubDate>
       
-      <guid>https://datastrophic.github.io/categories/architecture/</guid>
+      <guid>https://datastrophic.io/categories/architecture/</guid>
       <description></description>
     </item>
     
     <item>
       <title>Scheduling</title>
-      <link>https://datastrophic.github.io/categories/scheduling/</link>
+      <link>https://datastrophic.io/categories/scheduling/</link>
       <pubDate>Sun, 27 Mar 2016 00:00:00 +0000</pubDate>
       
-      <guid>https://datastrophic.github.io/categories/scheduling/</guid>
+      <guid>https://datastrophic.io/categories/scheduling/</guid>
       <description></description>
     </item>
     

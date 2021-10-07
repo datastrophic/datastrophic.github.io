@@ -2,179 +2,179 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Tags on datastrophic</title>
-    <link>https://datastrophic.github.io/tags/</link>
+    <link>https://datastrophic.io/tags/</link>
     <description>Recent content in Tags on datastrophic</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Mon, 04 Oct 2021 00:00:00 +0000</lastBuildDate><atom:link href="https://datastrophic.github.io/tags/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Mon, 04 Oct 2021 00:00:00 +0000</lastBuildDate><atom:link href="https://datastrophic.io/tags/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>istio</title>
-      <link>https://datastrophic.github.io/tags/istio/</link>
+      <link>https://datastrophic.io/tags/istio/</link>
       <pubDate>Mon, 04 Oct 2021 00:00:00 +0000</pubDate>
       
-      <guid>https://datastrophic.github.io/tags/istio/</guid>
+      <guid>https://datastrophic.io/tags/istio/</guid>
       <description></description>
     </item>
     
     <item>
       <title>kubeflow</title>
-      <link>https://datastrophic.github.io/tags/kubeflow/</link>
+      <link>https://datastrophic.io/tags/kubeflow/</link>
       <pubDate>Mon, 04 Oct 2021 00:00:00 +0000</pubDate>
       
-      <guid>https://datastrophic.github.io/tags/kubeflow/</guid>
+      <guid>https://datastrophic.io/tags/kubeflow/</guid>
       <description></description>
     </item>
     
     <item>
       <title>kubernetes</title>
-      <link>https://datastrophic.github.io/tags/kubernetes/</link>
+      <link>https://datastrophic.io/tags/kubernetes/</link>
       <pubDate>Mon, 04 Oct 2021 00:00:00 +0000</pubDate>
       
-      <guid>https://datastrophic.github.io/tags/kubernetes/</guid>
+      <guid>https://datastrophic.io/tags/kubernetes/</guid>
       <description></description>
     </item>
     
     <item>
       <title>mlops</title>
-      <link>https://datastrophic.github.io/tags/mlops/</link>
+      <link>https://datastrophic.io/tags/mlops/</link>
       <pubDate>Mon, 04 Oct 2021 00:00:00 +0000</pubDate>
       
-      <guid>https://datastrophic.github.io/tags/mlops/</guid>
+      <guid>https://datastrophic.io/tags/mlops/</guid>
       <description></description>
     </item>
     
     <item>
       <title>operators</title>
-      <link>https://datastrophic.github.io/tags/operators/</link>
+      <link>https://datastrophic.io/tags/operators/</link>
       <pubDate>Mon, 04 Oct 2021 00:00:00 +0000</pubDate>
       
-      <guid>https://datastrophic.github.io/tags/operators/</guid>
+      <guid>https://datastrophic.io/tags/operators/</guid>
       <description></description>
     </item>
     
     <item>
       <title>docker</title>
-      <link>https://datastrophic.github.io/tags/docker/</link>
+      <link>https://datastrophic.io/tags/docker/</link>
       <pubDate>Thu, 12 Oct 2017 00:00:00 +0000</pubDate>
       
-      <guid>https://datastrophic.github.io/tags/docker/</guid>
+      <guid>https://datastrophic.io/tags/docker/</guid>
       <description></description>
     </item>
     
     <item>
       <title>marathon</title>
-      <link>https://datastrophic.github.io/tags/marathon/</link>
+      <link>https://datastrophic.io/tags/marathon/</link>
       <pubDate>Thu, 12 Oct 2017 00:00:00 +0000</pubDate>
       
-      <guid>https://datastrophic.github.io/tags/marathon/</guid>
+      <guid>https://datastrophic.io/tags/marathon/</guid>
       <description></description>
     </item>
     
     <item>
       <title>mesos</title>
-      <link>https://datastrophic.github.io/tags/mesos/</link>
+      <link>https://datastrophic.io/tags/mesos/</link>
       <pubDate>Thu, 12 Oct 2017 00:00:00 +0000</pubDate>
       
-      <guid>https://datastrophic.github.io/tags/mesos/</guid>
+      <guid>https://datastrophic.io/tags/mesos/</guid>
       <description></description>
     </item>
     
     <item>
       <title>spark</title>
-      <link>https://datastrophic.github.io/tags/spark/</link>
+      <link>https://datastrophic.io/tags/spark/</link>
       <pubDate>Thu, 12 Oct 2017 00:00:00 +0000</pubDate>
       
-      <guid>https://datastrophic.github.io/tags/spark/</guid>
+      <guid>https://datastrophic.io/tags/spark/</guid>
       <description></description>
     </item>
     
     <item>
       <title>DRF</title>
-      <link>https://datastrophic.github.io/tags/drf/</link>
+      <link>https://datastrophic.io/tags/drf/</link>
       <pubDate>Sun, 27 Mar 2016 00:00:00 +0000</pubDate>
       
-      <guid>https://datastrophic.github.io/tags/drf/</guid>
+      <guid>https://datastrophic.io/tags/drf/</guid>
       <description></description>
     </item>
     
     <item>
       <title>sheduling</title>
-      <link>https://datastrophic.github.io/tags/sheduling/</link>
+      <link>https://datastrophic.io/tags/sheduling/</link>
       <pubDate>Sun, 27 Mar 2016 00:00:00 +0000</pubDate>
       
-      <guid>https://datastrophic.github.io/tags/sheduling/</guid>
+      <guid>https://datastrophic.io/tags/sheduling/</guid>
       <description></description>
     </item>
     
     <item>
       <title>DAG</title>
-      <link>https://datastrophic.github.io/tags/dag/</link>
+      <link>https://datastrophic.io/tags/dag/</link>
       <pubDate>Thu, 03 Mar 2016 00:00:00 +0000</pubDate>
       
-      <guid>https://datastrophic.github.io/tags/dag/</guid>
+      <guid>https://datastrophic.io/tags/dag/</guid>
       <description></description>
     </item>
     
     <item>
       <title>RDD</title>
-      <link>https://datastrophic.github.io/tags/rdd/</link>
+      <link>https://datastrophic.io/tags/rdd/</link>
       <pubDate>Thu, 03 Mar 2016 00:00:00 +0000</pubDate>
       
-      <guid>https://datastrophic.github.io/tags/rdd/</guid>
+      <guid>https://datastrophic.io/tags/rdd/</guid>
       <description></description>
     </item>
     
     <item>
       <title>shuffle</title>
-      <link>https://datastrophic.github.io/tags/shuffle/</link>
+      <link>https://datastrophic.io/tags/shuffle/</link>
       <pubDate>Thu, 03 Mar 2016 00:00:00 +0000</pubDate>
       
-      <guid>https://datastrophic.github.io/tags/shuffle/</guid>
+      <guid>https://datastrophic.io/tags/shuffle/</guid>
       <description></description>
     </item>
     
     <item>
       <title>akka</title>
-      <link>https://datastrophic.github.io/tags/akka/</link>
+      <link>https://datastrophic.io/tags/akka/</link>
       <pubDate>Wed, 16 Sep 2015 00:00:00 +0000</pubDate>
       
-      <guid>https://datastrophic.github.io/tags/akka/</guid>
+      <guid>https://datastrophic.io/tags/akka/</guid>
       <description></description>
     </item>
     
     <item>
       <title>cassandra</title>
-      <link>https://datastrophic.github.io/tags/cassandra/</link>
+      <link>https://datastrophic.io/tags/cassandra/</link>
       <pubDate>Wed, 16 Sep 2015 00:00:00 +0000</pubDate>
       
-      <guid>https://datastrophic.github.io/tags/cassandra/</guid>
+      <guid>https://datastrophic.io/tags/cassandra/</guid>
       <description></description>
     </item>
     
     <item>
       <title>kafka</title>
-      <link>https://datastrophic.github.io/tags/kafka/</link>
+      <link>https://datastrophic.io/tags/kafka/</link>
       <pubDate>Wed, 16 Sep 2015 00:00:00 +0000</pubDate>
       
-      <guid>https://datastrophic.github.io/tags/kafka/</guid>
+      <guid>https://datastrophic.io/tags/kafka/</guid>
       <description></description>
     </item>
     
     <item>
       <title>SMACK</title>
-      <link>https://datastrophic.github.io/tags/smack/</link>
+      <link>https://datastrophic.io/tags/smack/</link>
       <pubDate>Wed, 16 Sep 2015 00:00:00 +0000</pubDate>
       
-      <guid>https://datastrophic.github.io/tags/smack/</guid>
+      <guid>https://datastrophic.io/tags/smack/</guid>
       <description></description>
     </item>
     
     <item>
       <title>scala</title>
-      <link>https://datastrophic.github.io/tags/scala/</link>
+      <link>https://datastrophic.io/tags/scala/</link>
       <pubDate>Wed, 01 Jul 2015 00:00:00 +0000</pubDate>
       
-      <guid>https://datastrophic.github.io/tags/scala/</guid>
+      <guid>https://datastrophic.io/tags/scala/</guid>
       <description></description>
     </item>
     

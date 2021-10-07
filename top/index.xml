@@ -2,25 +2,25 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Tops on datastrophic</title>
-    <link>https://datastrophic.github.io/top/</link>
+    <link>https://datastrophic.io/top/</link>
     <description>Recent content in Tops on datastrophic</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language><atom:link href="https://datastrophic.github.io/top/index.xml" rel="self" type="application/rss+xml" />
+    <language>en-us</language><atom:link href="https://datastrophic.io/top/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title></title>
-      <link>https://datastrophic.github.io/top/about/</link>
+      <link>https://datastrophic.io/top/about/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://datastrophic.github.io/top/about/</guid>
+      <guid>https://datastrophic.io/top/about/</guid>
       <description>About Hi! It&amp;rsquo;s Anton here and I&amp;rsquo;m the author of datastrophic.io. I&amp;rsquo;m a technical leader and a software engineer specializing in distributed systems, data platforms, and AI infrastructure. My tenure in the industry passed the mark of 15 years during which I was working on high-load, distributed, big data, workload and container orchestration systems. If you&amp;rsquo;d like to connect or to learn more about my background - the best way to do it is via LinkedIn.</description>
     </item>
     
     <item>
       <title>Posts Archive</title>
-      <link>https://datastrophic.github.io/top/archive/</link>
+      <link>https://datastrophic.io/top/archive/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://datastrophic.github.io/top/archive/</guid>
+      <guid>https://datastrophic.io/top/archive/</guid>
       <description></description>
     </item>
     
