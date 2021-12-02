@@ -1,207 +1,98 @@
-<!DOCTYPE html>
-<html lang="en-us">
+<!doctype html><html lang=en-us>
 <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    
-    <meta property="og:site_name" content="datastrophic">
-    <meta property="og:type" content="article">
-
-    
-    <meta property="og:image" content="https://datastrophic.io//img/datastrophic-strip-1.png">
-    <meta property="twitter:image" content="https://datastrophic.io//img/datastrophic-strip-1.png" />
-    
-
-    
-    <meta name="title" content="Cassandra 2.1 Counters: Testing Consistency During Node Failures" />
-    <meta property="og:title" content="Cassandra 2.1 Counters: Testing Consistency During Node Failures" />
-    <meta property="twitter:title" content="Cassandra 2.1 Counters: Testing Consistency During Node Failures" />
-    
-
-    
-    <meta name="description" content="A blog about distributed systems, data platforms, and AI infrastructure">
-    <meta property="og:description" content="A blog about distributed systems, data platforms, and AI infrastructure" />
-    <meta property="twitter:description" content="A blog about distributed systems, data platforms, and AI infrastructure" />
-    
-
-    
-    <meta property="twitter:card" content="summary" />
-    
-    
-
-    <meta name="keyword"  content="Spark, Mesos, Kubernetes, Kubeflow, Istio, SMACK stack, Cassandra, Kafka">
-    <link rel="shortcut icon" href="/img/favicon.ico">
-
-    <title>Cassandra 2.1 Counters: Testing Consistency During Node Failures</title>
-
-    <link rel="canonical" href="/evaluating-cassandra-2-1-counters-consistency/">
-
-    
-    <link rel="stylesheet" href="/css/bootstrap.min.css">
-
-    
-    <link rel="stylesheet" href="/css/hugo-theme-cleanwhite.min.css">
-
-    
-    <link rel="stylesheet" href="/css/zanshang.css">
-
-    
-    <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet" type="text/css">
-
-    
-    <link rel="stylesheet" href="https://datastrophic.io/css/footer.css"><link rel="stylesheet" href="https://datastrophic.io/css/pager.css"><link rel="stylesheet" href="https://datastrophic.io/css/overrides.css">
-
-    
-    
-    <script src="/js/jquery.min.js"></script>
-
-    
-    <script src="/js/bootstrap.min.js"></script>
-
-    
-    <script src="/js/hux-blog.min.js"></script>
-
-    
-    
-
+<meta charset=utf-8>
+<meta http-equiv=x-ua-compatible content="IE=edge">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta property="og:site_name" content="datastrophic">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://datastrophic.io//img/datastrophic-strip-1.png">
+<meta property="twitter:image" content="https://datastrophic.io//img/datastrophic-strip-1.png">
+<meta name=title content="Cassandra 2.1 Counters: Testing Consistency During Node Failures">
+<meta property="og:title" content="Cassandra 2.1 Counters: Testing Consistency During Node Failures">
+<meta property="twitter:title" content="Cassandra 2.1 Counters: Testing Consistency During Node Failures">
+<meta name=description content="A blog about distributed systems, data platforms, and AI infrastructure">
+<meta property="og:description" content="A blog about distributed systems, data platforms, and AI infrastructure">
+<meta property="twitter:description" content="A blog about distributed systems, data platforms, and AI infrastructure">
+<meta property="twitter:card" content="summary">
+<meta name=keyword content="Spark, Mesos, Kubernetes, Kubeflow, Istio, SMACK stack, Cassandra, Kafka">
+<link rel="shortcut icon" href=/img/favicon.ico>
+<title>Cassandra 2.1 Counters: Testing Consistency During Node Failures</title>
+<link rel=canonical href=/evaluating-cassandra-2-1-counters-consistency/>
+<link rel=stylesheet href=/css/bootstrap.min.css>
+<link rel=stylesheet href=/css/hugo-theme-cleanwhite.min.css>
+<link rel=stylesheet href=/css/zanshang.css>
+<link href=//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css rel=stylesheet type=text/css>
+<link rel=stylesheet href=https://datastrophic.io/css/footer.css><link rel=stylesheet href=https://datastrophic.io/css/pager.css><link rel=stylesheet href=https://datastrophic.io/css/overrides.css>
+<script src=/js/jquery.min.js></script>
+<script src=/js/bootstrap.min.js></script>
+<script src=/js/hux-blog.min.js></script>
 </head>
-
-
-
-
 <nav class="navbar navbar-default navbar-custom navbar-fixed-top">
-
-    <div class="container-fluid">
-        
-        <div class="navbar-header page-scroll">
-            <button type="button" class="navbar-toggle">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </button>
-        </div>
-
-        
-        
-        <div id="huxblog_navbar">
-            <div class="navbar-collapse">
-                <ul class="nav navbar-nav navbar-right">
-                    <li>
-                        <a href="/">Home</a>
-                    </li>
-                    
-		            
-                        <li><a href="/top/archive/">ARCHIVE</a></li>
-                    
-                        <li><a href="/top/about/">ABOUT</a></li>
-                    
-                </ul>
-            </div>
-        </div>
-        
-    </div>
-    
+<div class=container-fluid>
+<div class="navbar-header page-scroll">
+<button type=button class=navbar-toggle>
+<span class=sr-only>Toggle navigation</span>
+<span class=icon-bar></span>
+<span class=icon-bar></span>
+<span class=icon-bar></span>
+</button>
+</div>
+<div id=huxblog_navbar>
+<div class=navbar-collapse>
+<ul class="nav navbar-nav navbar-right">
+<li>
+<a href=/>Home</a>
+</li>
+<li><a href=/top/archive/>ARCHIVE</a></li>
+<li><a href=/top/about/>ABOUT</a></li>
+</ul>
+</div>
+</div>
+</div>
 </nav>
-<script>
-    
-    
-    
-    var $body   = document.body;
-    var $toggle = document.querySelector('.navbar-toggle');
-    var $navbar = document.querySelector('#huxblog_navbar');
-    var $collapse = document.querySelector('.navbar-collapse');
-
-    $toggle.addEventListener('click', handleMagic)
-    function handleMagic(e){
-        if ($navbar.className.indexOf('in') > 0) {
-        
-            $navbar.className = " ";
-            
-            setTimeout(function(){
-                
-                if($navbar.className.indexOf('in') < 0) {
-                    $collapse.style.height = "0px"
-                }
-            },400)
-        }else{
-        
-            $collapse.style.height = "auto"
-            $navbar.className += " in";
-        }
-    }
-</script>
-
-
-
-
-<style type="text/css">
-    header.intro-header {
-        background-image: url('/img/datastrophic-strip-1.png');
-        color: #3A4145;
-    }
-</style>
-<header class="intro-header" style="background-image: url('/img/datastrophic-strip-1.png')">
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 ">
-                <div class="post-heading">
-                    <div class="tags">
-                        
-                        <a class="tag" href="/tags/akka" title="akka">
-                            akka
-                        </a>
-                        
-                        <a class="tag" href="/tags/cassandra" title="cassandra">
-                            cassandra
-                        </a>
-                        
-                    </div>
-                    <h1>Cassandra 2.1 Counters: Testing Consistency During Node Failures</h1>
-                    
-                    <span class="meta">
-                        
-                            Posted on 
-                            September 3, 2015
-                            
-                    </span>
-                </div>
-            </div>
-        </div>
-    </div>
+<script>var $body=document.body,$toggle=document.querySelector('.navbar-toggle'),$navbar=document.querySelector('#huxblog_navbar'),$collapse=document.querySelector('.navbar-collapse');$toggle.addEventListener('click',handleMagic);function handleMagic(a){$navbar.className.indexOf('in')>0?($navbar.className=" ",setTimeout(function(){$navbar.className.indexOf('in')<0&&($collapse.style.height="0px")},400)):($collapse.style.height="auto",$navbar.className+=" in")}</script>
+<style type=text/css>header.intro-header{background-image:url(/img/datastrophic-strip-1.png);color:#3a4145}</style>
+<header class=intro-header style=background-image:url(/img/datastrophic-strip-1.png)>
+<div class=container>
+<div class=row>
+<div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+<div class=post-heading>
+<div class=tags>
+<a class=tag href=/tags/akka title=akka>
+akka
+</a>
+<a class=tag href=/tags/cassandra title=cassandra>
+cassandra
+</a>
+</div>
+<h1>Cassandra 2.1 Counters: Testing Consistency During Node Failures</h1>
+<span class=meta>
+Posted on
+September 3, 2015
+</span>
+</div>
+</div>
+</div>
+</div>
 </header>
-
-
-
-
-
 <article>
-    <div class="container">
-        <div class="row">
-
-            
-            <div class="
-                col-lg-8 col-lg-offset-2
-                col-md-10 col-md-offset-1
-                post-container">
-
-                
-                <p>For some cases such as the ones present in AdServing, the counters come really handy to accumulate totals for events coming into a system compared to batch aggregates. While distributed counters consistency is a well-known problem Cassandra counters in version 2.1 are claimed to be more accurate compared to the prior ones. This post describes the approach and the results of Cassandra counters consistency testing in different failure scenarios such as rolling restarts, abnormal termination of nodes, and network splits.</p>
+<div class=container>
+<div class=row>
+<div class="col-lg-8 col-lg-offset-2
+col-md-10 col-md-offset-1
+post-container">
+<p>For some cases such as the ones present in AdServing, the counters come really handy to accumulate totals for events coming into a system compared to batch aggregates. While distributed counters consistency is a well-known problem Cassandra counters in version 2.1 are claimed to be more accurate compared to the prior ones. This post describes the approach and the results of Cassandra counters consistency testing in different failure scenarios such as rolling restarts, abnormal termination of nodes, and network splits.</p>
 <p>
-  <img src="/blog/2015-09-03/cassandra-ring.png" alt="">
-
+<img src=/blog/2015-09-03/cassandra-ring.png alt>
 </p>
-<p>Here&rsquo;s the initial <a href="http://www.datastax.com/dev/blog/whats-new-in-cassandra-2-1-a-better-implementation-of-counters">blog post</a> by DataStax describing the internals of new Cassandra counters implementation. There exist really good counters consistency tests during network splits performed by Jepsen and published in <a href="https://aphyr.com/posts/294-call-me-maybe-cassandra/">Aphyr&rsquo;s blog</a>. While there are a wide variety of stress test tools, with counters it would be nice to verify their behavior for business-specific cases, emulating production workload. For this purpose, a simple Akka-based application has been implemented allowing to produce a high write rate while using the problem domain data model.</p>
-<h2 id="the-load-testing-tool">The Load Testing Tool</h2>
+<p>Here&rsquo;s the initial <a href=http://www.datastax.com/dev/blog/whats-new-in-cassandra-2-1-a-better-implementation-of-counters>blog post</a> by DataStax describing the internals of new Cassandra counters implementation. There exist really good counters consistency tests during network splits performed by Jepsen and published in <a href=https://aphyr.com/posts/294-call-me-maybe-cassandra/>Aphyr&rsquo;s blog</a>. While there are a wide variety of stress test tools, with counters it would be nice to verify their behavior for business-specific cases, emulating production workload. For this purpose, a simple Akka-based application has been implemented allowing to produce a high write rate while using the problem domain data model.</p>
+<h2 id=the-load-testing-tool>The Load Testing Tool</h2>
 <p>The main idea behind the tool is in providing highly concurrent writes with respect to the data model (which reflects a particular business case) and a simple feedback loop to verify the results. The feedback loop is implemented with a configurable number of retries to wait for eventually consistent writes being propagated to all nodes.</p>
-<h4 id="actor-system-overview">Actor System Overview</h4>
+<h4 id=actor-system-overview>Actor System Overview</h4>
 <p>
-  <img src="/blog/2015-09-03/actor-system.png" alt="">
-
+<img src=/blog/2015-09-03/actor-system.png alt>
 </p>
-<h3 id="actors-responsibilities-and-relationships">Actors responsibilities and relationships</h3>
+<h3 id=actors-responsibilities-and-relationships>Actors responsibilities and relationships</h3>
 <ul>
 <li><code>Coordinator</code> controls interactions between the rest of the actors, waits for initialization, executes broadcast load start command, etc. when all writes are sent to the cluster, Coordinator executes feedback loop to compare actual counter values with expected result</li>
 <li><code>Generator</code>s are domain-aware random insert queries generators that take into account the number of unique rows and counters per row to generate the full path to counters. The total number of counters thus equals the number of unique rows times the number of counters per row</li>
@@ -210,25 +101,25 @@
 <li><code>Worker</code>s are needed for generating increments and coordinating writes to generated keys. Each worker holds a subset of the Processor&rsquo;s keys for a specific table thus providing faster iterations over smaller insert batches. The number of writers influences the parallelism of writes to different keys providing intermixed writes with other workers. But generally, it is a performance optimization for processing a smaller number of keys per write</li>
 <li><code>CassandraWriter</code> is a short-living actor which dies after all work is done. These actors live on a dedicated dispatcher with a separate thread pool due to <code>datastax-java-driver</code> specifics: it becomes enormously slow on a shared thread pool for some reason.</li>
 </ul>
-<h3 id="data-model">Data model</h3>
+<h3 id=data-model>Data model</h3>
 <p>A replication factor of 3 will be used in tests against 5-node C* cluster:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#ff79c6">CREATE</span> KEYSPACE <span style="color:#ff79c6">IF</span> <span style="color:#ff79c6">NOT</span> <span style="color:#ff79c6">EXISTS</span> $keyspaceName <span style="color:#ff79c6">WITH</span> replication<span style="color:#ff79c6">=</span> {<span style="color:#f1fa8c">&#39;class&#39;</span>:<span style="color:#f1fa8c">&#39;SimpleStrategy&#39;</span>, <span style="color:#f1fa8c">&#39;replication_factor&#39;</span>:<span style="color:#bd93f9">3</span>};
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sql data-lang=sql><span style=color:#ff79c6>CREATE</span> KEYSPACE <span style=color:#ff79c6>IF</span> <span style=color:#ff79c6>NOT</span> <span style=color:#ff79c6>EXISTS</span> $keyspaceName <span style=color:#ff79c6>WITH</span> replication<span style=color:#ff79c6>=</span> {<span style=color:#f1fa8c>&#39;class&#39;</span>:<span style=color:#f1fa8c>&#39;SimpleStrategy&#39;</span>, <span style=color:#f1fa8c>&#39;replication_factor&#39;</span>:<span style=color:#bd93f9>3</span>};
 </code></pre></div><p>During the tests, the data will be written independently representing 3 different entities (e.g. views, clicks, and campaigns). Each of these entities looks as follows:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#ff79c6">CREATE</span> <span style="color:#ff79c6">TABLE</span> <span style="color:#ff79c6">IF</span> <span style="color:#ff79c6">NOT</span> <span style="color:#ff79c6">EXISTS</span> $keyspaceName.$name (
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sql data-lang=sql><span style=color:#ff79c6>CREATE</span> <span style=color:#ff79c6>TABLE</span> <span style=color:#ff79c6>IF</span> <span style=color:#ff79c6>NOT</span> <span style=color:#ff79c6>EXISTS</span> $keyspaceName.$name (
            id uuid,
            u ascii,
            e ascii,
-           d <span style="color:#8be9fd;font-style:italic">int</span>,
-           <span style="color:#ff79c6">c</span> counter,
-           <span style="color:#ff79c6">PRIMARY</span> <span style="color:#ff79c6">KEY</span>((id, u, e), d));
+           d <span style=color:#8be9fd;font-style:italic>int</span>,
+           <span style=color:#ff79c6>c</span> counter,
+           <span style=color:#ff79c6>PRIMARY</span> <span style=color:#ff79c6>KEY</span>((id, u, e), d));
 </code></pre></div><p>But for one of the entities, two column families will be created to reflect the case with different read paths (same fields, different row keys).</p>
-<h2 id="test-setup">Test Setup</h2>
-<h3 id="cassandra-cluster-configuration">Cassandra cluster configuration</h3>
+<h2 id=test-setup>Test Setup</h2>
+<h3 id=cassandra-cluster-configuration>Cassandra cluster configuration</h3>
 <p>Tests are performed against 5 node Cassandra 2.1.9 cluster. Each node has 32Gb of RAM and 4-core 8-threads 3.70GHz Xeon CPU.</p>
 <p>Cassandra heap size: 8Gb</p>
-<h3 id="test-configuration">Test configuration</h3>
+<h3 id=test-configuration>Test configuration</h3>
 <p>Here&rsquo;s an example of tool invocation:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">java -jar counters-test.jar -h 10.120.0.252 -k test_keyspace -p <span style="color:#bd93f9">10</span> -w <span style="color:#bd93f9">100</span> -s <span style="color:#bd93f9">50</span> -r <span style="color:#bd93f9">1000</span> -c <span style="color:#bd93f9">100</span>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell>java -jar counters-test.jar -h 10.120.0.252 -k test_keyspace -p <span style=color:#bd93f9>10</span> -w <span style=color:#bd93f9>100</span> -s <span style=color:#bd93f9>50</span> -r <span style=color:#bd93f9>1000</span> -c <span style=color:#bd93f9>100</span>
 </code></pre></div><p>Details:</p>
 <ul>
 <li>counter total value 50</li>
@@ -238,21 +129,21 @@
 <li>100 counters per row</li>
 </ul>
 <p>The tool is configured to write +1 increments which result in 5M of total writes to every table (views, clicks, 2x campaign). Write throughput after warmup fluctuates around 30K writes/sec. Generally</p>
-<p>Network partitions and rolling restarts are implemented with <a href="https://github.com/mchlstckl/siafu">Siafu: fabric-based python tool</a></p>
-<h3 id="cassandra-client-configuration">Cassandra client configuration</h3>
+<p>Network partitions and rolling restarts are implemented with <a href=https://github.com/mchlstckl/siafu>Siafu: fabric-based python tool</a></p>
+<h3 id=cassandra-client-configuration>Cassandra client configuration</h3>
 <p>Client configured with:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scala" data-lang="scala"><span style="color:#ff79c6">implicit</span> <span style="color:#ff79c6">val</span> cluster <span style="color:#ff79c6">=</span> <span style="color:#50fa7b">Cluster</span><span style="color:#ff79c6">.</span>builder<span style="color:#ff79c6">()</span>
-      <span style="color:#ff79c6">.</span>addContactPoint<span style="color:#ff79c6">(</span>config<span style="color:#ff79c6">.</span>clusterNode<span style="color:#ff79c6">)</span>
-      <span style="color:#ff79c6">.</span>withQueryOptions<span style="color:#ff79c6">(</span><span style="color:#ff79c6">new</span> <span style="color:#50fa7b">QueryOptions</span><span style="color:#ff79c6">()</span>
-         <span style="color:#ff79c6">.</span>setConsistencyLevel<span style="color:#ff79c6">(</span><span style="color:#50fa7b">ConsistencyLevel</span><span style="color:#ff79c6">.</span><span style="color:#50fa7b">QUORUM</span><span style="color:#ff79c6">)</span>
-      <span style="color:#ff79c6">).</span>build<span style="color:#ff79c6">()</span>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#ff79c6>implicit</span> <span style=color:#ff79c6>val</span> cluster <span style=color:#ff79c6>=</span> <span style=color:#50fa7b>Cluster</span><span style=color:#ff79c6>.</span>builder<span style=color:#ff79c6>()</span>
+      <span style=color:#ff79c6>.</span>addContactPoint<span style=color:#ff79c6>(</span>config<span style=color:#ff79c6>.</span>clusterNode<span style=color:#ff79c6>)</span>
+      <span style=color:#ff79c6>.</span>withQueryOptions<span style=color:#ff79c6>(</span><span style=color:#ff79c6>new</span> <span style=color:#50fa7b>QueryOptions</span><span style=color:#ff79c6>()</span>
+         <span style=color:#ff79c6>.</span>setConsistencyLevel<span style=color:#ff79c6>(</span><span style=color:#50fa7b>ConsistencyLevel</span><span style=color:#ff79c6>.</span><span style=color:#50fa7b>QUORUM</span><span style=color:#ff79c6>)</span>
+      <span style=color:#ff79c6>).</span>build<span style=color:#ff79c6>()</span>
 </code></pre></div><p>All writes are executed in sync mode, i.e.:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scala" data-lang="scala"><span style="color:#50fa7b">Try</span><span style="color:#ff79c6">(</span>msg<span style="color:#ff79c6">.</span>session<span style="color:#ff79c6">.</span>execute<span style="color:#ff79c6">(</span>statement<span style="color:#ff79c6">))</span> <span style="color:#ff79c6">match</span> <span style="color:#ff79c6">{</span>
-  <span style="color:#ff79c6">case</span> <span style="color:#50fa7b">Failure</span><span style="color:#ff79c6">(</span>ex<span style="color:#ff79c6">)</span> <span style="color:#ff79c6">=&gt;</span> log<span style="color:#ff79c6">.</span>error<span style="color:#ff79c6">(</span>ex<span style="color:#ff79c6">,</span> <span style="color:#f1fa8c">&#34;ERROR DURING WRITE&#34;</span><span style="color:#ff79c6">)</span>
-  <span style="color:#ff79c6">case</span> <span style="color:#ff79c6">_</span> <span style="color:#ff79c6">=&gt;</span>
-<span style="color:#ff79c6">}</span>
-</code></pre></div><h2 id="the-test">The Test</h2>
-<h3 id="scenarios-overview-and-results-interpretation">Scenarios Overview and Results Interpretation</h3>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#50fa7b>Try</span><span style=color:#ff79c6>(</span>msg<span style=color:#ff79c6>.</span>session<span style=color:#ff79c6>.</span>execute<span style=color:#ff79c6>(</span>statement<span style=color:#ff79c6>))</span> <span style=color:#ff79c6>match</span> <span style=color:#ff79c6>{</span>
+  <span style=color:#ff79c6>case</span> <span style=color:#50fa7b>Failure</span><span style=color:#ff79c6>(</span>ex<span style=color:#ff79c6>)</span> <span style=color:#ff79c6>=&gt;</span> log<span style=color:#ff79c6>.</span>error<span style=color:#ff79c6>(</span>ex<span style=color:#ff79c6>,</span> <span style=color:#f1fa8c>&#34;ERROR DURING WRITE&#34;</span><span style=color:#ff79c6>)</span>
+  <span style=color:#ff79c6>case</span> <span style=color:#ff79c6>_</span> <span style=color:#ff79c6>=&gt;</span>
+<span style=color:#ff79c6>}</span>
+</code></pre></div><h2 id=the-test>The Test</h2>
+<h3 id=scenarios-overview-and-results-interpretation>Scenarios Overview and Results Interpretation</h3>
 <p>The counters consistency is going to be evaluated in the following scenarios while writes are executed against the cluster:</p>
 <ul>
 <li>node normally stops</li>
@@ -262,7 +153,7 @@
 <li>node dies, starts again and <code>nodetool repair</code> is executed</li>
 <li>node is lost due to network split and then comes back</li>
 </ul>
-<h3 id="interpretation-of-results">Interpretation of results</h3>
+<h3 id=interpretation-of-results>Interpretation of results</h3>
 <p>Results for each entity contain the following set of fields:</p>
 <ul>
 <li><code>overcounts</code> - the total number of counters holding value greater than expected</li>
@@ -272,22 +163,17 @@
 <li><code>maxUnderCount</code> - maximum undercount value for a single counter</li>
 <li><code>totalUnderCount</code> - the total number of queries with undercount</li>
 </ul>
-<h3 id="load-stats">Load stats</h3>
+<h3 id=load-stats>Load stats</h3>
 <p>Here&rsquo;s an example of throughput stats for the test being executed without incidents:
-
-  <img src="/blog/2015-09-03/stats-normal-execution.jpeg" alt="">
-
-
+<img src=/blog/2015-09-03/stats-normal-execution.jpeg alt>
 The spike in the beginning is due to several minutes of warmup done before the actual writes.</p>
 <p>And here&rsquo;s an example of throughput deviation while node fails and gets back:
-
-  <img src="/blog/2015-09-03/stats-node-down.jpeg" alt="">
-
+<img src=/blog/2015-09-03/stats-node-down.jpeg alt>
 </p>
 <p>One really important thing during interpretation of the test results is that the test is pretty synthetic and the amount of failed under- or overcounts will vary depending on the throughput and amount of failures per test. But for the initial evaluation of C* counters behavior in the most common failure scenarios, this should be enough to grasp the whole picture.</p>
-<h2 id="the-results">The Results</h2>
-<h3 id="scenario-a-normal-node-stop">Scenario: a normal node stop</h3>
-<pre tabindex="0"><code>DEVIATION STATS:
+<h2 id=the-results>The Results</h2>
+<h3 id=scenario-a-normal-node-stop>Scenario: a normal node stop</h3>
+<pre tabindex=0><code>DEVIATION STATS:
 overcounts: 4
 maxOverCount: 1
 totalOverCount: 4
@@ -311,8 +197,8 @@ totalOverCount: 2
 undercounts: 0
 maxUnderCount: 0
 totalUnderCount: 0
-</code></pre><h3 id="scenario-a-normal-node-restart">Scenario: a normal node restart</h3>
-<pre tabindex="0"><code>DEVIATION STATS:
+</code></pre><h3 id=scenario-a-normal-node-restart>Scenario: a normal node restart</h3>
+<pre tabindex=0><code>DEVIATION STATS:
 overcounts: 4
 maxOverCount: 1
 totalOverCount: 4
@@ -335,8 +221,8 @@ totalOverCount: 1
 undercounts: 6
 maxUnderCount: 1
 totalUnderCount: 6
-</code></pre><h3 id="scenario-cluster-rolling-restart">Scenario: cluster rolling restart</h3>
-<pre tabindex="0"><code>DEVIATION STATS:
+</code></pre><h3 id=scenario-cluster-rolling-restart>Scenario: cluster rolling restart</h3>
+<pre tabindex=0><code>DEVIATION STATS:
 overcounts: 8
 maxOverCount: 1
 totalOverCount: 8
@@ -359,10 +245,10 @@ totalOverCount: 22
 undercounts: 30
 maxUnderCount: 1
 totalUnderCount: 30
-</code></pre><h3 id="normal-termination-operations-conclusion">Normal termination operations conclusion</h3>
+</code></pre><h3 id=normal-termination-operations-conclusion>Normal termination operations conclusion</h3>
 <p>During normal operations like service stops, restarts, and cluster rolling restarts the amount of failed counters is not exceeded 0.000007% which is a pretty acceptable deviation for most of the cases. The results may vary depending on load/throughput but the fact is that even during normal cluster operations some undercounts (and what&rsquo;s even worse overcounts) are registered.</p>
-<h3 id="scenario-node-dies-kill--9">Scenario: node dies (<code>kill -9</code>)</h3>
-<pre tabindex="0"><code>DEVIATION STATS:
+<h3 id=scenario-node-dies-kill--9>Scenario: node dies (<code>kill -9</code>)</h3>
+<pre tabindex=0><code>DEVIATION STATS:
 overcounts: 0
 maxOverCount: 0
 totalOverCount: 0
@@ -385,8 +271,8 @@ totalOverCount: 0
 undercounts: 28
 maxUnderCount: 1
 totalUnderCount: 28
-</code></pre><h3 id="scenario-network-partition">Scenario: network partition</h3>
-<pre tabindex="0"><code>DEVIATION STATS:
+</code></pre><h3 id=scenario-network-partition>Scenario: network partition</h3>
+<pre tabindex=0><code>DEVIATION STATS:
 overcounts: 0
 maxOverCount: 0
 totalOverCount: 0
@@ -409,10 +295,10 @@ totalOverCount: 0
 undercounts: 57
 maxUnderCount: 1
 totalUnderCount: 57
-</code></pre><h3 id="scenario-2-new-nodes-are-added-to-5-node-cluster-while-writing">Scenario: 2 new nodes are added to 5-node cluster while writing</h3>
+</code></pre><h3 id=scenario-2-new-nodes-are-added-to-5-node-cluster-while-writing>Scenario: 2 new nodes are added to 5-node cluster while writing</h3>
 <p>No over- or under-counts registered</p>
-<h3 id="scenario-node-dies-starts-again-and-nodetool-repair-is-executed">Scenario: node dies, starts again and <code>nodetool repair</code> is executed</h3>
-<pre tabindex="0"><code>DEVIATION STATS:
+<h3 id=scenario-node-dies-starts-again-and-nodetool-repair-is-executed>Scenario: node dies, starts again and <code>nodetool repair</code> is executed</h3>
+<pre tabindex=0><code>DEVIATION STATS:
 overcounts: 1
 maxOverCount: 1
 totalOverCount: 1
@@ -435,29 +321,29 @@ totalOverCount: 1
 undercounts: 4588
 maxUnderCount: 4
 totalUnderCount: 6027
-</code></pre><h3 id="abnormal-termination-observations">Abnormal termination observations</h3>
+</code></pre><h3 id=abnormal-termination-observations>Abnormal termination observations</h3>
 <p>All cases except abnormal termination with consequent restart (with or without repair) went pretty same to normal termination while node coming back to the cluster after failure has shown major undercounts.</p>
 <p>The interesting part here is that with consistency level configured to <code>QUORUM</code> there&rsquo;s a repeatable exception appearing in the logs: <code>Cassandra timeout during write query at consistency ONE (1 replica were required but only 0 acknowledged the write)</code></p>
-<pre tabindex="0"><code>2015-08-31 15:02:07,336 ERROR [akka://counter-consistency/user/$b/$m/$S/$b] - ERROR DURING WRITE
+<pre tabindex=0><code>2015-08-31 15:02:07,336 ERROR [akka://counter-consistency/user/$b/$m/$S/$b] - ERROR DURING WRITE
 com.datastax.driver.core.exceptions.WriteTimeoutException: Cassandra timeout during write query at consistency ONE (1 replica were required but only 0 acknowledged the write)
         at com.datastax.driver.core.exceptions.WriteTimeoutException.copy(WriteTimeoutException.java:54) ~[cassandra-tools.jar:1.0]
         at com.datastax.driver.core.DefaultResultSetFuture.extractCauseFromExecutionException(DefaultResultSetFuture.java:269) ~[cassandra-tools.jar:1.0]
         at com.datastax.driver.core.DefaultResultSetFuture.getUninterruptibly(DefaultResultSetFuture.java:183) ~[cassandra-tools.jar:1.0]
         at com.datastax.driver.core.AbstractSession.execute(AbstractSession.java:52) ~[cassandra-tools.jar:1.0]
         ...
-</code></pre><p>It looks like it relates to <a href="https://issues.apache.org/jira/browse/CASSANDRA-10041">[CASSANDRA-10041]: &ldquo;timeout during write query at consistency ONE&rdquo; when updating counter at consistency QUORUM and 2 of 3 nodes alive</a> Jira issue which was unresolved at the moment of performing tests.</p>
+</code></pre><p>It looks like it relates to <a href=https://issues.apache.org/jira/browse/CASSANDRA-10041>[CASSANDRA-10041]: &ldquo;timeout during write query at consistency ONE&rdquo; when updating counter at consistency QUORUM and 2 of 3 nodes alive</a> Jira issue which was unresolved at the moment of performing tests.</p>
 <p>In the node death-then-restart scenario, the observed behavior is that one can&rsquo;t just restart the failed node. It&rsquo;s a bit strange because this situation could happen and it looks cumbersome to re-bootstrap the node wiping out all the data. But it looks like a reasonable tradeoff for the given counter functionality. The next test scenario checks the re-bootstrapping approach.</p>
-<h3 id="scenario-node-killed-then-rebootstrapped">Scenario: node killed, then rebootstrapped</h3>
+<h3 id=scenario-node-killed-then-rebootstrapped>Scenario: node killed, then rebootstrapped</h3>
 <p>Actions performed:</p>
 <ul>
 <li>one of the nodes is killed (<code>kill -9</code>)</li>
-<li>dead node removed <code>nodetool removenode &lt;node uid&gt;</code></li>
+<li>dead node removed <code>nodetool removenode &lt;node uid></code></li>
 <li>data dirs wiped out on failed node machine</li>
-<li><code>JVM_OPTS=&quot;$JVM_OPTS -Dcassandra.replace_address=&lt;node self address&gt;</code> added to <code>cassandra-env.sh</code> on the dead node</li>
+<li><code>JVM_OPTS="$JVM_OPTS -Dcassandra.replace_address=&lt;node self address></code> added to <code>cassandra-env.sh</code> on the dead node</li>
 <li>node started</li>
 </ul>
 <p>The results:</p>
-<pre tabindex="0"><code>DEVIATION STATS:
+<pre tabindex=0><code>DEVIATION STATS:
 overcounts: 2
 maxOverCount: 1
 totalOverCount: 2
@@ -482,242 +368,69 @@ maxUnderCount: 0
 totalUnderCount: 0
 
 </code></pre><p>After the total wipeout of the commitlog and data directories deviations are of the same magnitude as in the other scenarios.</p>
-<h2 id="conclusion">Conclusion</h2>
+<h2 id=conclusion>Conclusion</h2>
 <p>The results are pretty clear: Cassandra 2.1 counters are not totally consistent. But. The deviation and amount of undercounts are really small in the total amount of writes per test(5M) while the amount of overcounts is even smaller (not exceeding 10 per test). One thing to mention here again is that results randomly vary depending on which node to restart due to row key distribution across the nodes and write throughput. One still can&rsquo;t use the counters in banking but the amount of failed counters is quite acceptable in other cases where strict accuracy is not a mandatory requirement(e.g. adserving). Combined with some sort of aggregates as a part of Lambda Architecture Cassandra counters can be used without big risks. But there are still two open questions after the tests:</p>
 <ul>
 <li>why in the case of normal operations like stop/restart some counters are inconsistent? This basically means that in case of any Cassandra operation which needs service restart it will lose some increments</li>
 <li>why one can&rsquo;t simply restart failed node without major undercounts? Counters operations are completely different from the regular ones in Cassandra and <code>nodetool repair</code> simply doesn&rsquo;t work as expected.</li>
 </ul>
-
-                
-                <nav class="pagination" role="navigation">
-                    
-                        <a class="older-posts" href="/data-processing-platforms-architectures-with-spark-mesos-akka-cassandra-and-kafka/">Next Post &rarr;</a>
-                    
-                    
-                    
-                        <a class="newer-posts" href="/in-the-wake-of-scala-days-2015/">&larr; Previous Post</a>
-                    
-                </nav>                
-            </div>
-
-            
-            
-            <div class="
-                col-lg-2 col-lg-offset-0
-                visible-lg-block
-                sidebar-container
-                catalog-container">
-                <div class="side-catalog">
-                    <hr class="hidden-sm hidden-xs">
-                    <h5>
-                        <a class="catalog-toggle" href="#">CONTENTS</a>
-                    </h5>
-                    <ul class="catalog-body"></ul>
-                </div>
-            </div>
-            
-
-            
-            <div class="
-                col-lg-8 col-lg-offset-2
-                col-md-10 col-md-offset-1
-                sidebar-container">
-
-                
-                
-                <section>
-                    <hr class="hidden-sm hidden-xs">
-                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
-                    <div class="tags">
-                        
-                        
-                        
-                        <a href="/tags/akka" title="akka">
-                            akka
-                        </a>
-                        
-                        
-                        
-                        <a href="/tags/cassandra" title="cassandra">
-                            cassandra
-                        </a>
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        <a href="/tags/mesos" title="mesos">
-                            mesos
-                        </a>
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        <a href="/tags/sheduling" title="sheduling">
-                            sheduling
-                        </a>
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        <a href="/tags/spark" title="spark">
-                            spark
-                        </a>
-                        
-                        
-                    </div>
-                </section>
-                
-            </div>
-        </div>
-    </div>
+<nav class=pagination role=navigation>
+<a class=older-posts href=/data-processing-platforms-architectures-with-spark-mesos-akka-cassandra-and-kafka/>Next Post &rarr;</a>
+<a class=newer-posts href=/in-the-wake-of-scala-days-2015/>&larr; Previous Post</a>
+</nav>
+</div>
+<div class="col-lg-2 col-lg-offset-0
+visible-lg-block
+sidebar-container
+catalog-container">
+<div class=side-catalog>
+<hr class="hidden-sm hidden-xs">
+<h5>
+<a class=catalog-toggle href=#>CONTENTS</a>
+</h5>
+<ul class=catalog-body></ul>
+</div>
+</div>
+<div class="col-lg-8 col-lg-offset-2
+col-md-10 col-md-offset-1
+sidebar-container">
+<section>
+<hr class="hidden-sm hidden-xs">
+<h5><a href=/tags/>FEATURED TAGS</a></h5>
+<div class=tags>
+<a href=/tags/akka title=akka>
+akka
+</a>
+<a href=/tags/cassandra title=cassandra>
+cassandra
+</a>
+<a href=/tags/kubernetes title=kubernetes>
+kubernetes
+</a>
+<a href=/tags/mesos title=mesos>
+mesos
+</a>
+<a href=/tags/sheduling title=sheduling>
+sheduling
+</a>
+<a href=/tags/spark title=spark>
+spark
+</a>
+</div>
+</section>
+</div>
+</div>
+</div>
 </article>
-
-
-
 <footer class="site-footer clearfix">
-    <section class="copyright"><a href="">datastrophic</a> &copy; 2021</section>
-    <section class="poweredby">Proudly generated by <a class="icon-hugo" href="http://gohugo.io">HUGO</a></section>
+<section class=copyright><a href>datastrophic</a> &copy; 2021</section>
+<section class=poweredby>Proudly generated by <a class=icon-hugo href=http://gohugo.io>HUGO</a></section>
 </footer>
-
-
-<script>
-    function loadAsync(u, c) {
-      var d = document, t = 'script',
-          o = d.createElement(t),
-          s = d.getElementsByTagName(t)[0];
-      o.src = u;
-      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
-      s.parentNode.insertBefore(o, s);
-    }
-</script>
-
-
-
-
-
-
-<script>
-    
-    if($('#tag_cloud').length !== 0){
-        loadAsync("/js/jquery.tagcloud.js",function(){
-            $.fn.tagcloud.defaults = {
-                
-                color: {start: '#bbbbee', end: '#0085a1'},
-            };
-            $('#tag_cloud a').tagcloud();
-        })
-    }
-</script>
-
-
-<script>
-    loadAsync("https://cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.js", function(){
-        var $nav = document.querySelector("nav");
-        if($nav) FastClick.attach($nav);
-    })
-</script>
-
-
-
-<script type="application/javascript">
-var doNotTrack = false;
-if (!doNotTrack) {
-	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
-	ga('create', 'UA-65032691-1', 'auto');
-	
-	ga('send', 'pageview');
-}
-</script>
-<script async src='https://www.google-analytics.com/analytics.js'></script>
-
-
-
-
-
-<script type="text/javascript">
-    function generateCatalog(selector) {
-
-        
-        
-        
-        
-            _containerSelector = 'div.post-container'
-        
-
-        
-        var P = $(_containerSelector), a, n, t, l, i, c;
-        a = P.find('h1,h2,h3,h4,h5,h6');
-
-        
-        $(selector).html('')
-
-        
-        a.each(function () {
-            n = $(this).prop('tagName').toLowerCase();
-            i = "#" + $(this).prop('id');
-            t = $(this).text();
-            c = $('<a href="' + i + '" rel="nofollow">' + t + '</a>');
-            l = $('<li class="' + n + '_nav"></li>').append(c);
-            $(selector).append(l);
-        });
-        return true;
-    }
-
-    generateCatalog(".catalog-body");
-
-    
-    $(".catalog-toggle").click((function (e) {
-        e.preventDefault();
-        $('.side-catalog').toggleClass("fold")
-    }))
-
-    
-
-
-    loadAsync("\/js\/jquery.nav.js", function () {
-        $('.catalog-body').onePageNav({
-            currentClass: "active",
-            changeHash: !1,
-            easing: "swing",
-            filter: "",
-            scrollSpeed: 700,
-            scrollOffset: 0,
-            scrollThreshold: .2,
-            begin: null,
-            end: null,
-            scrollChange: null,
-            padding: 80
-        });
-    });
-</script>
-
-
-
+<script>function loadAsync(f,b){var c=document,d='script',a=c.createElement(d),e=c.getElementsByTagName(d)[0];a.src=f,b&&a.addEventListener('load',function(a){b(null,a)},!1),e.parentNode.insertBefore(a,e)}</script>
+<script>$('#tag_cloud').length!==0&&loadAsync("/js/jquery.tagcloud.js",function(){$.fn.tagcloud.defaults={color:{start:'#bbbbee',end:'#0085a1'}},$('#tag_cloud a').tagcloud()})</script>
+<script>loadAsync("https://cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.js",function(){var a=document.querySelector("nav");a&&FastClick.attach(a)})</script>
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-65032691-1','auto'),ga('send','pageview'))</script>
+<script async src=https://www.google-analytics.com/analytics.js></script>
+<script type=text/javascript>function generateCatalog(a){_containerSelector='div.post-container';var h=$(_containerSelector),c,d,e,f,g,b;return c=h.find('h1,h2,h3,h4,h5,h6'),$(a).html(''),c.each(function(){d=$(this).prop('tagName').toLowerCase(),g="#"+$(this).prop('id'),e=$(this).text(),b=$('<a href="'+g+'" rel="nofollow">'+e+'</a>'),f=$('<li class="'+d+'_nav"></li>').append(b),$(a).append(f)}),!0}generateCatalog(".catalog-body"),$(".catalog-toggle").click(function(a){a.preventDefault(),$('.side-catalog').toggleClass("fold")}),loadAsync("/js/jquery.nav.js",function(){$('.catalog-body').onePageNav({currentClass:"active",changeHash:!1,easing:"swing",filter:"",scrollSpeed:700,scrollOffset:0,scrollThreshold:.2,begin:null,end:null,scrollChange:null,padding:80})})</script>
 </body>
 </html>

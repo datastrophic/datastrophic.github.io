@@ -1,258 +1,144 @@
-<!DOCTYPE html>
-<html lang="en-us">
+<!doctype html><html lang=en-us>
 <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    
-    <meta property="og:site_name" content="datastrophic">
-    <meta property="og:type" content="article">
-
-    
-    <meta property="og:image" content="https://datastrophic.io//img/datastrophic-strip-1.png">
-    <meta property="twitter:image" content="https://datastrophic.io//img/datastrophic-strip-1.png" />
-    
-
-    
-    <meta name="title" content="Apache Spark: core concepts, architecture and internals" />
-    <meta property="og:title" content="Apache Spark: core concepts, architecture and internals" />
-    <meta property="twitter:title" content="Apache Spark: core concepts, architecture and internals" />
-    
-
-    
-    <meta name="description" content="A blog about distributed systems, data platforms, and AI infrastructure">
-    <meta property="og:description" content="A blog about distributed systems, data platforms, and AI infrastructure" />
-    <meta property="twitter:description" content="A blog about distributed systems, data platforms, and AI infrastructure" />
-    
-
-    
-    <meta property="twitter:card" content="summary" />
-    
-    
-
-    <meta name="keyword"  content="Spark, Mesos, Kubernetes, Kubeflow, Istio, SMACK stack, Cassandra, Kafka">
-    <link rel="shortcut icon" href="/img/favicon.ico">
-
-    <title>Apache Spark: core concepts, architecture and internals</title>
-
-    <link rel="canonical" href="/core-concepts-architecture-and-internals-of-apache-spark/">
-
-    
-    <link rel="stylesheet" href="/css/bootstrap.min.css">
-
-    
-    <link rel="stylesheet" href="/css/hugo-theme-cleanwhite.min.css">
-
-    
-    <link rel="stylesheet" href="/css/zanshang.css">
-
-    
-    <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet" type="text/css">
-
-    
-    <link rel="stylesheet" href="https://datastrophic.io/css/footer.css"><link rel="stylesheet" href="https://datastrophic.io/css/pager.css"><link rel="stylesheet" href="https://datastrophic.io/css/overrides.css">
-
-    
-    
-    <script src="/js/jquery.min.js"></script>
-
-    
-    <script src="/js/bootstrap.min.js"></script>
-
-    
-    <script src="/js/hux-blog.min.js"></script>
-
-    
-    
-
+<meta charset=utf-8>
+<meta http-equiv=x-ua-compatible content="IE=edge">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta property="og:site_name" content="datastrophic">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://datastrophic.io//img/datastrophic-strip-1.png">
+<meta property="twitter:image" content="https://datastrophic.io//img/datastrophic-strip-1.png">
+<meta name=title content="Apache Spark: core concepts, architecture and internals">
+<meta property="og:title" content="Apache Spark: core concepts, architecture and internals">
+<meta property="twitter:title" content="Apache Spark: core concepts, architecture and internals">
+<meta name=description content="A blog about distributed systems, data platforms, and AI infrastructure">
+<meta property="og:description" content="A blog about distributed systems, data platforms, and AI infrastructure">
+<meta property="twitter:description" content="A blog about distributed systems, data platforms, and AI infrastructure">
+<meta property="twitter:card" content="summary">
+<meta name=keyword content="Spark, Mesos, Kubernetes, Kubeflow, Istio, SMACK stack, Cassandra, Kafka">
+<link rel="shortcut icon" href=/img/favicon.ico>
+<title>Apache Spark: core concepts, architecture and internals</title>
+<link rel=canonical href=/core-concepts-architecture-and-internals-of-apache-spark/>
+<link rel=stylesheet href=/css/bootstrap.min.css>
+<link rel=stylesheet href=/css/hugo-theme-cleanwhite.min.css>
+<link rel=stylesheet href=/css/zanshang.css>
+<link href=//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css rel=stylesheet type=text/css>
+<link rel=stylesheet href=https://datastrophic.io/css/footer.css><link rel=stylesheet href=https://datastrophic.io/css/pager.css><link rel=stylesheet href=https://datastrophic.io/css/overrides.css>
+<script src=/js/jquery.min.js></script>
+<script src=/js/bootstrap.min.js></script>
+<script src=/js/hux-blog.min.js></script>
 </head>
-
-
-
-
 <nav class="navbar navbar-default navbar-custom navbar-fixed-top">
-
-    <div class="container-fluid">
-        
-        <div class="navbar-header page-scroll">
-            <button type="button" class="navbar-toggle">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </button>
-        </div>
-
-        
-        
-        <div id="huxblog_navbar">
-            <div class="navbar-collapse">
-                <ul class="nav navbar-nav navbar-right">
-                    <li>
-                        <a href="/">Home</a>
-                    </li>
-                    
-		            
-                        <li><a href="/top/archive/">ARCHIVE</a></li>
-                    
-                        <li><a href="/top/about/">ABOUT</a></li>
-                    
-                </ul>
-            </div>
-        </div>
-        
-    </div>
-    
+<div class=container-fluid>
+<div class="navbar-header page-scroll">
+<button type=button class=navbar-toggle>
+<span class=sr-only>Toggle navigation</span>
+<span class=icon-bar></span>
+<span class=icon-bar></span>
+<span class=icon-bar></span>
+</button>
+</div>
+<div id=huxblog_navbar>
+<div class=navbar-collapse>
+<ul class="nav navbar-nav navbar-right">
+<li>
+<a href=/>Home</a>
+</li>
+<li><a href=/top/archive/>ARCHIVE</a></li>
+<li><a href=/top/about/>ABOUT</a></li>
+</ul>
+</div>
+</div>
+</div>
 </nav>
-<script>
-    
-    
-    
-    var $body   = document.body;
-    var $toggle = document.querySelector('.navbar-toggle');
-    var $navbar = document.querySelector('#huxblog_navbar');
-    var $collapse = document.querySelector('.navbar-collapse');
-
-    $toggle.addEventListener('click', handleMagic)
-    function handleMagic(e){
-        if ($navbar.className.indexOf('in') > 0) {
-        
-            $navbar.className = " ";
-            
-            setTimeout(function(){
-                
-                if($navbar.className.indexOf('in') < 0) {
-                    $collapse.style.height = "0px"
-                }
-            },400)
-        }else{
-        
-            $collapse.style.height = "auto"
-            $navbar.className += " in";
-        }
-    }
-</script>
-
-
-
-
-<style type="text/css">
-    header.intro-header {
-        background-image: url('/img/datastrophic-strip-1.png');
-        color: #3A4145;
-    }
-</style>
-<header class="intro-header" style="background-image: url('/img/datastrophic-strip-1.png')">
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 ">
-                <div class="post-heading">
-                    <div class="tags">
-                        
-                        <a class="tag" href="/tags/spark" title="spark">
-                            spark
-                        </a>
-                        
-                        <a class="tag" href="/tags/sheduling" title="sheduling">
-                            sheduling
-                        </a>
-                        
-                        <a class="tag" href="/tags/rdd" title="RDD">
-                            RDD
-                        </a>
-                        
-                        <a class="tag" href="/tags/dag" title="DAG">
-                            DAG
-                        </a>
-                        
-                        <a class="tag" href="/tags/shuffle" title="shuffle">
-                            shuffle
-                        </a>
-                        
-                    </div>
-                    <h1>Apache Spark: core concepts, architecture and internals</h1>
-                    
-                    <span class="meta">
-                        
-                            Posted on 
-                            March 3, 2016
-                            
-                    </span>
-                </div>
-            </div>
-        </div>
-    </div>
+<script>var $body=document.body,$toggle=document.querySelector('.navbar-toggle'),$navbar=document.querySelector('#huxblog_navbar'),$collapse=document.querySelector('.navbar-collapse');$toggle.addEventListener('click',handleMagic);function handleMagic(a){$navbar.className.indexOf('in')>0?($navbar.className=" ",setTimeout(function(){$navbar.className.indexOf('in')<0&&($collapse.style.height="0px")},400)):($collapse.style.height="auto",$navbar.className+=" in")}</script>
+<style type=text/css>header.intro-header{background-image:url(/img/datastrophic-strip-1.png);color:#3a4145}</style>
+<header class=intro-header style=background-image:url(/img/datastrophic-strip-1.png)>
+<div class=container>
+<div class=row>
+<div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+<div class=post-heading>
+<div class=tags>
+<a class=tag href=/tags/spark title=spark>
+spark
+</a>
+<a class=tag href=/tags/sheduling title=sheduling>
+sheduling
+</a>
+<a class=tag href=/tags/rdd title=RDD>
+RDD
+</a>
+<a class=tag href=/tags/dag title=DAG>
+DAG
+</a>
+<a class=tag href=/tags/shuffle title=shuffle>
+shuffle
+</a>
+</div>
+<h1>Apache Spark: core concepts, architecture and internals</h1>
+<span class=meta>
+Posted on
+March 3, 2016
+</span>
+</div>
+</div>
+</div>
+</div>
 </header>
-
-
-
-
-
 <article>
-    <div class="container">
-        <div class="row">
-
-            
-            <div class="
-                col-lg-8 col-lg-offset-2
-                col-md-10 col-md-offset-1
-                post-container">
-
-                
-                <p>This post covers core concepts of Apache Spark such as RDD, DAG, execution workflow, forming stages of tasks, and shuffle implementation and also describes the architecture and main components of Spark Driver. There&rsquo;s a <a href="https://github.com/datastrophic/spark-workshop">github.com/datastrophic/spark-workshop</a> project created alongside this post which contains Spark Applications examples and dockerized Hadoop environment to play with. <a href="http://www.slideshare.net/akirillov/spark-workshop-internals-architecture-and-coding-59035491">Slides are also available at slideshare</a>.</p>
-<h2 id="intro">Intro</h2>
+<div class=container>
+<div class=row>
+<div class="col-lg-8 col-lg-offset-2
+col-md-10 col-md-offset-1
+post-container">
+<p>This post covers core concepts of Apache Spark such as RDD, DAG, execution workflow, forming stages of tasks, and shuffle implementation and also describes the architecture and main components of Spark Driver. There&rsquo;s a <a href=https://github.com/datastrophic/spark-workshop>github.com/datastrophic/spark-workshop</a> project created alongside this post which contains Spark Applications examples and dockerized Hadoop environment to play with. <a href=http://www.slideshare.net/akirillov/spark-workshop-internals-architecture-and-coding-59035491>Slides are also available at slideshare</a>.</p>
+<h2 id=intro>Intro</h2>
 <p>Spark is a generalized framework for distributed data processing providing functional API for manipulating data at scale, in-memory data caching, and reuse across computations. It applies a set of coarse-grained transformations over partitioned data and relies on the dataset lineage to recompute tasks in case of failures. Worth mentioning is that Spark supports the majority of data formats, has integrations with various storage systems, and can be executed on Mesos or YARN.</p>
 <p>Powerful and concise API in conjunction with rich library makes it easier to perform data operations at scale. E.g. performing backup and restore of Cassandra column families in Parquet format:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scala" data-lang="scala"><span style="color:#ff79c6">def</span> backup<span style="color:#ff79c6">(</span>path<span style="color:#ff79c6">:</span> <span style="color:#8be9fd">String</span><span style="color:#ff79c6">,</span> config<span style="color:#ff79c6">:</span> <span style="color:#8be9fd">Config</span><span style="color:#ff79c6">)</span> <span style="color:#ff79c6">{</span>
-  sc<span style="color:#ff79c6">.</span>cassandraTable<span style="color:#ff79c6">(</span>config<span style="color:#ff79c6">.</span>keyspace<span style="color:#ff79c6">,</span> config<span style="color:#ff79c6">.</span>table<span style="color:#ff79c6">)</span>
-    <span style="color:#ff79c6">.</span>map<span style="color:#ff79c6">(</span><span style="color:#ff79c6">_</span><span style="color:#ff79c6">.</span>toEvent<span style="color:#ff79c6">).</span>toDF<span style="color:#ff79c6">()</span>
-    <span style="color:#ff79c6">.</span>write<span style="color:#ff79c6">.</span>parquet<span style="color:#ff79c6">(</span>path<span style="color:#ff79c6">)</span>
-<span style="color:#ff79c6">}</span>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#ff79c6>def</span> backup<span style=color:#ff79c6>(</span>path<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>String</span><span style=color:#ff79c6>,</span> config<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>Config</span><span style=color:#ff79c6>)</span> <span style=color:#ff79c6>{</span>
+  sc<span style=color:#ff79c6>.</span>cassandraTable<span style=color:#ff79c6>(</span>config<span style=color:#ff79c6>.</span>keyspace<span style=color:#ff79c6>,</span> config<span style=color:#ff79c6>.</span>table<span style=color:#ff79c6>)</span>
+    <span style=color:#ff79c6>.</span>map<span style=color:#ff79c6>(</span><span style=color:#ff79c6>_</span><span style=color:#ff79c6>.</span>toEvent<span style=color:#ff79c6>).</span>toDF<span style=color:#ff79c6>()</span>
+    <span style=color:#ff79c6>.</span>write<span style=color:#ff79c6>.</span>parquet<span style=color:#ff79c6>(</span>path<span style=color:#ff79c6>)</span>
+<span style=color:#ff79c6>}</span>
 
-<span style="color:#ff79c6">def</span> restore<span style="color:#ff79c6">(</span>path<span style="color:#ff79c6">:</span> <span style="color:#8be9fd">String</span><span style="color:#ff79c6">,</span> config<span style="color:#ff79c6">:</span> <span style="color:#8be9fd">Config</span><span style="color:#ff79c6">)</span> <span style="color:#ff79c6">{</span>
-  sqlContext<span style="color:#ff79c6">.</span>read<span style="color:#ff79c6">.</span>parquet<span style="color:#ff79c6">(</span>path<span style="color:#ff79c6">)</span>
-  <span style="color:#ff79c6">.</span>map<span style="color:#ff79c6">(</span><span style="color:#ff79c6">_</span><span style="color:#ff79c6">.</span>toEvent<span style="color:#ff79c6">)</span>
-  <span style="color:#ff79c6">.</span>saveToCassandra<span style="color:#ff79c6">(</span>config<span style="color:#ff79c6">.</span>keyspace<span style="color:#ff79c6">,</span> config<span style="color:#ff79c6">.</span>table<span style="color:#ff79c6">)</span>
-<span style="color:#ff79c6">}</span>
+<span style=color:#ff79c6>def</span> restore<span style=color:#ff79c6>(</span>path<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>String</span><span style=color:#ff79c6>,</span> config<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>Config</span><span style=color:#ff79c6>)</span> <span style=color:#ff79c6>{</span>
+  sqlContext<span style=color:#ff79c6>.</span>read<span style=color:#ff79c6>.</span>parquet<span style=color:#ff79c6>(</span>path<span style=color:#ff79c6>)</span>
+  <span style=color:#ff79c6>.</span>map<span style=color:#ff79c6>(</span><span style=color:#ff79c6>_</span><span style=color:#ff79c6>.</span>toEvent<span style=color:#ff79c6>)</span>
+  <span style=color:#ff79c6>.</span>saveToCassandra<span style=color:#ff79c6>(</span>config<span style=color:#ff79c6>.</span>keyspace<span style=color:#ff79c6>,</span> config<span style=color:#ff79c6>.</span>table<span style=color:#ff79c6>)</span>
+<span style=color:#ff79c6>}</span>
 </code></pre></div><p>Or run discrepancies analysis comparing the data in different data stores:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scala" data-lang="scala">sqlContext<span style="color:#ff79c6">.</span>sql <span style="color:#ff79c6">{</span>
-  <span style="color:#f1fa8c">&#34;&#34;&#34;
-</span><span style="color:#f1fa8c">     SELECT count()
-</span><span style="color:#f1fa8c">     FROM cassandra_event_rollups
-</span><span style="color:#f1fa8c">     JOIN mongo_event_rollups
-</span><span style="color:#f1fa8c">     ON cassandra_event_rollups.uuid = cassandra_event_rollups.uuid
-</span><span style="color:#f1fa8c">     WHERE cassandra_event_rollups.value != cassandra_event_rollups.value
-</span><span style="color:#f1fa8c">  &#34;&#34;&#34;</span><span style="color:#ff79c6">.</span>stripMargin
-<span style="color:#ff79c6">}</span>
-</code></pre></div><h2 id="recap">Recap</h2>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala>sqlContext<span style=color:#ff79c6>.</span>sql <span style=color:#ff79c6>{</span>
+  <span style=color:#f1fa8c>&#34;&#34;&#34;
+</span><span style=color:#f1fa8c>     SELECT count()
+</span><span style=color:#f1fa8c>     FROM cassandra_event_rollups
+</span><span style=color:#f1fa8c>     JOIN mongo_event_rollups
+</span><span style=color:#f1fa8c>     ON cassandra_event_rollups.uuid = cassandra_event_rollups.uuid
+</span><span style=color:#f1fa8c>     WHERE cassandra_event_rollups.value != cassandra_event_rollups.value
+</span><span style=color:#f1fa8c>  &#34;&#34;&#34;</span><span style=color:#ff79c6>.</span>stripMargin
+<span style=color:#ff79c6>}</span>
+</code></pre></div><h2 id=recap>Recap</h2>
 <p>Spark is built around the concepts of Resilient Distributed Datasets and Direct Acyclic Graph representing transformations and dependencies between them.</p>
 <p>
-  <img src="/blog/2016-03-03/spark-overview.png" alt="">
-
-
+<img src=/blog/2016-03-03/spark-overview.png alt>
 Spark Application (often referred to as Driver Program or Application Master) at a high level consists of SparkContext and user code which interacts with it creating RDDs and performing series of transformations to achieve the final result. These transformations of RDDs are then translated into DAG and submitted to Scheduler to be executed on a set of worker nodes.</p>
-<h3 id="rdd-resilient-distributed-datasets">RDD: Resilient Distributed Datasets</h3>
+<h3 id=rdd-resilient-distributed-datasets>RDD: Resilient Distributed Datasets</h3>
 <p>RDD could be thought of as an immutable parallel data structure with failure recovery possibilities. It provides API for various transformations and materializations of data as well as for control over caching and partitioning of elements to optimize data placement. RDD can be created either from external storage or from another RDD and stores information about its parents to optimize execution (via pipelining of operations) and recompute partition in case of failure.</p>
 <p>From a developer&rsquo;s point of view, RDD represents distributed immutable data (partitioned data + iterator) and lazily evaluated operations (transformations). As an interface RDD defines five main properties:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scala" data-lang="scala"><span style="color:#6272a4">//a list of partitions (e.g. splits in Hadoop)
-</span><span style="color:#6272a4"></span><span style="color:#ff79c6">def</span> getPartitions<span style="color:#ff79c6">:</span> <span style="color:#8be9fd">Array</span><span style="color:#ff79c6">[</span><span style="color:#8be9fd">Partition</span><span style="color:#ff79c6">]</span>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#6272a4>//a list of partitions (e.g. splits in Hadoop)
+</span><span style=color:#6272a4></span><span style=color:#ff79c6>def</span> getPartitions<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>Array</span><span style=color:#ff79c6>[</span><span style=color:#8be9fd>Partition</span><span style=color:#ff79c6>]</span>
 
-<span style="color:#6272a4">//a list of dependencies on other RDDs
-</span><span style="color:#6272a4"></span><span style="color:#ff79c6">def</span> getDependencies<span style="color:#ff79c6">:</span> <span style="color:#8be9fd">Seq</span><span style="color:#ff79c6">[</span><span style="color:#8be9fd">Dependency</span><span style="color:#ff79c6">[</span><span style="color:#ff79c6">_</span><span style="color:#ff79c6">]]</span>
+<span style=color:#6272a4>//a list of dependencies on other RDDs
+</span><span style=color:#6272a4></span><span style=color:#ff79c6>def</span> getDependencies<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>Seq</span><span style=color:#ff79c6>[</span><span style=color:#8be9fd>Dependency</span><span style=color:#ff79c6>[</span><span style=color:#ff79c6>_</span><span style=color:#ff79c6>]]</span>
 
-<span style="color:#6272a4">//a function for computing each split
-</span><span style="color:#6272a4"></span><span style="color:#ff79c6">def</span> compute<span style="color:#ff79c6">(</span>split<span style="color:#ff79c6">:</span> <span style="color:#8be9fd">Partition</span><span style="color:#ff79c6">,</span> context<span style="color:#ff79c6">:</span> <span style="color:#8be9fd">TaskContext</span><span style="color:#ff79c6">)</span><span style="color:#ff79c6">:</span> <span style="color:#8be9fd">Iterator</span><span style="color:#ff79c6">[</span><span style="color:#8be9fd">T</span><span style="color:#ff79c6">]</span>
+<span style=color:#6272a4>//a function for computing each split
+</span><span style=color:#6272a4></span><span style=color:#ff79c6>def</span> compute<span style=color:#ff79c6>(</span>split<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>Partition</span><span style=color:#ff79c6>,</span> context<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>TaskContext</span><span style=color:#ff79c6>)</span><span style=color:#ff79c6>:</span> <span style=color:#8be9fd>Iterator</span><span style=color:#ff79c6>[</span><span style=color:#8be9fd>T</span><span style=color:#ff79c6>]</span>
 
-<span style="color:#6272a4">//(optional) a list of preferred locations to compute each split on
-</span><span style="color:#6272a4"></span><span style="color:#ff79c6">def</span> getPreferredLocations<span style="color:#ff79c6">(</span>split<span style="color:#ff79c6">:</span> <span style="color:#8be9fd">Partition</span><span style="color:#ff79c6">)</span><span style="color:#ff79c6">:</span> <span style="color:#8be9fd">Seq</span><span style="color:#ff79c6">[</span><span style="color:#8be9fd">String</span><span style="color:#ff79c6">]</span> <span style="color:#ff79c6">=</span> <span style="color:#50fa7b">Nil</span>
+<span style=color:#6272a4>//(optional) a list of preferred locations to compute each split on
+</span><span style=color:#6272a4></span><span style=color:#ff79c6>def</span> getPreferredLocations<span style=color:#ff79c6>(</span>split<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>Partition</span><span style=color:#ff79c6>)</span><span style=color:#ff79c6>:</span> <span style=color:#8be9fd>Seq</span><span style=color:#ff79c6>[</span><span style=color:#8be9fd>String</span><span style=color:#ff79c6>]</span> <span style=color:#ff79c6>=</span> <span style=color:#50fa7b>Nil</span>
 
-<span style="color:#6272a4">//(optional) a partitioner for key-value RDDs
-</span><span style="color:#6272a4"></span><span style="color:#ff79c6">val</span> partitioner<span style="color:#ff79c6">:</span> <span style="color:#8be9fd">Option</span><span style="color:#ff79c6">[</span><span style="color:#8be9fd">Partitioner</span><span style="color:#ff79c6">]</span> <span style="color:#ff79c6">=</span> <span style="color:#50fa7b">None</span>
-</code></pre></div><p>Here&rsquo;s an example of RDDs created during a call of method <code>sparkContext.textFile(&quot;hdfs://...&quot;)</code> which first loads HDFS blocks in memory and then applies map() function to filter out keys creating two RDDs:
-
-  <img src="/blog/2016-03-03/dag-logical-vs-partitions-view.png" alt="">
-
+<span style=color:#6272a4>//(optional) a partitioner for key-value RDDs
+</span><span style=color:#6272a4></span><span style=color:#ff79c6>val</span> partitioner<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>Option</span><span style=color:#ff79c6>[</span><span style=color:#8be9fd>Partitioner</span><span style=color:#ff79c6>]</span> <span style=color:#ff79c6>=</span> <span style=color:#50fa7b>None</span>
+</code></pre></div><p>Here&rsquo;s an example of RDDs created during a call of method <code>sparkContext.textFile("hdfs://...")</code> which first loads HDFS blocks in memory and then applies map() function to filter out keys creating two RDDs:
+<img src=/blog/2016-03-03/dag-logical-vs-partitions-view.png alt>
 </p>
 <ul>
 <li>HadoopRDD:
@@ -299,59 +185,53 @@ Operations on RDDs are divided into several groups:</p>
 </li>
 </ul>
 <p>Here&rsquo;s a code sample of a job which aggregates data from Cassandra in lambda style combining previously rolled-up data with the data from raw storage and demonstrates some of the transformations and actions available on RDDs</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scala" data-lang="scala"><span style="color:#6272a4">//aggregate events after specific date for given campaign
-</span><span style="color:#6272a4"></span><span style="color:#ff79c6">val</span> events <span style="color:#ff79c6">=</span>  
-    sc<span style="color:#ff79c6">.</span>cassandraTable<span style="color:#ff79c6">(</span><span style="color:#f1fa8c">&#34;demo&#34;</span><span style="color:#ff79c6">,</span> <span style="color:#f1fa8c">&#34;event&#34;</span><span style="color:#ff79c6">)</span>
-      <span style="color:#ff79c6">.</span>map<span style="color:#ff79c6">(</span><span style="color:#ff79c6">_</span><span style="color:#ff79c6">.</span>toEvent<span style="color:#ff79c6">)</span>								
-      <span style="color:#ff79c6">.</span>filter <span style="color:#ff79c6">{</span> e <span style="color:#ff79c6">=&gt;</span>
-        e<span style="color:#ff79c6">.</span>campaignId <span style="color:#ff79c6">==</span> campaignId <span style="color:#ff79c6">&amp;&amp;</span> e<span style="color:#ff79c6">.</span>time<span style="color:#ff79c6">.</span>isAfter<span style="color:#ff79c6">(</span>watermark<span style="color:#ff79c6">)</span>
-      <span style="color:#ff79c6">}</span>
-      <span style="color:#ff79c6">.</span>keyBy<span style="color:#ff79c6">(</span><span style="color:#ff79c6">_</span><span style="color:#ff79c6">.</span>eventType<span style="color:#ff79c6">)</span>
-      <span style="color:#ff79c6">.</span>reduceByKey<span style="color:#ff79c6">(</span><span style="color:#ff79c6">_</span> <span style="color:#ff79c6">+</span> <span style="color:#ff79c6">_</span><span style="color:#ff79c6">)</span>										
-      <span style="color:#ff79c6">.</span>cache<span style="color:#ff79c6">()</span>											
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#6272a4>//aggregate events after specific date for given campaign
+</span><span style=color:#6272a4></span><span style=color:#ff79c6>val</span> events <span style=color:#ff79c6>=</span>  
+    sc<span style=color:#ff79c6>.</span>cassandraTable<span style=color:#ff79c6>(</span><span style=color:#f1fa8c>&#34;demo&#34;</span><span style=color:#ff79c6>,</span> <span style=color:#f1fa8c>&#34;event&#34;</span><span style=color:#ff79c6>)</span>
+      <span style=color:#ff79c6>.</span>map<span style=color:#ff79c6>(</span><span style=color:#ff79c6>_</span><span style=color:#ff79c6>.</span>toEvent<span style=color:#ff79c6>)</span>								
+      <span style=color:#ff79c6>.</span>filter <span style=color:#ff79c6>{</span> e <span style=color:#ff79c6>=&gt;</span>
+        e<span style=color:#ff79c6>.</span>campaignId <span style=color:#ff79c6>==</span> campaignId <span style=color:#ff79c6>&amp;&amp;</span> e<span style=color:#ff79c6>.</span>time<span style=color:#ff79c6>.</span>isAfter<span style=color:#ff79c6>(</span>watermark<span style=color:#ff79c6>)</span>
+      <span style=color:#ff79c6>}</span>
+      <span style=color:#ff79c6>.</span>keyBy<span style=color:#ff79c6>(</span><span style=color:#ff79c6>_</span><span style=color:#ff79c6>.</span>eventType<span style=color:#ff79c6>)</span>
+      <span style=color:#ff79c6>.</span>reduceByKey<span style=color:#ff79c6>(</span><span style=color:#ff79c6>_</span> <span style=color:#ff79c6>+</span> <span style=color:#ff79c6>_</span><span style=color:#ff79c6>)</span>										
+      <span style=color:#ff79c6>.</span>cache<span style=color:#ff79c6>()</span>											
 
-<span style="color:#6272a4">//aggregate campaigns by type
-</span><span style="color:#6272a4"></span><span style="color:#ff79c6">val</span> campaigns <span style="color:#ff79c6">=</span> 
-    sc<span style="color:#ff79c6">.</span>cassandraTable<span style="color:#ff79c6">(</span><span style="color:#f1fa8c">&#34;demo&#34;</span><span style="color:#ff79c6">,</span> <span style="color:#f1fa8c">&#34;campaign&#34;</span><span style="color:#ff79c6">)</span>
-      <span style="color:#ff79c6">.</span>map<span style="color:#ff79c6">(</span><span style="color:#ff79c6">_</span><span style="color:#ff79c6">.</span>toCampaign<span style="color:#ff79c6">)</span>
-      <span style="color:#ff79c6">.</span>filter <span style="color:#ff79c6">{</span> c <span style="color:#ff79c6">=&gt;</span> 
-         c<span style="color:#ff79c6">.</span>id <span style="color:#ff79c6">==</span> campaignId <span style="color:#ff79c6">&amp;&amp;</span> c<span style="color:#ff79c6">.</span>time<span style="color:#ff79c6">.</span>isBefore<span style="color:#ff79c6">(</span>watermark<span style="color:#ff79c6">)</span>
-      <span style="color:#ff79c6">}</span>
-      <span style="color:#ff79c6">.</span>keyBy<span style="color:#ff79c6">(</span><span style="color:#ff79c6">_</span><span style="color:#ff79c6">.</span>eventType<span style="color:#ff79c6">)</span>
-      <span style="color:#ff79c6">.</span>reduceByKey<span style="color:#ff79c6">(</span><span style="color:#ff79c6">_</span> <span style="color:#ff79c6">+</span> <span style="color:#ff79c6">_</span><span style="color:#ff79c6">)</span>
-      <span style="color:#ff79c6">.</span>cache<span style="color:#ff79c6">()</span>
+<span style=color:#6272a4>//aggregate campaigns by type
+</span><span style=color:#6272a4></span><span style=color:#ff79c6>val</span> campaigns <span style=color:#ff79c6>=</span> 
+    sc<span style=color:#ff79c6>.</span>cassandraTable<span style=color:#ff79c6>(</span><span style=color:#f1fa8c>&#34;demo&#34;</span><span style=color:#ff79c6>,</span> <span style=color:#f1fa8c>&#34;campaign&#34;</span><span style=color:#ff79c6>)</span>
+      <span style=color:#ff79c6>.</span>map<span style=color:#ff79c6>(</span><span style=color:#ff79c6>_</span><span style=color:#ff79c6>.</span>toCampaign<span style=color:#ff79c6>)</span>
+      <span style=color:#ff79c6>.</span>filter <span style=color:#ff79c6>{</span> c <span style=color:#ff79c6>=&gt;</span> 
+         c<span style=color:#ff79c6>.</span>id <span style=color:#ff79c6>==</span> campaignId <span style=color:#ff79c6>&amp;&amp;</span> c<span style=color:#ff79c6>.</span>time<span style=color:#ff79c6>.</span>isBefore<span style=color:#ff79c6>(</span>watermark<span style=color:#ff79c6>)</span>
+      <span style=color:#ff79c6>}</span>
+      <span style=color:#ff79c6>.</span>keyBy<span style=color:#ff79c6>(</span><span style=color:#ff79c6>_</span><span style=color:#ff79c6>.</span>eventType<span style=color:#ff79c6>)</span>
+      <span style=color:#ff79c6>.</span>reduceByKey<span style=color:#ff79c6>(</span><span style=color:#ff79c6>_</span> <span style=color:#ff79c6>+</span> <span style=color:#ff79c6>_</span><span style=color:#ff79c6>)</span>
+      <span style=color:#ff79c6>.</span>cache<span style=color:#ff79c6>()</span>
 
-<span style="color:#6272a4">//joined rollups and raw events
-</span><span style="color:#6272a4"></span><span style="color:#ff79c6">val</span> joinedTotals <span style="color:#ff79c6">=</span> campaigns<span style="color:#ff79c6">.</span>join<span style="color:#ff79c6">(</span>events<span style="color:#ff79c6">)</span>
-           <span style="color:#ff79c6">.</span>map <span style="color:#ff79c6">{</span> <span style="color:#ff79c6">case</span> <span style="color:#ff79c6">(</span>key<span style="color:#ff79c6">,</span> <span style="color:#ff79c6">(</span>campaign<span style="color:#ff79c6">,</span> event<span style="color:#ff79c6">))</span> <span style="color:#ff79c6">=&gt;</span> 
-             <span style="color:#50fa7b">CampaignTotals</span><span style="color:#ff79c6">(</span>campaign<span style="color:#ff79c6">,</span> event<span style="color:#ff79c6">)</span> 
-            <span style="color:#ff79c6">}</span>
-           <span style="color:#ff79c6">.</span>collect<span style="color:#ff79c6">()</span>
+<span style=color:#6272a4>//joined rollups and raw events
+</span><span style=color:#6272a4></span><span style=color:#ff79c6>val</span> joinedTotals <span style=color:#ff79c6>=</span> campaigns<span style=color:#ff79c6>.</span>join<span style=color:#ff79c6>(</span>events<span style=color:#ff79c6>)</span>
+           <span style=color:#ff79c6>.</span>map <span style=color:#ff79c6>{</span> <span style=color:#ff79c6>case</span> <span style=color:#ff79c6>(</span>key<span style=color:#ff79c6>,</span> <span style=color:#ff79c6>(</span>campaign<span style=color:#ff79c6>,</span> event<span style=color:#ff79c6>))</span> <span style=color:#ff79c6>=&gt;</span> 
+             <span style=color:#50fa7b>CampaignTotals</span><span style=color:#ff79c6>(</span>campaign<span style=color:#ff79c6>,</span> event<span style=color:#ff79c6>)</span> 
+            <span style=color:#ff79c6>}</span>
+           <span style=color:#ff79c6>.</span>collect<span style=color:#ff79c6>()</span>
 
-<span style="color:#6272a4">//count totals separately
-</span><span style="color:#6272a4"></span><span style="color:#ff79c6">val</span> eventTotals <span style="color:#ff79c6">=</span> 
-    events<span style="color:#ff79c6">.</span>map<span style="color:#ff79c6">{</span> <span style="color:#ff79c6">case</span> <span style="color:#ff79c6">(</span>t<span style="color:#ff79c6">,</span> e<span style="color:#ff79c6">)</span> <span style="color:#ff79c6">=&gt;</span> <span style="color:#f1fa8c">s&#34;</span><span style="color:#f1fa8c">$t</span><span style="color:#f1fa8c"> -&gt; </span><span style="color:#f1fa8c">${</span>e<span style="color:#ff79c6">.</span>value<span style="color:#f1fa8c">}</span><span style="color:#f1fa8c">&#34;</span> <span style="color:#ff79c6">}</span>
-    <span style="color:#ff79c6">.</span>collect<span style="color:#ff79c6">()</span>
+<span style=color:#6272a4>//count totals separately
+</span><span style=color:#6272a4></span><span style=color:#ff79c6>val</span> eventTotals <span style=color:#ff79c6>=</span> 
+    events<span style=color:#ff79c6>.</span>map<span style=color:#ff79c6>{</span> <span style=color:#ff79c6>case</span> <span style=color:#ff79c6>(</span>t<span style=color:#ff79c6>,</span> e<span style=color:#ff79c6>)</span> <span style=color:#ff79c6>=&gt;</span> <span style=color:#f1fa8c>s&#34;</span><span style=color:#f1fa8c>$t</span><span style=color:#f1fa8c> -&gt; </span><span style=color:#f1fa8c>${</span>e<span style=color:#ff79c6>.</span>value<span style=color:#f1fa8c>}</span><span style=color:#f1fa8c>&#34;</span> <span style=color:#ff79c6>}</span>
+    <span style=color:#ff79c6>.</span>collect<span style=color:#ff79c6>()</span>
 
-<span style="color:#ff79c6">val</span> campaignTotals <span style="color:#ff79c6">=</span> 
-    campaigns<span style="color:#ff79c6">.</span>map<span style="color:#ff79c6">{</span> <span style="color:#ff79c6">case</span> <span style="color:#ff79c6">(</span>t<span style="color:#ff79c6">,</span> e<span style="color:#ff79c6">)</span> <span style="color:#ff79c6">=&gt;</span> <span style="color:#f1fa8c">s&#34;</span><span style="color:#f1fa8c">$t</span><span style="color:#f1fa8c"> -&gt; </span><span style="color:#f1fa8c">${</span>e<span style="color:#ff79c6">.</span>value<span style="color:#f1fa8c">}</span><span style="color:#f1fa8c">&#34;</span> <span style="color:#ff79c6">}</span>
-    <span style="color:#ff79c6">.</span>collect<span style="color:#ff79c6">()</span>
-</code></pre></div><h3 id="execution-workflow-recap">Execution workflow recap</h3>
+<span style=color:#ff79c6>val</span> campaignTotals <span style=color:#ff79c6>=</span> 
+    campaigns<span style=color:#ff79c6>.</span>map<span style=color:#ff79c6>{</span> <span style=color:#ff79c6>case</span> <span style=color:#ff79c6>(</span>t<span style=color:#ff79c6>,</span> e<span style=color:#ff79c6>)</span> <span style=color:#ff79c6>=&gt;</span> <span style=color:#f1fa8c>s&#34;</span><span style=color:#f1fa8c>$t</span><span style=color:#f1fa8c> -&gt; </span><span style=color:#f1fa8c>${</span>e<span style=color:#ff79c6>.</span>value<span style=color:#f1fa8c>}</span><span style=color:#f1fa8c>&#34;</span> <span style=color:#ff79c6>}</span>
+    <span style=color:#ff79c6>.</span>collect<span style=color:#ff79c6>()</span>
+</code></pre></div><h3 id=execution-workflow-recap>Execution workflow recap</h3>
 <p>
-  <img src="/blog/2016-03-03/spark-scheduling-process.png" alt="">
-
-
+<img src=/blog/2016-03-03/spark-scheduling-process.png alt>
 Here&rsquo;s a quick recap on the execution workflow before digging deeper into details: user code containing RDD transformations forms Direct Acyclic Graph which is then split into stages of tasks by DAGScheduler. Stages combine tasks that don’t require shuffling/repartitioning of the data. Tasks run on workers and results then returned to the client.</p>
-<h2 id="dag">DAG</h2>
+<h2 id=dag>DAG</h2>
 <p>
-  <img src="/blog/2016-03-03/dag-logical-view.png" alt="">
-
-
+<img src=/blog/2016-03-03/dag-logical-view.png alt>
 Here&rsquo;s a DAG for the code sample above. So basically any data processing workflow could be defined as reading the data source, applying a set of transformations, and materializing the result in different ways. Transformations create dependencies between RDDs and here we can see different types of them.</p>
 <p>The dependencies are usually classified as &ldquo;narrow&rdquo; and &ldquo;wide&rdquo;:
-
-  <img src="/blog/2016-03-03/dag-dependency-types.png" alt="">
-
+<img src=/blog/2016-03-03/dag-dependency-types.png alt>
 </p>
 <ul>
 <li>Narrow (&ldquo;pipelineable&rdquo;)
@@ -369,11 +249,9 @@ Here&rsquo;s a DAG for the code sample above. So basically any data processing w
 </ul>
 </li>
 </ul>
-<h3 id="splitting-dag-into-stages">Splitting DAG into Stages</h3>
+<h3 id=splitting-dag-into-stages>Splitting DAG into Stages</h3>
 <p>Spark stages are created by breaking the RDD graph at shuffle boundaries
-
-  <img src="/blog/2016-03-03/dag-stages.png" alt="">
-
+<img src=/blog/2016-03-03/dag-stages.png alt>
 </p>
 <ul>
 <li>RDD operations with &ldquo;narrow&rdquo; dependencies, like map() and filter(), are pipelined together into one set of tasks in each stage
@@ -381,7 +259,7 @@ operations with shuffle dependencies require multiple stages (one to write a set
 <li>In the end, every stage will have only shuffle dependencies on other stages, and may compute multiple operations inside it. The actual pipelining of these operations happens in the <code>RDD.compute()</code> functions of various RDDs</li>
 </ul>
 <p>There are two types of tasks in Spark: <code>ShuffleMapTask</code> which partitions its input for shuffle and <code>ResultTask</code> which sends its output to the driver. The same applies to types of stages: <code>ShuffleMapStage</code> and <code>ResultStage</code> correspondingly.</p>
-<h3 id="shuffle">Shuffle</h3>
+<h3 id=shuffle>Shuffle</h3>
 <p>During the shuffle, <code>ShuffleMapTask</code> writes blocks to the local drive, and then the task in the next stages fetches these blocks over the network.</p>
 <ul>
 <li>Shuffle Write
@@ -401,21 +279,17 @@ operations with shuffle dependencies require multiple stages (one to write a set
 </ul>
 <p>In Spark, Sort Shuffle is the default one since 1.2, but Hash Shuffle is available too.</p>
 <p><strong>Sort Shuffle</strong>
-
-  <img src="/blog/2016-03-03/sort-shuffle.png" alt="">
-
+<img src=/blog/2016-03-03/sort-shuffle.png alt>
 </p>
 <ul>
 <li>Incoming records accumulated and sorted in memory according to their target partition ids</li>
 <li>Sorted records are written to file or multiple files if spilled and then merged</li>
 <li><em>index</em> file stores offsets of the data blocks in the data file</li>
-<li>Sorting without deserialization is possible under certain conditions (<a href="https://issues.apache.org/jira/browse/SPARK-7081">SPARK-7081</a>)</li>
+<li>Sorting without deserialization is possible under certain conditions (<a href=https://issues.apache.org/jira/browse/SPARK-7081>SPARK-7081</a>)</li>
 </ul>
-<h2 id="spark-components">Spark Components</h2>
+<h2 id=spark-components>Spark Components</h2>
 <p>At 10K foot view there are three major components:
-
-  <img src="/blog/2016-03-03/spark-architecture.png" alt="">
-
+<img src=/blog/2016-03-03/spark-architecture.png alt>
 </p>
 <ul>
 <li>Spark Driver
@@ -440,9 +314,7 @@ operations with shuffle dependencies require multiple stages (one to write a set
 </li>
 </ul>
 <p>Spark Driver contains more components responsible for translation of user code into actual jobs executed on a cluster:
-
-  <img src="/blog/2016-03-03/spark-components.png" alt="">
-
+<img src=/blog/2016-03-03/spark-components.png alt>
 </p>
 <ul>
 <li>SparkContext
@@ -472,11 +344,9 @@ operations with shuffle dependencies require multiple stages (one to write a set
 </ul>
 </li>
 </ul>
-<h3 id="memory-management-in-spark-16">Memory Management in Spark 1.6</h3>
+<h3 id=memory-management-in-spark-16>Memory Management in Spark 1.6</h3>
 <p>Executors run as Java processes, so the available memory is equal to the heap size. Internally available memory is split into several regions with specific functions.
-
-  <img src="/blog/2016-03-03/spark-memory-model.png" alt="">
-
+<img src=/blog/2016-03-03/spark-memory-model.png alt>
 </p>
 <ul>
 <li>Execution Memory
@@ -505,243 +375,70 @@ operations with shuffle dependencies require multiple stages (one to write a set
 </ul>
 </li>
 </ul>
-<h2 id="where-to-go-from-here">Where to go from here</h2>
+<h2 id=where-to-go-from-here>Where to go from here</h2>
 <ul>
-<li><a href="https://github.com/apache/spark">Spark source code</a> is a great source of information containing great scaladocs and absolutely worth checking out</li>
-<li><a href="http://spark.apache.org/docs/latest/">Official Spark documentation</a></li>
-<li>Great blog on Distributed Systems Architectures containing a lot of Spark-related stuff <a href="http://0x0fff.com/category/spark/">0x0fff</a></li>
-<li><a href="https://github.com/JerryLead/SparkInternals">Spark Internals</a> github project contains extremely deep explanations of different Spark aspects</li>
+<li><a href=https://github.com/apache/spark>Spark source code</a> is a great source of information containing great scaladocs and absolutely worth checking out</li>
+<li><a href=http://spark.apache.org/docs/latest/>Official Spark documentation</a></li>
+<li>Great blog on Distributed Systems Architectures containing a lot of Spark-related stuff <a href=http://0x0fff.com/category/spark/>0x0fff</a></li>
+<li><a href=https://github.com/JerryLead/SparkInternals>Spark Internals</a> github project contains extremely deep explanations of different Spark aspects</li>
 </ul>
-
-                
-                <nav class="pagination" role="navigation">
-                    
-                        <a class="older-posts" href="/resource-allocation-in-mesos-dominant-resource-fairness-explained/">Next Post &rarr;</a>
-                    
-                    
-                    
-                        <a class="newer-posts" href="/data-processing-platforms-architectures-with-spark-mesos-akka-cassandra-and-kafka/">&larr; Previous Post</a>
-                    
-                </nav>                
-            </div>
-
-            
-            
-            <div class="
-                col-lg-2 col-lg-offset-0
-                visible-lg-block
-                sidebar-container
-                catalog-container">
-                <div class="side-catalog">
-                    <hr class="hidden-sm hidden-xs">
-                    <h5>
-                        <a class="catalog-toggle" href="#">CONTENTS</a>
-                    </h5>
-                    <ul class="catalog-body"></ul>
-                </div>
-            </div>
-            
-
-            
-            <div class="
-                col-lg-8 col-lg-offset-2
-                col-md-10 col-md-offset-1
-                sidebar-container">
-
-                
-                
-                <section>
-                    <hr class="hidden-sm hidden-xs">
-                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
-                    <div class="tags">
-                        
-                        
-                        
-                        <a href="/tags/akka" title="akka">
-                            akka
-                        </a>
-                        
-                        
-                        
-                        <a href="/tags/cassandra" title="cassandra">
-                            cassandra
-                        </a>
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        <a href="/tags/mesos" title="mesos">
-                            mesos
-                        </a>
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        <a href="/tags/sheduling" title="sheduling">
-                            sheduling
-                        </a>
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        <a href="/tags/spark" title="spark">
-                            spark
-                        </a>
-                        
-                        
-                    </div>
-                </section>
-                
-            </div>
-        </div>
-    </div>
+<nav class=pagination role=navigation>
+<a class=older-posts href=/resource-allocation-in-mesos-dominant-resource-fairness-explained/>Next Post &rarr;</a>
+<a class=newer-posts href=/data-processing-platforms-architectures-with-spark-mesos-akka-cassandra-and-kafka/>&larr; Previous Post</a>
+</nav>
+</div>
+<div class="col-lg-2 col-lg-offset-0
+visible-lg-block
+sidebar-container
+catalog-container">
+<div class=side-catalog>
+<hr class="hidden-sm hidden-xs">
+<h5>
+<a class=catalog-toggle href=#>CONTENTS</a>
+</h5>
+<ul class=catalog-body></ul>
+</div>
+</div>
+<div class="col-lg-8 col-lg-offset-2
+col-md-10 col-md-offset-1
+sidebar-container">
+<section>
+<hr class="hidden-sm hidden-xs">
+<h5><a href=/tags/>FEATURED TAGS</a></h5>
+<div class=tags>
+<a href=/tags/akka title=akka>
+akka
+</a>
+<a href=/tags/cassandra title=cassandra>
+cassandra
+</a>
+<a href=/tags/kubernetes title=kubernetes>
+kubernetes
+</a>
+<a href=/tags/mesos title=mesos>
+mesos
+</a>
+<a href=/tags/sheduling title=sheduling>
+sheduling
+</a>
+<a href=/tags/spark title=spark>
+spark
+</a>
+</div>
+</section>
+</div>
+</div>
+</div>
 </article>
-
-
-
 <footer class="site-footer clearfix">
-    <section class="copyright"><a href="">datastrophic</a> &copy; 2021</section>
-    <section class="poweredby">Proudly generated by <a class="icon-hugo" href="http://gohugo.io">HUGO</a></section>
+<section class=copyright><a href>datastrophic</a> &copy; 2021</section>
+<section class=poweredby>Proudly generated by <a class=icon-hugo href=http://gohugo.io>HUGO</a></section>
 </footer>
-
-
-<script>
-    function loadAsync(u, c) {
-      var d = document, t = 'script',
-          o = d.createElement(t),
-          s = d.getElementsByTagName(t)[0];
-      o.src = u;
-      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
-      s.parentNode.insertBefore(o, s);
-    }
-</script>
-
-
-
-
-
-
-<script>
-    
-    if($('#tag_cloud').length !== 0){
-        loadAsync("/js/jquery.tagcloud.js",function(){
-            $.fn.tagcloud.defaults = {
-                
-                color: {start: '#bbbbee', end: '#0085a1'},
-            };
-            $('#tag_cloud a').tagcloud();
-        })
-    }
-</script>
-
-
-<script>
-    loadAsync("https://cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.js", function(){
-        var $nav = document.querySelector("nav");
-        if($nav) FastClick.attach($nav);
-    })
-</script>
-
-
-
-<script type="application/javascript">
-var doNotTrack = false;
-if (!doNotTrack) {
-	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
-	ga('create', 'UA-65032691-1', 'auto');
-	
-	ga('send', 'pageview');
-}
-</script>
-<script async src='https://www.google-analytics.com/analytics.js'></script>
-
-
-
-
-
-<script type="text/javascript">
-    function generateCatalog(selector) {
-
-        
-        
-        
-        
-            _containerSelector = 'div.post-container'
-        
-
-        
-        var P = $(_containerSelector), a, n, t, l, i, c;
-        a = P.find('h1,h2,h3,h4,h5,h6');
-
-        
-        $(selector).html('')
-
-        
-        a.each(function () {
-            n = $(this).prop('tagName').toLowerCase();
-            i = "#" + $(this).prop('id');
-            t = $(this).text();
-            c = $('<a href="' + i + '" rel="nofollow">' + t + '</a>');
-            l = $('<li class="' + n + '_nav"></li>').append(c);
-            $(selector).append(l);
-        });
-        return true;
-    }
-
-    generateCatalog(".catalog-body");
-
-    
-    $(".catalog-toggle").click((function (e) {
-        e.preventDefault();
-        $('.side-catalog').toggleClass("fold")
-    }))
-
-    
-
-
-    loadAsync("\/js\/jquery.nav.js", function () {
-        $('.catalog-body').onePageNav({
-            currentClass: "active",
-            changeHash: !1,
-            easing: "swing",
-            filter: "",
-            scrollSpeed: 700,
-            scrollOffset: 0,
-            scrollThreshold: .2,
-            begin: null,
-            end: null,
-            scrollChange: null,
-            padding: 80
-        });
-    });
-</script>
-
-
-
+<script>function loadAsync(f,b){var c=document,d='script',a=c.createElement(d),e=c.getElementsByTagName(d)[0];a.src=f,b&&a.addEventListener('load',function(a){b(null,a)},!1),e.parentNode.insertBefore(a,e)}</script>
+<script>$('#tag_cloud').length!==0&&loadAsync("/js/jquery.tagcloud.js",function(){$.fn.tagcloud.defaults={color:{start:'#bbbbee',end:'#0085a1'}},$('#tag_cloud a').tagcloud()})</script>
+<script>loadAsync("https://cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.js",function(){var a=document.querySelector("nav");a&&FastClick.attach(a)})</script>
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-65032691-1','auto'),ga('send','pageview'))</script>
+<script async src=https://www.google-analytics.com/analytics.js></script>
+<script type=text/javascript>function generateCatalog(a){_containerSelector='div.post-container';var h=$(_containerSelector),c,d,e,f,g,b;return c=h.find('h1,h2,h3,h4,h5,h6'),$(a).html(''),c.each(function(){d=$(this).prop('tagName').toLowerCase(),g="#"+$(this).prop('id'),e=$(this).text(),b=$('<a href="'+g+'" rel="nofollow">'+e+'</a>'),f=$('<li class="'+d+'_nav"></li>').append(b),$(a).append(f)}),!0}generateCatalog(".catalog-body"),$(".catalog-toggle").click(function(a){a.preventDefault(),$('.side-catalog').toggleClass("fold")}),loadAsync("/js/jquery.nav.js",function(){$('.catalog-body').onePageNav({currentClass:"active",changeHash:!1,easing:"swing",filter:"",scrollSpeed:700,scrollOffset:0,scrollThreshold:.2,begin:null,end:null,scrollChange:null,padding:80})})</script>
 </body>
 </html>

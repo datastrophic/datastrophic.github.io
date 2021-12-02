@@ -1,21 +1,2 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-  <channel>
-    <title>RDD on datastrophic</title>
-    <link>https://datastrophic.io/tags/rdd/</link>
-    <description>Recent content in RDD on datastrophic</description>
-    <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
-    <lastBuildDate>Thu, 03 Mar 2016 00:00:00 +0000</lastBuildDate><atom:link href="https://datastrophic.io/tags/rdd/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>Apache Spark: core concepts, architecture and internals</title>
-      <link>https://datastrophic.io/core-concepts-architecture-and-internals-of-apache-spark/</link>
-      <pubDate>Thu, 03 Mar 2016 00:00:00 +0000</pubDate>
-      
-      <guid>https://datastrophic.io/core-concepts-architecture-and-internals-of-apache-spark/</guid>
-      <description>This post covers core concepts of Apache Spark such as RDD, DAG, execution workflow, forming stages of tasks, and shuffle implementation and also describes the architecture and main components of Spark Driver. There&amp;rsquo;s a github.com/datastrophic/spark-workshop project created alongside this post which contains Spark Applications examples and dockerized Hadoop environment to play with. Slides are also available at slideshare.
-Intro Spark is a generalized framework for distributed data processing providing functional API for manipulating data at scale, in-memory data caching, and reuse across computations.</description>
-    </item>
-    
-  </channel>
-</rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>RDD on datastrophic</title><link>https://datastrophic.io/tags/rdd/</link><description>Recent content in RDD on datastrophic</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Thu, 03 Mar 2016 00:00:00 +0000</lastBuildDate><atom:link href="https://datastrophic.io/tags/rdd/index.xml" rel="self" type="application/rss+xml"/><item><title>Apache Spark: core concepts, architecture and internals</title><link>https://datastrophic.io/core-concepts-architecture-and-internals-of-apache-spark/</link><pubDate>Thu, 03 Mar 2016 00:00:00 +0000</pubDate><guid>https://datastrophic.io/core-concepts-architecture-and-internals-of-apache-spark/</guid><description>This post covers core concepts of Apache Spark such as RDD, DAG, execution workflow, forming stages of tasks, and shuffle implementation and also describes the architecture and main components of Spark Driver. There&amp;rsquo;s a github.com/datastrophic/spark-workshop project created alongside this post which contains Spark Applications examples and dockerized Hadoop environment to play with. Slides are also available at slideshare.
+Intro Spark is a generalized framework for distributed data processing providing functional API for manipulating data at scale, in-memory data caching, and reuse across computations.</description></item></channel></rss>
