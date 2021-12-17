@@ -356,26 +356,26 @@ helm install dex dex/dex <span style=color:#f1fa8c>\
 <p>OAuth2 Proxy has quite a few configuration options described in <a href=https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/oauth_provider#openid-connect-provider>oauth2-proxy documentation</a><br>
 and available in the example <a href=https://github.com/oauth2-proxy/oauth2-proxy/blob/master/contrib/local-environment/kubernetes/values.yaml>values.yaml</a> in GitHub. The majority of the examples set <code>ssl_insecure_skip_verify</code> parameter to <code>true</code> to skip the verification of the OIDC provider endpoint. This is convenient when it is running with a self-signed certificate, however, if the certificate verification is skipped, this means we&rsquo;re ignoring who is authenticating the users. In this setup, a dedicated certificate will be issued for the ingress endpoint running Dex and mounted to the OAuth2 Proxy for validating the certificates against the CA.</p>
 <p>Create a second certificate for the Gateway address but in the <code>auth</code> namespace:</p>
-<pre tabindex=0><code>kubectl apply -f - &lt;&lt;EOF
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: gateway-cert
-  namespace: auth
-spec:
-  secretName: gateway-cert
-  ipAddresses:
-  - &quot;${INGRESS_HOST}&quot;
-  duration: 2160h # 90d
-  renewBefore: 360h # 15d
-  subject:
-    organizations:
-      - Datastrophic
-  issuerRef:
-    name: ca-issuer
-    kind: ClusterIssuer
-EOF
-</code></pre><p>Create the OAuth2 Proxy Helm configuration:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell>kubectl apply -f - <span style=color:#f1fa8c>&lt;&lt;EOF
+</span><span style=color:#f1fa8c>apiVersion: cert-manager.io/v1
+</span><span style=color:#f1fa8c>kind: Certificate
+</span><span style=color:#f1fa8c>metadata:
+</span><span style=color:#f1fa8c>  name: gateway-cert
+</span><span style=color:#f1fa8c>  namespace: auth
+</span><span style=color:#f1fa8c>spec:
+</span><span style=color:#f1fa8c>  secretName: gateway-cert
+</span><span style=color:#f1fa8c>  ipAddresses:
+</span><span style=color:#f1fa8c>  - &#34;${INGRESS_HOST}&#34;
+</span><span style=color:#f1fa8c>  duration: 2160h # 90d
+</span><span style=color:#f1fa8c>  renewBefore: 360h # 15d
+</span><span style=color:#f1fa8c>  subject:
+</span><span style=color:#f1fa8c>    organizations:
+</span><span style=color:#f1fa8c>      - Datastrophic
+</span><span style=color:#f1fa8c>  issuerRef:
+</span><span style=color:#f1fa8c>    name: ca-issuer
+</span><span style=color:#f1fa8c>    kind: ClusterIssuer
+</span><span style=color:#f1fa8c>EOF</span>
+</code></pre></div><p>Create the OAuth2 Proxy Helm configuration:</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell>cat <span style=color:#f1fa8c>&lt;&lt;EOF &gt; oauth2-proxy-values.yaml
 </span><span style=color:#f1fa8c>config:
 </span><span style=color:#f1fa8c>  clientID: &#34;oauth2-proxy&#34;
