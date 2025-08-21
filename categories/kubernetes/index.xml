@@ -1,1 +1,27 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Kubernetes on datastrophic</title><link>https://datastrophic.io/categories/kubernetes/</link><description>Recent content in Kubernetes on datastrophic</description><generator>Hugo</generator><language>en</language><copyright>© 2025 datastrophic</copyright><lastBuildDate>Thu, 16 Dec 2021 00:00:00 +0000</lastBuildDate><atom:link href="https://datastrophic.io/categories/kubernetes/index.xml" rel="self" type="application/rss+xml"/><item><title>Secure Kubeflow Ingress and Authentication with Istio External Auth, Dex, and OAuth2 Proxy</title><link>https://datastrophic.io/secure-kubeflow-ingress-and-authentication/</link><pubDate>Thu, 16 Dec 2021 00:00:00 +0000</pubDate><guid>https://datastrophic.io/secure-kubeflow-ingress-and-authentication/</guid><description>Publicly exposed insecure service endpoints on Kubernetes produce a major risk of malicious workloads being deployed on your clusters. We’ve seen reports of the Kubernetes Dashboard, the Kubeflow Central Dashboard, and the Kubeflow Pipelines all were compromised when publicly exposed to the Internet. Combined with wide RBAC permissions, a publicly exposed software with workload scheduling capabilities opens your clusters for malicious deployments to anybody knowing the endpoint URL. This blog post focuses on building a secure ingress and authentication stack on Kubernetes with Istio targeting Kubeflow installations.</description></item><item><title>The Ultimate Kubernetes Homelab Guide: From Zero to Production Cluster On-Premises</title><link>https://datastrophic.io/kubernetes-homelab-with-proxmox-kubeadm-calico-openebs-and-metallb/</link><pubDate>Wed, 01 Dec 2021 00:00:00 +0000</pubDate><guid>https://datastrophic.io/kubernetes-homelab-with-proxmox-kubeadm-calico-openebs-and-metallb/</guid><description>Whether you’re looking for a more powerful development environment or a production-grade Kubernetes cluster for experiments, this guide provides end-to-end deployment and configuration instructions to get the cluster up and running. The first part of this guide covers the planning and provisioning of the infrastructure with Proxmox and Terraform. The second part is dedicated to installing Kubernetes and essential software such as Calico for networking, OpenEBS for volume provisioning, and MetalLB for network load balancing.</description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Kubernetes on datastrophic</title>
+    <link>http://localhost:1313/categories/kubernetes/</link>
+    <description>Recent content in Kubernetes on datastrophic</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <copyright>© 2025 datastrophic</copyright>
+    <lastBuildDate>Thu, 16 Dec 2021 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://localhost:1313/categories/kubernetes/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Secure Kubeflow Ingress and Authentication with Istio External Auth, Dex, and OAuth2 Proxy</title>
+      <link>http://localhost:1313/secure-kubeflow-ingress-and-authentication/</link>
+      <pubDate>Thu, 16 Dec 2021 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/secure-kubeflow-ingress-and-authentication/</guid>
+      <description>Publicly exposed insecure service endpoints on Kubernetes produce a major risk of malicious workloads being deployed on your clusters. We’ve seen reports of the Kubernetes Dashboard, the Kubeflow Central Dashboard, and the Kubeflow Pipelines all were compromised when publicly exposed to the Internet. Combined with wide RBAC permissions, a publicly exposed software with workload scheduling capabilities opens your clusters for malicious deployments to anybody knowing the endpoint URL. This blog post focuses on building a secure ingress and authentication stack on Kubernetes with Istio targeting Kubeflow installations.</description>
+    </item>
+    <item>
+      <title>The Ultimate Kubernetes Homelab Guide: From Zero to Production Cluster On-Premises</title>
+      <link>http://localhost:1313/kubernetes-homelab-with-proxmox-kubeadm-calico-openebs-and-metallb/</link>
+      <pubDate>Wed, 01 Dec 2021 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/kubernetes-homelab-with-proxmox-kubeadm-calico-openebs-and-metallb/</guid>
+      <description>Whether you’re looking for a more powerful development environment or a production-grade Kubernetes cluster for experiments, this guide provides end-to-end deployment and configuration instructions to get the cluster up and running. The first part of this guide covers the planning and provisioning of the infrastructure with Proxmox and Terraform. The second part is dedicated to installing Kubernetes and essential software such as Calico for networking, OpenEBS for volume provisioning, and MetalLB for network load balancing.</description>
+    </item>
+  </channel>
+</rss>
