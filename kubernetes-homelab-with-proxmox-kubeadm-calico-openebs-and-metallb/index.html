@@ -1,519 +1,275 @@
-<!doctype html><html lang=en-us>
-<head>
-<meta charset=utf-8>
-<meta http-equiv=x-ua-compatible content="IE=edge">
-<meta name=viewport content="width=device-width,initial-scale=1">
-<meta property="og:site_name" content="datastrophic">
-<meta property="og:type" content="article">
-<meta property="og:image" content="https://datastrophic.io//img/datastrophic-strip-1.png">
-<meta property="twitter:image" content="https://datastrophic.io//img/datastrophic-strip-1.png">
-<meta name=title content="The Ultimate Kubernetes Homelab Guide: From Zero to Production Cluster On-Premises">
-<meta property="og:title" content="The Ultimate Kubernetes Homelab Guide: From Zero to Production Cluster On-Premises">
-<meta property="twitter:title" content="The Ultimate Kubernetes Homelab Guide: From Zero to Production Cluster On-Premises">
-<meta name=description content="A blog about distributed systems, data platforms, and AI infrastructure">
-<meta property="og:description" content="A blog about distributed systems, data platforms, and AI infrastructure">
-<meta property="twitter:description" content="A blog about distributed systems, data platforms, and AI infrastructure">
-<meta property="twitter:card" content="summary">
-<meta name=keyword content="Spark, Mesos, Kubernetes, Kubeflow, Istio, SMACK stack, Cassandra, Kafka">
-<link rel="shortcut icon" href=/img/favicon.ico>
-<title>The Ultimate Kubernetes Homelab Guide: From Zero to Production Cluster On-Premises</title>
-<link rel=canonical href=/kubernetes-homelab-with-proxmox-kubeadm-calico-openebs-and-metallb/>
-<link rel=stylesheet href=/css/bootstrap.min.css>
-<link rel=stylesheet href=/css/hugo-theme-cleanwhite.min.css>
-<link rel=stylesheet href=/css/zanshang.css>
-<link href=//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css rel=stylesheet type=text/css>
-<link rel=stylesheet href=https://datastrophic.io/css/footer.css><link rel=stylesheet href=https://datastrophic.io/css/pager.css><link rel=stylesheet href=https://datastrophic.io/css/overrides.css>
-<script src=/js/jquery.min.js></script>
-<script src=/js/bootstrap.min.js></script>
-<script src=/js/hux-blog.min.js></script>
-</head>
-<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
-<div class=container-fluid>
-<div class="navbar-header page-scroll">
-<button type=button class=navbar-toggle>
-<span class=sr-only>Toggle navigation</span>
-<span class=icon-bar></span>
-<span class=icon-bar></span>
-<span class=icon-bar></span>
-</button>
-</div>
-<div id=huxblog_navbar>
-<div class=navbar-collapse>
-<ul class="nav navbar-nav navbar-right">
-<li>
-<a href=/>Home</a>
-</li>
-<li><a href=/top/archive/>ARCHIVE</a></li>
-<li><a href=/top/about/>ABOUT</a></li>
-</ul>
-</div>
-</div>
-</div>
-</nav>
-<script>var $body=document.body,$toggle=document.querySelector('.navbar-toggle'),$navbar=document.querySelector('#huxblog_navbar'),$collapse=document.querySelector('.navbar-collapse');$toggle.addEventListener('click',handleMagic);function handleMagic(a){$navbar.className.indexOf('in')>0?($navbar.className=" ",setTimeout(function(){$navbar.className.indexOf('in')<0&&($collapse.style.height="0px")},400)):($collapse.style.height="auto",$navbar.className+=" in")}</script>
-<style type=text/css>header.intro-header{background-image:url(/img/datastrophic-strip-1.png);color:#3a4145}</style>
-<header class=intro-header style=background-image:url(/img/datastrophic-strip-1.png)>
-<div class=container>
-<div class=row>
-<div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-<div class=post-heading>
-<div class=tags>
-<a class=tag href=/tags/kubernetes title=kubernetes>
-kubernetes
-</a>
-<a class=tag href=/tags/devops title=devops>
-devops
-</a>
-</div>
-<h1>The Ultimate Kubernetes Homelab Guide: From Zero to Production Cluster On-Premises</h1>
-<span class=meta>
-Posted on
-December 1, 2021
-</span>
-</div>
-</div>
-</div>
-</div>
-</header>
-<article>
-<div class=container>
-<div class=row>
-<div class="col-lg-8 col-lg-offset-2
-col-md-10 col-md-offset-1
-post-container">
-<p>Whether you&rsquo;re looking for a more powerful development environment or a production-grade Kubernetes cluster for experiments, this guide provides end-to-end deployment and configuration instructions to get the cluster up and running.</p>
-<p>The first part of this guide covers the planning and provisioning of the infrastructure with Proxmox and Terraform. The second part is dedicated to installing Kubernetes and essential software such as Calico for networking, OpenEBS for volume provisioning, and MetalLB for network load balancing. At the end, the guide provides steps for deploying the Kubernetes
-Dashboard with restricted permissions.</p>
-<h2 id=planning-and-provisioning-the-infrastructure>Planning and provisioning the infrastructure</h2>
-<p>This section contains basic information on how to get a virtual infrastructure up and running in an automated manner. If you already have the infrastructure ready (whether it&rsquo;s a multi-server rack or several pre-provisioned VMs) - just skip ahead to the <a href=#installing-the-kubernetes-cluster-and-essentials>Kubernetes deployment</a> part of this guide. However, if you just have a spare server or a commodity workstation you&rsquo;d like to use, then this section might be helpful for bootstrapping the infrastructure from scratch.</p>
-<h3 id=deployment-layout>Deployment layout</h3>
-<p>There are several options for how the target Kubernetes cluster will fit into the existing network and how clients will access it. Also, the target cluster may consist of several hardware nodes, a virtualized environment, or a hybrid of both. Let&rsquo;s look at the following layout:</p>
-<p>
-<img src=/blog/2021-12-01/infrastructure-layout.png alt="Infrastructure Layout">
-</p>
-<p>We&rsquo;re looking at a network with CIDR <code>192.165.0.0/24</code> behind a router. This can be an existing home router connected to the ISP, or another dedicated hardware router connected to the home gateway. The general idea here is that the network address range is split into two parts: DHCP addresses that are dynamically assigned to clients connecting to the network and the reserved static address range to be used for the physical nodes and VMs. Static addressing of the nodes is important for deployment automation that is using host addresses to connect to the hosts and apply changes. This would also allow other devices to connect to services running on Kubernetes using the local network addresses. While this network setup is pretty naive for a potentially internet-facing deployment, it should be considered as a basic building block of the infrastructure that can be implemented in a variety of ways (e.g. by using VLANs).</p>
-<p>When dealing with virtualization, it is important to take into account the overhead it brings both when running a hypervisor and when deciding on the number of virtual machines to create on a physical node. <a href=https://www.proxmox.com/en/proxmox-ve>Proxmox VE</a> is an open-source small-footprint hypervisor that is based on Debian Linux and will be used for virtualization in this guide. One of the additional benefits it has is a Terraform provider that allows to declaratively define virtual machines based on templates and to provision them automatically.</p>
-<h3 id=infrastructure-automation-with-proxmox-and-terraform>Infrastructure automation with Proxmox and Terraform</h3>
-<p>When working with on-premises environments the infrastructure provisioning might be a tedious task. However, with an intermediate hypervisor layer, it is possible to achieve the same automation levels as with public cloud providers. <a href=https://registry.terraform.io/providers/Telmate/proxmox/latest/docs>Terraform Proxmox provider</a> brings Infrastructure-as-a-Code capabilities for environments running Proxmox.</p>
-<blockquote>
-<p><strong>NOTE:</strong> In order to continue, Proxmox VE must be installed on the target machines. To install Proxmox VE, follow the <a href=https://www.proxmox.com/en/proxmox-ve/get-started>official documentation</a>.</p>
-</blockquote>
-<p>Prior to the provisioning of the VMs themselves, it is beneficial to create a <code>cloud-init</code> template to simplify the configuration and provisioning of the future VMs. The template can be created manually on the PVE host as described in several blog posts such as <a href=https://norocketscience.at/deploy-proxmox-virtual-machines-using-cloud-init/>Deploy Proxmox virtual machines using cloud-init</a>, or we can use Ansible to automate this step. A working Ansible playbook with the instructions can be found at <a href=https://github.com/datastrophic/kubernetes-deployment/tree/master/proxmox/>datastrophic/kubernetes-deployment/proxmox/</a>.</p>
-<p>Once the VM template is created, we can define a Terraform configuration to provision VMs. Here&rsquo;s an excerpt from <code>main.tf</code> with full instructions available at <a href=https://github.com/datastrophic/kubernetes-deployment/tree/master/proxmox/>datastrophic/kubernetes-deployment/proxmox/</a>:</p>
-<pre tabindex=0><code>resource &quot;proxmox_vm_qemu&quot; &quot;control_plane&quot; {
+<!doctype html><html lang=en dir=ltr class=scroll-smooth data-default-appearance=light data-auto-appearance=true><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=theme-color content="#FFFFFF"><title>The Ultimate Kubernetes Homelab Guide: From Zero to Production Cluster On-Premises &#183; datastrophic</title><meta name=title content="The Ultimate Kubernetes Homelab Guide: From Zero to Production Cluster On-Premises &#183; datastrophic"><script type=text/javascript src=https://datastrophic.io/js/appearance.min.8a082f81b27f3cb2ee528df0b0bdc39787034cf2cc34d4669fbc9977c929023c.js integrity="sha256-iggvgbJ/PLLuUo3wsL3Dl4cDTPLMNNRmn7yZd8kpAjw="></script><link type=text/css rel=stylesheet href=https://datastrophic.io/css/main.bundle.min.02e0262738dfe4d54f6393381fab23180d51c6764276ae9f9736ba07270c82d3.css integrity="sha256-AuAmJzjf5NVPY5M4H6sjGA1RxnZCdq6flza6BycMgtM="><script defer type=text/javascript id=script-bundle src=https://datastrophic.io/js/main.bundle.min.d4b727caf411cb5c3b421d0d427ed1e3daeafe0d04840327efad4978430edb8c.js integrity="sha256-1LcnyvQRy1w7Qh0NQn7R49rq/g0EhAMn761JeEMO24w=" data-copy=Copy data-copied=Copied></script><meta name=description content="
+      
+        Whether you’re looking for a more powerful development environment or a production-grade Kubernetes cluster for experiments, this guide provides end-to-end deployment and configuration instructions to get the cluster up and running. The first part of this guide covers the planning and provisioning of the infrastructure with Proxmox and Terraform. The second part is dedicated to installing Kubernetes and essential software such as Calico for networking, OpenEBS for volume provisioning, and MetalLB for network load balancing.
+      
+    "><link rel=canonical href=https://datastrophic.io/kubernetes-homelab-with-proxmox-kubeadm-calico-openebs-and-metallb/><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/site.webmanifest><meta property="og:url" content="https://datastrophic.io/kubernetes-homelab-with-proxmox-kubeadm-calico-openebs-and-metallb/"><meta property="og:site_name" content="datastrophic"><meta property="og:title" content="The Ultimate Kubernetes Homelab Guide: From Zero to Production Cluster On-Premises"><meta property="og:description" content="Whether you’re looking for a more powerful development environment or a production-grade Kubernetes cluster for experiments, this guide provides end-to-end deployment and configuration instructions to get the cluster up and running. The first part of this guide covers the planning and provisioning of the infrastructure with Proxmox and Terraform. The second part is dedicated to installing Kubernetes and essential software such as Calico for networking, OpenEBS for volume provisioning, and MetalLB for network load balancing."><meta property="og:locale" content="en"><meta property="og:type" content="article"><meta property="article:section" content="posts"><meta property="article:published_time" content="2021-12-01T00:00:00+00:00"><meta property="article:modified_time" content="2021-12-01T00:00:00+00:00"><meta property="article:tag" content="Kubernetes"><meta property="article:tag" content="Devops"><meta name=twitter:card content="summary"><meta name=twitter:title content="The Ultimate Kubernetes Homelab Guide: From Zero to Production Cluster On-Premises"><meta name=twitter:description content="Whether you’re looking for a more powerful development environment or a production-grade Kubernetes cluster for experiments, this guide provides end-to-end deployment and configuration instructions to get the cluster up and running. The first part of this guide covers the planning and provisioning of the infrastructure with Proxmox and Terraform. The second part is dedicated to installing Kubernetes and essential software such as Calico for networking, OpenEBS for volume provisioning, and MetalLB for network load balancing."><script type=application/ld+json>{"@context":"https://schema.org","@type":"Article","articleSection":"","name":"The Ultimate Kubernetes Homelab Guide: From Zero to Production Cluster On-Premises","headline":"The Ultimate Kubernetes Homelab Guide: From Zero to Production Cluster On-Premises","abstract":"Whether you’re looking for a more powerful development environment or a production-grade Kubernetes cluster for experiments, this guide provides end-to-end deployment and configuration instructions to get the cluster up and running. The first part of this guide covers the planning and provisioning of the infrastructure with Proxmox and Terraform. The second part is dedicated to installing Kubernetes and essential software such as Calico for networking, OpenEBS for volume provisioning, and MetalLB for network load balancing.","inLanguage":"en","url":"https:\/\/datastrophic.io\/kubernetes-homelab-with-proxmox-kubeadm-calico-openebs-and-metallb\/","author":{"@type":"Person","name":"Anton Kirillov"},"copyrightYear":"2021","dateCreated":"2021-12-01T00:00:00\u002b00:00","datePublished":"2021-12-01T00:00:00\u002b00:00","dateModified":"2021-12-01T00:00:00\u002b00:00","keywords":["kubernetes","devops"],"mainEntityOfPage":"true","wordCount":"2938"}</script><script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","item":"https://datastrophic.io/","name":"","position":1},{"@type":"ListItem","item":"https://datastrophic.io/posts/","name":"","position":2},{"@type":"ListItem","item":"https://datastrophic.io/categories/kubernetes/","name":"Kubernetes","position":3},{"@type":"ListItem","name":"The Ultimate Kubernetes Homelab Guide From Zero to Production Cluster on Premises","position":4}]}</script><meta name=author content="Anton Kirillov"><link href=https://www.linkedin.com/in/datastrophic/ rel=me><link href=https://github.com/datastrophic rel=me><script async src="https://www.googletagmanager.com/gtag/js?id=G-Z9WG27GT0G"></script><script>var dnt,doNotTrack=!1;if(!1&&(dnt=navigator.doNotTrack||window.doNotTrack||navigator.msDoNotTrack,doNotTrack=dnt=="1"||dnt=="yes"),!doNotTrack){window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-Z9WG27GT0G")}</script></head><body class="m-auto flex h-screen max-w-7xl flex-col bg-neutral px-6 text-lg leading-7 text-neutral-900 dark:bg-neutral-800 dark:text-neutral sm:px-14 md:px-24 lg:px-32"><div id=the-top class="absolute flex self-center"><a class="-translate-y-8 rounded-b-lg bg-primary-200 px-3 py-1 text-sm focus:translate-y-0 dark:bg-neutral-600" href=#main-content><span class="pe-2 font-bold text-primary-600 dark:text-primary-400">&darr;</span>Skip to main content</a></div><header class="py-6 font-semibold text-neutral-900 dark:text-neutral sm:py-10 print:hidden"><nav class="flex items-start justify-between sm:items-center"><div class="z-40 flex flex-row items-center"><a class="decoration-primary-500 hover:underline hover:decoration-2 hover:underline-offset-2" rel=me href=/>datastrophic</a></div><label id=menu-button for=menu-controller class="block sm:hidden"><input type=checkbox id=menu-controller class=hidden><div class="cursor-pointer hover:text-primary-600 dark:hover:text-primary-400"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 448 512"><path fill="currentColor" d="M0 96C0 78.33 14.33 64 32 64H416c17.7.0 32 14.33 32 32 0 17.7-14.3 32-32 32H32C14.33 128 0 113.7.0 96zM0 256c0-17.7 14.33-32 32-32H416c17.7.0 32 14.3 32 32s-14.3 32-32 32H32c-17.67.0-32-14.3-32-32zM416 448H32c-17.67.0-32-14.3-32-32s14.33-32 32-32H416c17.7.0 32 14.3 32 32s-14.3 32-32 32z"/></svg></span></div><div id=menu-wrapper class="invisible fixed inset-0 z-30 m-auto h-full w-full cursor-default overflow-auto bg-neutral-100/50 opacity-0 backdrop-blur-sm transition-opacity dark:bg-neutral-900/50"><ul class="mx-auto flex w-full max-w-7xl list-none flex-col overflow-visible px-6 py-6 text-end sm:px-14 sm:py-10 sm:pt-10 md:px-24 lg:px-32"><li class=mb-1><span class="cursor-pointer hover:text-primary-600 dark:hover:text-primary-400"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 320 512"><path fill="currentColor" d="M310.6 361.4c12.5 12.5 12.5 32.75.0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3 54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75.0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75.0-45.25s32.75-12.5 45.25.0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25.0s12.5 32.75.0 45.25l-105.4 105.4L310.6 361.4z"/></svg></span></span></li><li class="group mb-1"><a href=/posts/ title onclick=close_menu()><span class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2">archive</span></a></li><li class="group mb-1"><a href=/about/ title onclick=close_menu()><span class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2">about</span></a></li></ul></div></label><ul class="hidden list-none flex-row text-end sm:flex"><li class="group mb-1 sm:mb-0 sm:me-7 sm:last:me-0"><a href=/posts/ title><span class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2">archive</span></a></li><li class="group mb-1 sm:mb-0 sm:me-7 sm:last:me-0"><a href=/about/ title><span class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2">about</span></a></li></ul></nav></header><div class="relative flex grow flex-col"><main id=main-content class=grow><article><header class=max-w-prose><h1 class="mb-8 mt-0 text-4xl font-extrabold text-neutral-900 dark:text-neutral">The Ultimate Kubernetes Homelab Guide: From Zero to Production Cluster On-Premises</h1><div class="mb-10 text-base text-neutral-500 dark:text-neutral-400 print:hidden"><div class="flex flex-row flex-wrap items-center"><time datetime="2021-12-01 00:00:00 +0000 UTC">1 December 2021</time><span class="px-2 text-primary-500">&#183;</span><span title="Reading time">14 mins</span></div></div></header><section class="prose mt-0 flex max-w-full flex-col dark:prose-invert lg:flex-row"><div class="min-h-0 min-w-0 max-w-prose grow"><p>Whether you&rsquo;re looking for a more powerful development environment or a production-grade Kubernetes cluster for experiments, this guide provides end-to-end deployment and configuration instructions to get the cluster up and running.</p><p>The first part of this guide covers the planning and provisioning of the infrastructure with Proxmox and Terraform. The second part is dedicated to installing Kubernetes and essential software such as Calico for networking, OpenEBS for volume provisioning, and MetalLB for network load balancing. At the end, the guide provides steps for deploying the Kubernetes
+Dashboard with restricted permissions.</p><h2 id=planning-and-provisioning-the-infrastructure class="relative group">Planning and provisioning the infrastructure <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#planning-and-provisioning-the-infrastructure aria-label=Anchor>#</a></span></h2><p>This section contains basic information on how to get a virtual infrastructure up and running in an automated manner. If you already have the infrastructure ready (whether it&rsquo;s a multi-server rack or several pre-provisioned VMs) - just skip ahead to the <a href=#installing-the-kubernetes-cluster-and-essentials>Kubernetes deployment</a> part of this guide. However, if you just have a spare server or a commodity workstation you&rsquo;d like to use, then this section might be helpful for bootstrapping the infrastructure from scratch.</p><h3 id=deployment-layout class="relative group">Deployment layout <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#deployment-layout aria-label=Anchor>#</a></span></h3><p>There are several options for how the target Kubernetes cluster will fit into the existing network and how clients will access it. Also, the target cluster may consist of several hardware nodes, a virtualized environment, or a hybrid of both. Let&rsquo;s look at the following layout:</p><p><figure><img src=./infrastructure-layout.png alt="Infrastructure Layout" class="mx-auto my-0 rounded-md"></figure></p><p>We&rsquo;re looking at a network with CIDR <code>192.165.0.0/24</code> behind a router. This can be an existing home router connected to the ISP, or another dedicated hardware router connected to the home gateway. The general idea here is that the network address range is split into two parts: DHCP addresses that are dynamically assigned to clients connecting to the network and the reserved static address range to be used for the physical nodes and VMs. Static addressing of the nodes is important for deployment automation that is using host addresses to connect to the hosts and apply changes. This would also allow other devices to connect to services running on Kubernetes using the local network addresses. While this network setup is pretty naive for a potentially internet-facing deployment, it should be considered as a basic building block of the infrastructure that can be implemented in a variety of ways (e.g. by using VLANs).</p><p>When dealing with virtualization, it is important to take into account the overhead it brings both when running a hypervisor and when deciding on the number of virtual machines to create on a physical node. <a href=https://www.proxmox.com/en/proxmox-ve target=_blank rel=noreferrer>Proxmox VE</a> is an open-source small-footprint hypervisor that is based on Debian Linux and will be used for virtualization in this guide. One of the additional benefits it has is a Terraform provider that allows to declaratively define virtual machines based on templates and to provision them automatically.</p><h3 id=infrastructure-automation-with-proxmox-and-terraform class="relative group">Infrastructure automation with Proxmox and Terraform <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#infrastructure-automation-with-proxmox-and-terraform aria-label=Anchor>#</a></span></h3><p>When working with on-premises environments the infrastructure provisioning might be a tedious task. However, with an intermediate hypervisor layer, it is possible to achieve the same automation levels as with public cloud providers. <a href=https://registry.terraform.io/providers/Telmate/proxmox/latest/docs target=_blank rel=noreferrer>Terraform Proxmox provider</a> brings Infrastructure-as-a-Code capabilities for environments running Proxmox.</p><blockquote><p><strong>NOTE:</strong> In order to continue, Proxmox VE must be installed on the target machines. To install Proxmox VE, follow the <a href=https://www.proxmox.com/en/proxmox-ve/get-started target=_blank rel=noreferrer>official documentation</a>.</p></blockquote><p>Prior to the provisioning of the VMs themselves, it is beneficial to create a <code>cloud-init</code> template to simplify the configuration and provisioning of the future VMs. The template can be created manually on the PVE host as described in several blog posts such as <a href=https://norocketscience.at/deploy-proxmox-virtual-machines-using-cloud-init/ target=_blank rel=noreferrer>Deploy Proxmox virtual machines using cloud-init</a>, or we can use Ansible to automate this step. A working Ansible playbook with the instructions can be found at <a href=https://github.com/datastrophic/kubernetes-deployment/tree/master/proxmox/ target=_blank rel=noreferrer>datastrophic/kubernetes-deployment/proxmox/</a>.</p><p>Once the VM template is created, we can define a Terraform configuration to provision VMs. Here&rsquo;s an excerpt from <code>main.tf</code> with full instructions available at <a href=https://github.com/datastrophic/kubernetes-deployment/tree/master/proxmox/ target=_blank rel=noreferrer>datastrophic/kubernetes-deployment/proxmox/</a>:</p><pre tabindex=0><code>resource &#34;proxmox_vm_qemu&#34; &#34;control_plane&#34; {
   count             = 1
-  name              = &quot;control-plane-${count.index}.k8s.cluster&quot;
-  target_node       = &quot;${var.pm_node}&quot;
+  name              = &#34;control-plane-${count.index}.k8s.cluster&#34;
+  target_node       = &#34;${var.pm_node}&#34;
 
-  clone             = &quot;ubuntu-2004-cloudinit-template&quot;
+  clone             = &#34;ubuntu-2004-cloudinit-template&#34;
 
-  os_type           = &quot;cloud-init&quot;
+  os_type           = &#34;cloud-init&#34;
   cores             = 4
-  sockets           = &quot;1&quot;
-  cpu               = &quot;host&quot;
+  sockets           = &#34;1&#34;
+  cpu               = &#34;host&#34;
   memory            = 2048
-  scsihw            = &quot;virtio-scsi-pci&quot;
-  bootdisk          = &quot;scsi0&quot;
+  scsihw            = &#34;virtio-scsi-pci&#34;
+  bootdisk          = &#34;scsi0&#34;
 
   disk {
-    size            = &quot;20G&quot;
-    type            = &quot;scsi&quot;
-    storage         = &quot;local-lvm&quot;
+    size            = &#34;20G&#34;
+    type            = &#34;scsi&#34;
+    storage         = &#34;local-lvm&#34;
     iothread        = 1
   }
 
   network {
-    model           = &quot;virtio&quot;
-    bridge          = &quot;vmbr0&quot;
+    model           = &#34;virtio&#34;
+    bridge          = &#34;vmbr0&#34;
   }
 
   # cloud-init settings
   # adjust the ip and gateway addresses as needed
-  ipconfig0         = &quot;ip=192.168.0.11${count.index}/24,gw=192.168.0.1&quot;
-  sshkeys = file(&quot;${var.ssh_key_file}&quot;)
+  ipconfig0         = &#34;ip=192.168.0.11${count.index}/24,gw=192.168.0.1&#34;
+  sshkeys = file(&#34;${var.ssh_key_file}&#34;)
 }
-</code></pre><p>A few things in the above configuration to pay attention to:</p>
-<ul>
-<li><code>clone</code> must point to the unique name of the VM template created at the previous step</li>
-<li><code>ipconfig0</code> should respect the configuration of the network the VMs are running in. In this case, we assign VMs static IP addresses within the external (to PVE) network range so they look like regular hosts without the need for NAT routing.</li>
-</ul>
-<p>Once the configuration is adjusted for the target environment needs, it is sufficient to run terraform to get
-target VMs created:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell>terraform init
-terraform plan -var<span style=color:#ff79c6>=</span><span style=color:#f1fa8c>&#34;pm_user=&lt;PVE user&gt;&#34;</span> -var<span style=color:#ff79c6>=</span><span style=color:#f1fa8c>&#34;pm_password=&lt;PVE password&gt;&#34;</span> -out plan
-
-terraform apply <span style=color:#f1fa8c>&#34;plan&#34;</span>
-</code></pre></div><h2 id=installing-the-kubernetes-cluster-and-essentials>Installing the Kubernetes cluster and essentials</h2>
-<p>The <a href=https://landscape.cncf.io/>CNCF technology landscape</a> is broad and there&rsquo;s a lot of vendors providing solutions for various aspects of Kubernetes, and whole Kubernetes distributions themselves. A fully-functioning Kubernetes cluster requires several essential things such as container runtime, a Kubernetes distribution itself, a CNI (Container Network Interface) implementation for pod networking, a networking load balancer for exposing <code>Services</code> with <code>LoadBalancer</code> type on-premises, and a CSI (Container Storage Interface) implementation for volume provisioning.</p>
-<p>Unlike <a href=https://github.com/kelseyhightower/kubernetes-the-hard-way>&ldquo;Kubernetes the Hard Way&rdquo;</a>, this guide relies on Ansible automation for the Kubernetes deployment and just covers the high-level steps required for the Kubernetes cluster bootstrap. Under the hood, the automation is using <code>kubeadm</code> in conjunction with declarative configuration for the cluster deployment. The source code of Ansible playbooks is available at <a href=https://github.com/datastrophic/kubernetes-deployment/>github.com/datastrophic/kubernetes-deployment</a>.</p>
-<h4 id=before-you-begin>Before you begin</h4>
-<p>Prior to going forward with the installation, it is recommended to clone the <a href=https://github.com/datastrophic/kubernetes-deployment/>source code repository for this guide</a> locally and double-check and update the following files to match your environment:</p>
-<ul>
-<li>the Ansible inventory file that contains the addresses of the nodes in <a href=https://github.com/datastrophic/kubernetes-deployment/blob/master/ansible/inventory.yaml>kubernetes-deployment/ansible/inventory.yaml</a></li>
-<li>the default Ansible variables in <a href=https://github.com/datastrophic/kubernetes-deployment/blob/master/ansible/group_vars/all>kubernetes-deployment/ansible/group_vars/all</a> that contain Kubernetes version, MetalLB address range, etc.</li>
-</ul>
-<p>The client machine must have SSH access to the cluster nodes and <code>sudo</code> privileges on the target hosts.</p>
-<h3 id=kubeadm-containerd-and-calico>kubeadm, containerd, and Calico</h3>
-<p>In this guide, the Kubernetes distribution of choice is the vanilla open-source Kubernetes that comes with <a href=https://kubernetes.io/docs/reference/setup-tools/kubeadm/>kubeadm</a> tool for cluster bootstrapping. Vanilla Kubernetes has a bigger footprint compared to e.g. <a href=https://k3s.io/>k3s</a> and might not be a good fit for resource-constrained environments.
+</code></pre><p>A few things in the above configuration to pay attention to:</p><ul><li><code>clone</code> must point to the unique name of the VM template created at the previous step</li><li><code>ipconfig0</code> should respect the configuration of the network the VMs are running in. In this case, we assign VMs static IP addresses within the external (to PVE) network range so they look like regular hosts without the need for NAT routing.</li></ul><p>Once the configuration is adjusted for the target environment needs, it is sufficient to run terraform to get
+target VMs created:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>terraform init
+</span></span><span class=line><span class=cl>terraform plan -var<span class=o>=</span><span class=s2>&#34;pm_user=&lt;PVE user&gt;&#34;</span> -var<span class=o>=</span><span class=s2>&#34;pm_password=&lt;PVE password&gt;&#34;</span> -out plan
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>terraform apply <span class=s2>&#34;plan&#34;</span>
+</span></span></code></pre></div><h2 id=installing-the-kubernetes-cluster-and-essentials class="relative group">Installing the Kubernetes cluster and essentials <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#installing-the-kubernetes-cluster-and-essentials aria-label=Anchor>#</a></span></h2><p>The <a href=https://landscape.cncf.io/ target=_blank rel=noreferrer>CNCF technology landscape</a> is broad and there&rsquo;s a lot of vendors providing solutions for various aspects of Kubernetes, and whole Kubernetes distributions themselves. A fully-functioning Kubernetes cluster requires several essential things such as container runtime, a Kubernetes distribution itself, a CNI (Container Network Interface) implementation for pod networking, a networking load balancer for exposing <code>Services</code> with <code>LoadBalancer</code> type on-premises, and a CSI (Container Storage Interface) implementation for volume provisioning.</p><p>Unlike <a href=https://github.com/kelseyhightower/kubernetes-the-hard-way target=_blank rel=noreferrer>&ldquo;Kubernetes the Hard Way&rdquo;</a>, this guide relies on Ansible automation for the Kubernetes deployment and just covers the high-level steps required for the Kubernetes cluster bootstrap. Under the hood, the automation is using <code>kubeadm</code> in conjunction with declarative configuration for the cluster deployment. The source code of Ansible playbooks is available at <a href=https://github.com/datastrophic/kubernetes-deployment/ target=_blank rel=noreferrer>github.com/datastrophic/kubernetes-deployment</a>.</p><h4 id=before-you-begin class="relative group">Before you begin <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#before-you-begin aria-label=Anchor>#</a></span></h4><p>Prior to going forward with the installation, it is recommended to clone the <a href=https://github.com/datastrophic/kubernetes-deployment/ target=_blank rel=noreferrer>source code repository for this guide</a> locally and double-check and update the following files to match your environment:</p><ul><li>the Ansible inventory file that contains the addresses of the nodes in <a href=https://github.com/datastrophic/kubernetes-deployment/blob/master/ansible/inventory.yaml target=_blank rel=noreferrer>kubernetes-deployment/ansible/inventory.yaml</a></li><li>the default Ansible variables in <a href=https://github.com/datastrophic/kubernetes-deployment/blob/master/ansible/group_vars/all target=_blank rel=noreferrer>kubernetes-deployment/ansible/group_vars/all</a> that contain Kubernetes version, MetalLB address range, etc.</li></ul><p>The client machine must have SSH access to the cluster nodes and <code>sudo</code> privileges on the target hosts.</p><h3 id=kubeadm-containerd-and-calico class="relative group">kubeadm, containerd, and Calico <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#kubeadm-containerd-and-calico aria-label=Anchor>#</a></span></h3><p>In this guide, the Kubernetes distribution of choice is the vanilla open-source Kubernetes that comes with <a href=https://kubernetes.io/docs/reference/setup-tools/kubeadm/ target=_blank rel=noreferrer>kubeadm</a> tool for cluster bootstrapping. Vanilla Kubernetes has a bigger footprint compared to e.g. <a href=https://k3s.io/ target=_blank rel=noreferrer>k3s</a> and might not be a good fit for resource-constrained environments.
 However, it is vendor independent and fully open-source, doesn&rsquo;t have any modifications, and both the API changes and
-the tooling have the same release cadence so there&rsquo;s a lower risk of running into incompatibilities or delays.</p>
-<p>Prior to deploying the Kubernetes itself, the cluster nodes require additional configuration and software installed:</p>
-<ul>
-<li>Nodes must have swap disabled, iptables enabled, and allow forwarding and bridged traffic as per <a href=https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/>Bootstrapping clusters with kubeadm</a>.</li>
-<li>Nodes must have container runtime installed. The most standard container runtime used in various cloud and vendor Kubernetes distributions is containerd, so we will use it. Additional information on why we&rsquo;re not going to use Docker can be found in <a href=https://kubernetes.io/blog/2020/12/02/dont-panic-kubernetes-and-docker/>Don&rsquo;t Panic: Kubernetes and Docker</a>.</li>
-<li>Nodes must have the following packages installed: <code>kubelet</code>, <code>kubectl</code>, and <code>kubeadm</code>. These can be installed via the standard package manager such as <code>apt</code>.</li>
-</ul>
-<p>There&rsquo;s a dedicated playbook for bootstrapping the nodes with all the required configuration and dependencies available at <a href=https://github.com/datastrophic/kubernetes-deployment/blob/master/ansible/bootstrap.yaml>ansible/bootstrap.yaml</a>. Double-check the <a href=#before-you-continue>defaults</a>, and from the root of the repo run:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell>ansible-playbook -i ansible/inventory.yaml ansible/bootstrap.yaml -K
-</code></pre></div><p>Once all the prerequisites are in place, we can use <code>kubeadm</code> for the cluster bootstrapping. The Kubernetes cluster installation consists of two major steps: bootstrapping of the control plane and joining the worker nodes. We can do it by running <a href=https://github.com/datastrophic/kubernetes-deployment/blob/master/ansible/kubernetes-install.yaml>ansible/kubernetes-install.yaml</a> playbook:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell>ansible-playbook -i ansible/inventory.yaml ansible/kubernetes-install.yaml -K
-</code></pre></div><p>The playbook runs <code>kubeadm init</code> on the control plane nodes and uses a declarative cluster configuration which is the <a href=https://pkg.go.dev/k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta2>preferred way of configuring kubeadm</a>. The configuration template is available at <a href=https://github.com/datastrophic/kubernetes-deployment/blob/master/ansible/roles/kubeadm-init/templates/kubeadm.yaml>ansible/roles/kubeadm-init/templates/kubeadm.yaml</a>. Once the control plane bootstrap is complete, Ansible fetches a token and a certificate hash that are required for the worker nodes to authenticate with the API Server and runs <code>kubeadm join</code> on the worker nodes.</p>
-<p>The playbook also deploys <a href=https://www.tigera.io/project-calico/>Calico</a> for cluster networking although <a href=https://kubernetes.io/docs/concepts/cluster-administration/networking/>multiple options are available</a>. The choice of Calico is motivated by it being the most widely adopted networking and security solution for Kubernetes (at the moment of writing).</p>
-<p>Once the playbook execution completes, a kubeconfig file <code>admin.conf</code> will be fetched to the current directory. To verify the cluster is bootstrapped and connected, run:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell>$&gt; kubectl --kubeconfig<span style=color:#ff79c6>=</span>admin.conf get nodes
-NAME                          STATUS   ROLES                  AGE     VERSION
-control-plane-0.k8s.cluster   Ready    control-plane,master   4m40s   v1.21.6
-worker-0                      Ready    &lt;none&gt;                 4m5s    v1.21.6
-worker-1                      Ready    &lt;none&gt;                 4m5s    v1.21.6
-worker-2                      Ready    &lt;none&gt;                 4m4s    v1.21.6
-</code></pre></div><blockquote>
-<p>NOTE: it is recommended to export <code>admin.conf</code> location to run <code>kubectl</code> commands without providing <code>--kubeconfig</code> flag every time:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=color:#8be9fd;font-style:italic>export</span> <span style=color:#8be9fd;font-style:italic>KUBECONFIG</span><span style=color:#ff79c6>=</span><span style=color:#ff79c6>$(</span><span style=color:#8be9fd;font-style:italic>pwd</span><span style=color:#ff79c6>)</span>/admin.conf
-</code></pre></div></blockquote>
-<h3 id=essential-software>Essential software</h3>
-<p>With the Kubernetes cluster up and running we now can deploy and run containers on it. However, a couple of essential parts of the fully-functional cluster are still missing: the dynamic volume provisioning and the support for <code>Services</code> with <code>LoadBalancer</code> type.</p>
-<h4 id=volume-provisioning-with-openebs>Volume Provisioning with OpenEBS</h4>
-<p>The volume provisioner solution comes in handy in both the situations when 3rd-party applications require a default <code>StorageClass</code> to provision <code>PersistentVolumes</code> and also when data replication is required for high availability guarantees.</p>
-<p>Using <a href=https://openebs.io/>OpenEBS</a> for the home lab setup seems reasonable as it provides <a href=https://openebs.io/docs/concepts/casengines#local-engines>Local Engines</a> for provisioning <code>PersistentVolumes</code> backed directly by the local disks on hosts that should make the IO pretty fast. If data replication is required, OpenEBS has several <a href=https://openebs.io/docs/concepts/casengines#replicated-engines>Replicated Engines</a> but the performance of those varies.</p>
-<p>Another alternative considered was <a href=https://rook.io/>Rook</a> that provides <a href=https://rook.io/docs/rook/v1.7/quickstart.html>multiple file access APIs</a> such as block, shared file system, and object store; and also has several options for the backend storage. The main user-facing advantage of Rook for home lab purposes was the out-of-the-box support for RWX (<code>ReadWriteMany</code>) volumes. However, OpenEBS with its local <code>PersistentVolumes</code> looked like a lighter and simpler alternative compared to the Ceph-backed Rook even with the lack of RWX.</p>
-<p>To deploy a minimal installation with host-local <code>PersistentVolumes</code>, OpenEBS provides a &ldquo;lite&rdquo; version:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell>kubectl apply -f https://openebs.github.io/charts/openebs-operator-lite.yaml
-</code></pre></div><p>Once the Operator is installed, create a <code>StorageClass</code> and annotate it as <strong>default</strong>. This would allow using OpenEBS for volume provisioning without the need to specify the <code>StorageClass</code> for <code>PersistentVolumes</code> every time:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell>kubectl apply -f - <span style=color:#f1fa8c>&lt;&lt;EOF
-</span><span style=color:#f1fa8c>apiVersion: storage.k8s.io/v1
-</span><span style=color:#f1fa8c>kind: StorageClass
-</span><span style=color:#f1fa8c>metadata:
-</span><span style=color:#f1fa8c>  name: openebs-hostpath
-</span><span style=color:#f1fa8c>  annotations:
-</span><span style=color:#f1fa8c>    storageclass.kubernetes.io/is-default-class: &#34;true&#34;
-</span><span style=color:#f1fa8c>    openebs.io/cas-type: local
-</span><span style=color:#f1fa8c>    cas.openebs.io/config: |
-</span><span style=color:#f1fa8c>      - name: StorageType
-</span><span style=color:#f1fa8c>        value: &#34;hostpath&#34;
-</span><span style=color:#f1fa8c>      - name: BasePath
-</span><span style=color:#f1fa8c>        value: &#34;/var/openebs/local/&#34;
-</span><span style=color:#f1fa8c>provisioner: openebs.io/local
-</span><span style=color:#f1fa8c>volumeBindingMode: WaitForFirstConsumer
-</span><span style=color:#f1fa8c>reclaimPolicy: Delete
-</span><span style=color:#f1fa8c>EOF</span>
-</code></pre></div><p>To verify the installation, there are steps available in the official <a href=https://openebs.io/docs/user-guides/localpv-hostpath#install-verification>OpenEBS documentation</a> but there is also an end-to-end example available at the end of this guide.</p>
-<h4 id=a-network-load-balancer-with-metallb>A Network Load Balancer with MetalLB</h4>
-<p>One last missing piece of functionality in the provisioned cluster is the ability to expose <code>Services</code> of the <code>LoadBalancer</code> type to the local network. When running in the cloud, this functionality is provided by the Kubernetes integrations with cloud providers and corresponding network-facing load balancers are provisioned by using the infrastructure provider. When running on bare metal, there&rsquo;s no such integration available in Kubernetes out-of-the-box.</p>
-<p><a href=https://metallb.universe.tf/>MetalLB</a> is the most widely used solution for network load balancing, however <a href=https://medium.com/thermokline/comparing-k8s-load-balancers-2f5c76ea8f31>other solutions started to appear</a>.</p>
-<p>MetalLB installation is configured via a <code>ConfigMap</code> and can contain multiple address pools:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=color:#ff79c6>apiVersion</span>: v1
-<span style=color:#ff79c6>kind</span>: ConfigMap
-<span style=color:#ff79c6>metadata</span>:
-  <span style=color:#ff79c6>namespace</span>: metallb-system
-  <span style=color:#ff79c6>name</span>: config
-<span style=color:#ff79c6>data</span>:
-  <span style=color:#ff79c6>config</span>: |<span style=color:#f1fa8c>
-</span><span style=color:#f1fa8c>    address-pools:
-</span><span style=color:#f1fa8c>    - name: default
-</span><span style=color:#f1fa8c>      protocol: layer2
-</span><span style=color:#f1fa8c>      addresses:
-</span><span style=color:#f1fa8c>      - &#34;{{ lab.metallb_address_range }}&#34;</span>    
-</code></pre></div><p>The template above is a part of the Ansible <a href=https://github.com/datastrophic/kubernetes-deployment/blob/master/ansible/roles/metallb/templates/metallb-config.yaml>ansible/metallb.yaml</a> playbook that installs the MetalLB and configures it to allocate addresses from the <code>lab.metallb_address_range</code> variable specified in the <code>group_vars</code>. The address range must be relevant for the target environment (part of the reserved static address range described in the <a href=#deployment-layout>deployment layout section</a> so that the addresses can be allocated. To install MetalLB, run:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell>ansible-playbook -i ansible/inventory.yaml ansible/metallb.yaml -K
-</code></pre></div><h2 id=verifying-the-installation>Verifying the installation</h2>
-<p>To verify the installation, we are going to create a <a href=https://min.io/>MinIO</a> <code>Deployment</code> with a <code>PersistentVolume</code> for storage, and expose the deployment to the local network via the <code>LoadBalancer</code> <code>Service</code> type. The example is based on the <a href=https://github.com/kubernetes/examples/tree/master/staging/storage/minio>Kubernetes storage examples</a>.</p>
-<ol>
-<li>Create a <code>PersistentVolumeClaim</code>:
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell>kubectl apply -f - <span style=color:#f1fa8c>&lt;&lt;EOF
-</span><span style=color:#f1fa8c>apiVersion: v1
-</span><span style=color:#f1fa8c>kind: PersistentVolumeClaim
-</span><span style=color:#f1fa8c>metadata:
-</span><span style=color:#f1fa8c>  name: minio-pv-claim
-</span><span style=color:#f1fa8c>spec:
-</span><span style=color:#f1fa8c>  accessModes:
-</span><span style=color:#f1fa8c>    - ReadWriteOnce
-</span><span style=color:#f1fa8c>  resources:
-</span><span style=color:#f1fa8c>    requests:
-</span><span style=color:#f1fa8c>      storage: 1Gi
-</span><span style=color:#f1fa8c>EOF</span>
-</code></pre></div></li>
-<li>Create a <code>Deployment</code>:
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell>kubectl apply -f - <span style=color:#f1fa8c>&lt;&lt;EOF
-</span><span style=color:#f1fa8c>apiVersion: apps/v1
-</span><span style=color:#f1fa8c>kind: Deployment
-</span><span style=color:#f1fa8c>metadata:
-</span><span style=color:#f1fa8c>  name: minio-deployment
-</span><span style=color:#f1fa8c>spec:
-</span><span style=color:#f1fa8c>  selector:
-</span><span style=color:#f1fa8c>    matchLabels:
-</span><span style=color:#f1fa8c>      app: minio
-</span><span style=color:#f1fa8c>  strategy:
-</span><span style=color:#f1fa8c>    type: Recreate
-</span><span style=color:#f1fa8c>  template:
-</span><span style=color:#f1fa8c>    metadata:
-</span><span style=color:#f1fa8c>      labels:
-</span><span style=color:#f1fa8c>        app: minio
-</span><span style=color:#f1fa8c>    spec:
-</span><span style=color:#f1fa8c>      volumes:
-</span><span style=color:#f1fa8c>      - name: storage
-</span><span style=color:#f1fa8c>        persistentVolumeClaim:
-</span><span style=color:#f1fa8c>          claimName: minio-pv-claim
-</span><span style=color:#f1fa8c>      containers:
-</span><span style=color:#f1fa8c>      - name: minio
-</span><span style=color:#f1fa8c>        image: minio/minio:latest
-</span><span style=color:#f1fa8c>        args:
-</span><span style=color:#f1fa8c>        - server
-</span><span style=color:#f1fa8c>        - /storage
-</span><span style=color:#f1fa8c>        - --console-address
-</span><span style=color:#f1fa8c>        - &#34;:9001&#34;
-</span><span style=color:#f1fa8c>        env:
-</span><span style=color:#f1fa8c>        - name: MINIO_ACCESS_KEY
-</span><span style=color:#f1fa8c>          value: &#34;minio&#34;
-</span><span style=color:#f1fa8c>        - name: MINIO_SECRET_KEY
-</span><span style=color:#f1fa8c>          value: &#34;minio123&#34;
-</span><span style=color:#f1fa8c>        ports:
-</span><span style=color:#f1fa8c>        - containerPort: 9000
-</span><span style=color:#f1fa8c>          hostPort: 9000
-</span><span style=color:#f1fa8c>        - containerPort: 9001
-</span><span style=color:#f1fa8c>          hostPort: 9001
-</span><span style=color:#f1fa8c>        volumeMounts:
-</span><span style=color:#f1fa8c>        - name: storage
-</span><span style=color:#f1fa8c>          mountPath: &#34;/storage&#34;
-</span><span style=color:#f1fa8c>EOF</span>
-</code></pre></div></li>
-<li>Verify the <code>PersistentVolumeClaim</code> is bound and a <code>PersistentVolume</code> is created:
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell>kubectl get pvc
-
-NAME             STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS       AGE
-minio-pv-claim   Bound    pvc-f43856ab-d0a2-42d3-8088-3010f7966ab9   1Gi        RWO            openebs-hostpath   77s
-
-
-kubectl get pv
-
-NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM                  STORAGECLASS       REASON   AGE
-pvc-f43856ab-d0a2-42d3-8088-3010f7966ab9   1Gi        RWO            Delete           Bound    minio/minio-pv-claim   openebs-hostpath            2m42s
-</code></pre></div></li>
-<li>Verify the <code>Deployment</code> is healthy:
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell>kubectl describe deployment minio-deployment
-
-...
-Conditions:
-  Type           Status  Reason
-  ----           ------  ------
-  Available      True    MinimumReplicasAvailable
-  Progressing    True    NewReplicaSetAvailable
-OldReplicaSets:  &lt;none&gt;
-NewReplicaSet:   minio-deployment-877b8596f <span style=color:#ff79c6>(</span>1/1 replicas created<span style=color:#ff79c6>)</span>
-Events:
-  Type    Reason             Age   From                   Message
-  ----    ------             ----  ----                   -------
-  Normal  ScalingReplicaSet  7m4s  deployment-controller  Scaled up replica <span style=color:#8be9fd;font-style:italic>set</span> minio-deployment-877b8596f to <span style=color:#bd93f9>1</span>
-</code></pre></div></li>
-<li>Expose the <code>Deployment</code> via a <code>Service</code> of the <code>LoadBalancer</code> type:
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell>kubectl apply -f - <span style=color:#f1fa8c>&lt;&lt;EOF
-</span><span style=color:#f1fa8c>apiVersion: v1
-</span><span style=color:#f1fa8c>kind: Service
-</span><span style=color:#f1fa8c>metadata:
-</span><span style=color:#f1fa8c>  name: minio
-</span><span style=color:#f1fa8c>spec:
-</span><span style=color:#f1fa8c>  ports:
-</span><span style=color:#f1fa8c>  - name: http
-</span><span style=color:#f1fa8c>    port: 9000
-</span><span style=color:#f1fa8c>    protocol: TCP
-</span><span style=color:#f1fa8c>    targetPort: 9000
-</span><span style=color:#f1fa8c>  - name: http-ui
-</span><span style=color:#f1fa8c>    port: 9001
-</span><span style=color:#f1fa8c>    protocol: TCP
-</span><span style=color:#f1fa8c>    targetPort: 9001
-</span><span style=color:#f1fa8c>  selector:
-</span><span style=color:#f1fa8c>    app: minio
-</span><span style=color:#f1fa8c>  type: LoadBalancer
-</span><span style=color:#f1fa8c>EOF</span>
-</code></pre></div></li>
-<li>Verify the <code>Service</code> is created and has the External IP set. For example:
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell>kubectl get service minio
-NAME    TYPE           CLUSTER-IP       EXTERNAL-IP      PORT<span style=color:#ff79c6>(</span>S<span style=color:#ff79c6>)</span>          AGE
-minio   LoadBalancer   10.109.223.141   192.168.0.151   9000:31073/TCP   7s
-</code></pre></div></li>
-</ol>
-<p>The <code>EXTERNAL-IP</code> address should be from the local network range, and now, you should be able to navigate to <a href=http://EXTERNAL-IP:9001>http://EXTERNAL-IP:9001</a> from a browser and see the MinIO Console login screen.</p>
-<p>
-<img src=/blog/2021-12-01/minio-login-screen.png alt="MinIO Login Screen">
-</p>
-<p>The default credentials are specified in the MinIO <code>Deployment</code> are <code>minio</code> and <code>minio123</code> for login and password correspondingly. After the login, create a bucket named <code>test</code>, and let&rsquo;s verify it is created on the <code>PersistentVolume</code>:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell>kubectl <span style=color:#8be9fd;font-style:italic>exec</span> deploy/minio-deployment -- bash -c <span style=color:#f1fa8c>&#34;ls -la /storage&#34;</span>
-
-total <span style=color:#bd93f9>16</span>
-drwxrwxrwx <span style=color:#bd93f9>4</span> root root <span style=color:#bd93f9>4096</span> Dec  <span style=color:#bd93f9>1</span> 19:04 .
-drwxr-xr-x <span style=color:#bd93f9>1</span> root root <span style=color:#bd93f9>4096</span> Dec  <span style=color:#bd93f9>1</span> 19:00 ..
-drwxr-xr-x <span style=color:#bd93f9>6</span> root root <span style=color:#bd93f9>4096</span> Dec  <span style=color:#bd93f9>1</span> 18:39 .minio.sys
-drwxr-xr-x <span style=color:#bd93f9>2</span> root root <span style=color:#bd93f9>4096</span> Dec  <span style=color:#bd93f9>1</span> 19:04 <span style=color:#8be9fd;font-style:italic>test</span>
-</code></pre></div><p>That wraps the verification: <code>test</code> folder created from the UI exposed to the local network was saved on the <code>PersistentVolume</code> mounted at <code>/storage</code> path.</p>
-<h2 id=observability>Observability</h2>
-<p>The final important piece of any permanent cluster is the observability stack. Depending on your cluster size,
-it could be just an instance of the <a href=https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/>Kubernetes Dashboard</a> or the <a href=https://prometheus-operator.dev/>Prometheus Operator</a>. This guide focuses
+the tooling have the same release cadence so there&rsquo;s a lower risk of running into incompatibilities or delays.</p><p>Prior to deploying the Kubernetes itself, the cluster nodes require additional configuration and software installed:</p><ul><li>Nodes must have swap disabled, iptables enabled, and allow forwarding and bridged traffic as per <a href=https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/ target=_blank rel=noreferrer>Bootstrapping clusters with kubeadm</a>.</li><li>Nodes must have container runtime installed. The most standard container runtime used in various cloud and vendor Kubernetes distributions is containerd, so we will use it. Additional information on why we&rsquo;re not going to use Docker can be found in <a href=https://kubernetes.io/blog/2020/12/02/dont-panic-kubernetes-and-docker/ target=_blank rel=noreferrer>Don&rsquo;t Panic: Kubernetes and Docker</a>.</li><li>Nodes must have the following packages installed: <code>kubelet</code>, <code>kubectl</code>, and <code>kubeadm</code>. These can be installed via the standard package manager such as <code>apt</code>.</li></ul><p>There&rsquo;s a dedicated playbook for bootstrapping the nodes with all the required configuration and dependencies available at <a href=https://github.com/datastrophic/kubernetes-deployment/blob/master/ansible/bootstrap.yaml target=_blank rel=noreferrer>ansible/bootstrap.yaml</a>. Double-check the <a href=#before-you-continue>defaults</a>, and from the root of the repo run:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>ansible-playbook -i ansible/inventory.yaml ansible/bootstrap.yaml -K
+</span></span></code></pre></div><p>Once all the prerequisites are in place, we can use <code>kubeadm</code> for the cluster bootstrapping. The Kubernetes cluster installation consists of two major steps: bootstrapping of the control plane and joining the worker nodes. We can do it by running <a href=https://github.com/datastrophic/kubernetes-deployment/blob/master/ansible/kubernetes-install.yaml target=_blank rel=noreferrer>ansible/kubernetes-install.yaml</a> playbook:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>ansible-playbook -i ansible/inventory.yaml ansible/kubernetes-install.yaml -K
+</span></span></code></pre></div><p>The playbook runs <code>kubeadm init</code> on the control plane nodes and uses a declarative cluster configuration which is the <a href=https://pkg.go.dev/k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta2 target=_blank rel=noreferrer>preferred way of configuring kubeadm</a>. The configuration template is available at <a href=https://github.com/datastrophic/kubernetes-deployment/blob/master/ansible/roles/kubeadm-init/templates/kubeadm.yaml target=_blank rel=noreferrer>ansible/roles/kubeadm-init/templates/kubeadm.yaml</a>. Once the control plane bootstrap is complete, Ansible fetches a token and a certificate hash that are required for the worker nodes to authenticate with the API Server and runs <code>kubeadm join</code> on the worker nodes.</p><p>The playbook also deploys <a href=https://www.tigera.io/project-calico/ target=_blank rel=noreferrer>Calico</a> for cluster networking although <a href=https://kubernetes.io/docs/concepts/cluster-administration/networking/ target=_blank rel=noreferrer>multiple options are available</a>. The choice of Calico is motivated by it being the most widely adopted networking and security solution for Kubernetes (at the moment of writing).</p><p>Once the playbook execution completes, a kubeconfig file <code>admin.conf</code> will be fetched to the current directory. To verify the cluster is bootstrapped and connected, run:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>$&gt; kubectl --kubeconfig<span class=o>=</span>admin.conf get nodes
+</span></span><span class=line><span class=cl>NAME                          STATUS   ROLES                  AGE     VERSION
+</span></span><span class=line><span class=cl>control-plane-0.k8s.cluster   Ready    control-plane,master   4m40s   v1.21.6
+</span></span><span class=line><span class=cl>worker-0                      Ready    &lt;none&gt;                 4m5s    v1.21.6
+</span></span><span class=line><span class=cl>worker-1                      Ready    &lt;none&gt;                 4m5s    v1.21.6
+</span></span><span class=line><span class=cl>worker-2                      Ready    &lt;none&gt;                 4m4s    v1.21.6
+</span></span></code></pre></div><blockquote><p>NOTE: it is recommended to export <code>admin.conf</code> location to run <code>kubectl</code> commands without providing <code>--kubeconfig</code> flag every time:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl><span class=nb>export</span> <span class=nv>KUBECONFIG</span><span class=o>=</span><span class=k>$(</span><span class=nb>pwd</span><span class=k>)</span>/admin.conf
+</span></span></code></pre></div></blockquote><h3 id=essential-software class="relative group">Essential software <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#essential-software aria-label=Anchor>#</a></span></h3><p>With the Kubernetes cluster up and running we now can deploy and run containers on it. However, a couple of essential parts of the fully-functional cluster are still missing: the dynamic volume provisioning and the support for <code>Services</code> with <code>LoadBalancer</code> type.</p><h4 id=volume-provisioning-with-openebs class="relative group">Volume Provisioning with OpenEBS <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#volume-provisioning-with-openebs aria-label=Anchor>#</a></span></h4><p>The volume provisioner solution comes in handy in both the situations when 3rd-party applications require a default <code>StorageClass</code> to provision <code>PersistentVolumes</code> and also when data replication is required for high availability guarantees.</p><p>Using <a href=https://openebs.io/ target=_blank rel=noreferrer>OpenEBS</a> for the home lab setup seems reasonable as it provides <a href=https://openebs.io/docs/concepts/casengines#local-engines target=_blank rel=noreferrer>Local Engines</a> for provisioning <code>PersistentVolumes</code> backed directly by the local disks on hosts that should make the IO pretty fast. If data replication is required, OpenEBS has several <a href=https://openebs.io/docs/concepts/casengines#replicated-engines target=_blank rel=noreferrer>Replicated Engines</a> but the performance of those varies.</p><p>Another alternative considered was <a href=https://rook.io/ target=_blank rel=noreferrer>Rook</a> that provides <a href=https://rook.io/docs/rook/v1.7/quickstart.html target=_blank rel=noreferrer>multiple file access APIs</a> such as block, shared file system, and object store; and also has several options for the backend storage. The main user-facing advantage of Rook for home lab purposes was the out-of-the-box support for RWX (<code>ReadWriteMany</code>) volumes. However, OpenEBS with its local <code>PersistentVolumes</code> looked like a lighter and simpler alternative compared to the Ceph-backed Rook even with the lack of RWX.</p><p>To deploy a minimal installation with host-local <code>PersistentVolumes</code>, OpenEBS provides a &ldquo;lite&rdquo; version:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>kubectl apply -f https://openebs.github.io/charts/openebs-operator-lite.yaml
+</span></span></code></pre></div><p>Once the Operator is installed, create a <code>StorageClass</code> and annotate it as <strong>default</strong>. This would allow using OpenEBS for volume provisioning without the need to specify the <code>StorageClass</code> for <code>PersistentVolumes</code> every time:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>kubectl apply -f - <span class=s>&lt;&lt;EOF
+</span></span></span><span class=line><span class=cl><span class=s>apiVersion: storage.k8s.io/v1
+</span></span></span><span class=line><span class=cl><span class=s>kind: StorageClass
+</span></span></span><span class=line><span class=cl><span class=s>metadata:
+</span></span></span><span class=line><span class=cl><span class=s>  name: openebs-hostpath
+</span></span></span><span class=line><span class=cl><span class=s>  annotations:
+</span></span></span><span class=line><span class=cl><span class=s>    storageclass.kubernetes.io/is-default-class: &#34;true&#34;
+</span></span></span><span class=line><span class=cl><span class=s>    openebs.io/cas-type: local
+</span></span></span><span class=line><span class=cl><span class=s>    cas.openebs.io/config: |
+</span></span></span><span class=line><span class=cl><span class=s>      - name: StorageType
+</span></span></span><span class=line><span class=cl><span class=s>        value: &#34;hostpath&#34;
+</span></span></span><span class=line><span class=cl><span class=s>      - name: BasePath
+</span></span></span><span class=line><span class=cl><span class=s>        value: &#34;/var/openebs/local/&#34;
+</span></span></span><span class=line><span class=cl><span class=s>provisioner: openebs.io/local
+</span></span></span><span class=line><span class=cl><span class=s>volumeBindingMode: WaitForFirstConsumer
+</span></span></span><span class=line><span class=cl><span class=s>reclaimPolicy: Delete
+</span></span></span><span class=line><span class=cl><span class=s>EOF</span>
+</span></span></code></pre></div><p>To verify the installation, there are steps available in the official <a href=https://openebs.io/docs/user-guides/localpv-hostpath#install-verification target=_blank rel=noreferrer>OpenEBS documentation</a> but there is also an end-to-end example available at the end of this guide.</p><h4 id=a-network-load-balancer-with-metallb class="relative group">A Network Load Balancer with MetalLB <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#a-network-load-balancer-with-metallb aria-label=Anchor>#</a></span></h4><p>One last missing piece of functionality in the provisioned cluster is the ability to expose <code>Services</code> of the <code>LoadBalancer</code> type to the local network. When running in the cloud, this functionality is provided by the Kubernetes integrations with cloud providers and corresponding network-facing load balancers are provisioned by using the infrastructure provider. When running on bare metal, there&rsquo;s no such integration available in Kubernetes out-of-the-box.</p><p><a href=https://metallb.universe.tf/ target=_blank rel=noreferrer>MetalLB</a> is the most widely used solution for network load balancing, however <a href=https://medium.com/thermokline/comparing-k8s-load-balancers-2f5c76ea8f31 target=_blank rel=noreferrer>other solutions started to appear</a>.</p><p>MetalLB installation is configured via a <code>ConfigMap</code> and can contain multiple address pools:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=line><span class=cl><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>ConfigMap</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>namespace</span><span class=p>:</span><span class=w> </span><span class=l>metallb-system</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>config</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>data</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>config</span><span class=p>:</span><span class=w> </span><span class=p>|</span><span class=sd>
+</span></span></span><span class=line><span class=cl><span class=sd>    address-pools:
+</span></span></span><span class=line><span class=cl><span class=sd>    - name: default
+</span></span></span><span class=line><span class=cl><span class=sd>      protocol: layer2
+</span></span></span><span class=line><span class=cl><span class=sd>      addresses:
+</span></span></span><span class=line><span class=cl><span class=sd>      - &#34;{{ lab.metallb_address_range }}&#34;</span><span class=w>
+</span></span></span></code></pre></div><p>The template above is a part of the Ansible <a href=https://github.com/datastrophic/kubernetes-deployment/blob/master/ansible/roles/metallb/templates/metallb-config.yaml target=_blank rel=noreferrer>ansible/metallb.yaml</a> playbook that installs the MetalLB and configures it to allocate addresses from the <code>lab.metallb_address_range</code> variable specified in the <code>group_vars</code>. The address range must be relevant for the target environment (part of the reserved static address range described in the <a href=#deployment-layout>deployment layout section</a> so that the addresses can be allocated. To install MetalLB, run:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>ansible-playbook -i ansible/inventory.yaml ansible/metallb.yaml -K
+</span></span></code></pre></div><h2 id=verifying-the-installation class="relative group">Verifying the installation <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#verifying-the-installation aria-label=Anchor>#</a></span></h2><p>To verify the installation, we are going to create a <a href=https://min.io/ target=_blank rel=noreferrer>MinIO</a> <code>Deployment</code> with a <code>PersistentVolume</code> for storage, and expose the deployment to the local network via the <code>LoadBalancer</code> <code>Service</code> type. The example is based on the <a href=https://github.com/kubernetes/examples/tree/master/staging/storage/minio target=_blank rel=noreferrer>Kubernetes storage examples</a>.</p><ol><li>Create a <code>PersistentVolumeClaim</code>:<div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>kubectl apply -f - <span class=s>&lt;&lt;EOF
+</span></span></span><span class=line><span class=cl><span class=s>apiVersion: v1
+</span></span></span><span class=line><span class=cl><span class=s>kind: PersistentVolumeClaim
+</span></span></span><span class=line><span class=cl><span class=s>metadata:
+</span></span></span><span class=line><span class=cl><span class=s>  name: minio-pv-claim
+</span></span></span><span class=line><span class=cl><span class=s>spec:
+</span></span></span><span class=line><span class=cl><span class=s>  accessModes:
+</span></span></span><span class=line><span class=cl><span class=s>    - ReadWriteOnce
+</span></span></span><span class=line><span class=cl><span class=s>  resources:
+</span></span></span><span class=line><span class=cl><span class=s>    requests:
+</span></span></span><span class=line><span class=cl><span class=s>      storage: 1Gi
+</span></span></span><span class=line><span class=cl><span class=s>EOF</span>
+</span></span></code></pre></div></li><li>Create a <code>Deployment</code>:<div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>kubectl apply -f - <span class=s>&lt;&lt;EOF
+</span></span></span><span class=line><span class=cl><span class=s>apiVersion: apps/v1
+</span></span></span><span class=line><span class=cl><span class=s>kind: Deployment
+</span></span></span><span class=line><span class=cl><span class=s>metadata:
+</span></span></span><span class=line><span class=cl><span class=s>  name: minio-deployment
+</span></span></span><span class=line><span class=cl><span class=s>spec:
+</span></span></span><span class=line><span class=cl><span class=s>  selector:
+</span></span></span><span class=line><span class=cl><span class=s>    matchLabels:
+</span></span></span><span class=line><span class=cl><span class=s>      app: minio
+</span></span></span><span class=line><span class=cl><span class=s>  strategy:
+</span></span></span><span class=line><span class=cl><span class=s>    type: Recreate
+</span></span></span><span class=line><span class=cl><span class=s>  template:
+</span></span></span><span class=line><span class=cl><span class=s>    metadata:
+</span></span></span><span class=line><span class=cl><span class=s>      labels:
+</span></span></span><span class=line><span class=cl><span class=s>        app: minio
+</span></span></span><span class=line><span class=cl><span class=s>    spec:
+</span></span></span><span class=line><span class=cl><span class=s>      volumes:
+</span></span></span><span class=line><span class=cl><span class=s>      - name: storage
+</span></span></span><span class=line><span class=cl><span class=s>        persistentVolumeClaim:
+</span></span></span><span class=line><span class=cl><span class=s>          claimName: minio-pv-claim
+</span></span></span><span class=line><span class=cl><span class=s>      containers:
+</span></span></span><span class=line><span class=cl><span class=s>      - name: minio
+</span></span></span><span class=line><span class=cl><span class=s>        image: minio/minio:latest
+</span></span></span><span class=line><span class=cl><span class=s>        args:
+</span></span></span><span class=line><span class=cl><span class=s>        - server
+</span></span></span><span class=line><span class=cl><span class=s>        - /storage
+</span></span></span><span class=line><span class=cl><span class=s>        - --console-address
+</span></span></span><span class=line><span class=cl><span class=s>        - &#34;:9001&#34;
+</span></span></span><span class=line><span class=cl><span class=s>        env:
+</span></span></span><span class=line><span class=cl><span class=s>        - name: MINIO_ACCESS_KEY
+</span></span></span><span class=line><span class=cl><span class=s>          value: &#34;minio&#34;
+</span></span></span><span class=line><span class=cl><span class=s>        - name: MINIO_SECRET_KEY
+</span></span></span><span class=line><span class=cl><span class=s>          value: &#34;minio123&#34;
+</span></span></span><span class=line><span class=cl><span class=s>        ports:
+</span></span></span><span class=line><span class=cl><span class=s>        - containerPort: 9000
+</span></span></span><span class=line><span class=cl><span class=s>          hostPort: 9000
+</span></span></span><span class=line><span class=cl><span class=s>        - containerPort: 9001
+</span></span></span><span class=line><span class=cl><span class=s>          hostPort: 9001
+</span></span></span><span class=line><span class=cl><span class=s>        volumeMounts:
+</span></span></span><span class=line><span class=cl><span class=s>        - name: storage
+</span></span></span><span class=line><span class=cl><span class=s>          mountPath: &#34;/storage&#34;
+</span></span></span><span class=line><span class=cl><span class=s>EOF</span>
+</span></span></code></pre></div></li><li>Verify the <code>PersistentVolumeClaim</code> is bound and a <code>PersistentVolume</code> is created:<div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>kubectl get pvc
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>NAME             STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS       AGE
+</span></span><span class=line><span class=cl>minio-pv-claim   Bound    pvc-f43856ab-d0a2-42d3-8088-3010f7966ab9   1Gi        RWO            openebs-hostpath   77s
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>kubectl get pv
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM                  STORAGECLASS       REASON   AGE
+</span></span><span class=line><span class=cl>pvc-f43856ab-d0a2-42d3-8088-3010f7966ab9   1Gi        RWO            Delete           Bound    minio/minio-pv-claim   openebs-hostpath            2m42s
+</span></span></code></pre></div></li><li>Verify the <code>Deployment</code> is healthy:<div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>kubectl describe deployment minio-deployment
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>...
+</span></span><span class=line><span class=cl>Conditions:
+</span></span><span class=line><span class=cl>  Type           Status  Reason
+</span></span><span class=line><span class=cl>  ----           ------  ------
+</span></span><span class=line><span class=cl>  Available      True    MinimumReplicasAvailable
+</span></span><span class=line><span class=cl>  Progressing    True    NewReplicaSetAvailable
+</span></span><span class=line><span class=cl>OldReplicaSets:  &lt;none&gt;
+</span></span><span class=line><span class=cl>NewReplicaSet:   minio-deployment-877b8596f <span class=o>(</span>1/1 replicas created<span class=o>)</span>
+</span></span><span class=line><span class=cl>Events:
+</span></span><span class=line><span class=cl>  Type    Reason             Age   From                   Message
+</span></span><span class=line><span class=cl>  ----    ------             ----  ----                   -------
+</span></span><span class=line><span class=cl>  Normal  ScalingReplicaSet  7m4s  deployment-controller  Scaled up replica <span class=nb>set</span> minio-deployment-877b8596f to <span class=m>1</span>
+</span></span></code></pre></div></li><li>Expose the <code>Deployment</code> via a <code>Service</code> of the <code>LoadBalancer</code> type:<div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>kubectl apply -f - <span class=s>&lt;&lt;EOF
+</span></span></span><span class=line><span class=cl><span class=s>apiVersion: v1
+</span></span></span><span class=line><span class=cl><span class=s>kind: Service
+</span></span></span><span class=line><span class=cl><span class=s>metadata:
+</span></span></span><span class=line><span class=cl><span class=s>  name: minio
+</span></span></span><span class=line><span class=cl><span class=s>spec:
+</span></span></span><span class=line><span class=cl><span class=s>  ports:
+</span></span></span><span class=line><span class=cl><span class=s>  - name: http
+</span></span></span><span class=line><span class=cl><span class=s>    port: 9000
+</span></span></span><span class=line><span class=cl><span class=s>    protocol: TCP
+</span></span></span><span class=line><span class=cl><span class=s>    targetPort: 9000
+</span></span></span><span class=line><span class=cl><span class=s>  - name: http-ui
+</span></span></span><span class=line><span class=cl><span class=s>    port: 9001
+</span></span></span><span class=line><span class=cl><span class=s>    protocol: TCP
+</span></span></span><span class=line><span class=cl><span class=s>    targetPort: 9001
+</span></span></span><span class=line><span class=cl><span class=s>  selector:
+</span></span></span><span class=line><span class=cl><span class=s>    app: minio
+</span></span></span><span class=line><span class=cl><span class=s>  type: LoadBalancer
+</span></span></span><span class=line><span class=cl><span class=s>EOF</span>
+</span></span></code></pre></div></li><li>Verify the <code>Service</code> is created and has the External IP set. For example:<div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>kubectl get service minio
+</span></span><span class=line><span class=cl>NAME    TYPE           CLUSTER-IP       EXTERNAL-IP      PORT<span class=o>(</span>S<span class=o>)</span>          AGE
+</span></span><span class=line><span class=cl>minio   LoadBalancer   10.109.223.141   192.168.0.151   9000:31073/TCP   7s
+</span></span></code></pre></div></li></ol><p>The <code>EXTERNAL-IP</code> address should be from the local network range, and now, you should be able to navigate to <a href=http://EXTERNAL-IP:9001 target=_blank rel=noreferrer>http://EXTERNAL-IP:9001</a> from a browser and see the MinIO Console login screen.</p><p><figure><img src=./minio-login-screen.png alt="MinIO Login Screen" class="mx-auto my-0 rounded-md"></figure></p><p>The default credentials are specified in the MinIO <code>Deployment</code> are <code>minio</code> and <code>minio123</code> for login and password correspondingly. After the login, create a bucket named <code>test</code>, and let&rsquo;s verify it is created on the <code>PersistentVolume</code>:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>kubectl <span class=nb>exec</span> deploy/minio-deployment -- bash -c <span class=s2>&#34;ls -la /storage&#34;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>total <span class=m>16</span>
+</span></span><span class=line><span class=cl>drwxrwxrwx <span class=m>4</span> root root <span class=m>4096</span> Dec  <span class=m>1</span> 19:04 .
+</span></span><span class=line><span class=cl>drwxr-xr-x <span class=m>1</span> root root <span class=m>4096</span> Dec  <span class=m>1</span> 19:00 ..
+</span></span><span class=line><span class=cl>drwxr-xr-x <span class=m>6</span> root root <span class=m>4096</span> Dec  <span class=m>1</span> 18:39 .minio.sys
+</span></span><span class=line><span class=cl>drwxr-xr-x <span class=m>2</span> root root <span class=m>4096</span> Dec  <span class=m>1</span> 19:04 <span class=nb>test</span>
+</span></span></code></pre></div><p>That wraps the verification: <code>test</code> folder created from the UI exposed to the local network was saved on the <code>PersistentVolume</code> mounted at <code>/storage</code> path.</p><h2 id=observability class="relative group">Observability <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#observability aria-label=Anchor>#</a></span></h2><p>The final important piece of any permanent cluster is the observability stack. Depending on your cluster size,
+it could be just an instance of the <a href=https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/ target=_blank rel=noreferrer>Kubernetes Dashboard</a> or the <a href=https://prometheus-operator.dev/ target=_blank rel=noreferrer>Prometheus Operator</a>. This guide focuses
 on the Kubernetes Dashboard but it is important to note that it doesn&rsquo;t provide any historical data view,
-custom dashboarding, or alerting. If those features are must have for your cluster - the <a href=https://prometheus-operator.dev/>Prometheus Operator</a> would be a great place to start.</p>
-<h3 id=kubernetes-dashboard>Kubernetes Dashboard</h3>
-<p>If the cluster is constrained in resources so it is hard to squeeze the full Prometheus stack
+custom dashboarding, or alerting. If those features are must have for your cluster - the <a href=https://prometheus-operator.dev/ target=_blank rel=noreferrer>Prometheus Operator</a> would be a great place to start.</p><h3 id=kubernetes-dashboard class="relative group">Kubernetes Dashboard <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#kubernetes-dashboard aria-label=Anchor>#</a></span></h3><p>If the cluster is constrained in resources so it is hard to squeeze the full Prometheus stack
 onto it, then the Kubernetes Dashboard would be the must-have minimum solution for the observability.
-The Kubernetes Dashboard has its <a href=https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/>respective installation guide</a> and here we&rsquo;ll focus on the appropriate RBAC permissions
-for the <code>ServiceAccount</code> used by it.</p>
-<p>First, let&rsquo;s install the Kubernetes Dashboard:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell>kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.4.0/aio/deploy/recommended.yaml
-</code></pre></div><p>While the Kubernetes Dashboard allows creating new resources and editing the existing ones,
+The Kubernetes Dashboard has its <a href=https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/ target=_blank rel=noreferrer>respective installation guide</a> and here we&rsquo;ll focus on the appropriate RBAC permissions
+for the <code>ServiceAccount</code> used by it.</p><p>First, let&rsquo;s install the Kubernetes Dashboard:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.4.0/aio/deploy/recommended.yaml
+</span></span></code></pre></div><p>While the Kubernetes Dashboard allows creating new resources and editing the existing ones,
 using it in read-only mode is more secure and wouldn&rsquo;t impose any security risks should
 anybody gain the access to the UI. The scope of visibility of the Dashboard is
-controlled via RBAC of the users accessing it.</p>
-<p>The most conservative approach would be to use an <a href=https://kubernetes.io/docs/reference/access-authn-authz/rbac/#aggregated-clusterroles>Aggregated ClusterRole</a> based on the default <a href=https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles>viewer role</a> and extend it with additional rules as needed:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell>kubectl apply -f - <span style=color:#f1fa8c>&lt;&lt;EOF
-</span><span style=color:#f1fa8c>apiVersion: rbac.authorization.k8s.io/v1
-</span><span style=color:#f1fa8c>kind: ClusterRole
-</span><span style=color:#f1fa8c>metadata:
-</span><span style=color:#f1fa8c>  name: dashboard-viewer
-</span><span style=color:#f1fa8c>aggregationRule:
-</span><span style=color:#f1fa8c>  clusterRoleSelectors:
-</span><span style=color:#f1fa8c>  - matchLabels:
-</span><span style=color:#f1fa8c>      rbac.authorization.k8s.io/aggregate-to-view: &#34;true&#34;
-</span><span style=color:#f1fa8c>  - matchLabels:
-</span><span style=color:#f1fa8c>      rbac.homelab.k8s.io/aggregate-to-view: &#34;true&#34;
-</span><span style=color:#f1fa8c>rules: []
-</span><span style=color:#f1fa8c>
-</span><span style=color:#f1fa8c>---
-</span><span style=color:#f1fa8c>apiVersion: rbac.authorization.k8s.io/v1
-</span><span style=color:#f1fa8c>kind: ClusterRole
-</span><span style=color:#f1fa8c>metadata:
-</span><span style=color:#f1fa8c>  name: dashboard-extended-view
-</span><span style=color:#f1fa8c>  labels:
-</span><span style=color:#f1fa8c>    rbac.homelab.k8s.io/aggregate-to-view: &#34;true&#34;
-</span><span style=color:#f1fa8c>rules:
-</span><span style=color:#f1fa8c>- apiGroups:
-</span><span style=color:#f1fa8c>  - &#34;&#34;
-</span><span style=color:#f1fa8c>  resources:
-</span><span style=color:#f1fa8c>  - nodes
-</span><span style=color:#f1fa8c>  - extensions
-</span><span style=color:#f1fa8c>  - apps
-</span><span style=color:#f1fa8c>  - batch
-</span><span style=color:#f1fa8c>  - storage
-</span><span style=color:#f1fa8c>  - networking
-</span><span style=color:#f1fa8c>  verbs:
-</span><span style=color:#f1fa8c>  - get
-</span><span style=color:#f1fa8c>  - list
-</span><span style=color:#f1fa8c>  - watch
-</span><span style=color:#f1fa8c>EOF</span>
-</code></pre></div><p>The <code>ClusterRole</code> provides extended view permissions but still doesn&rsquo;t allow viewing
+controlled via RBAC of the users accessing it.</p><p>The most conservative approach would be to use an <a href=https://kubernetes.io/docs/reference/access-authn-authz/rbac/#aggregated-clusterroles target=_blank rel=noreferrer>Aggregated ClusterRole</a> based on the default <a href=https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles target=_blank rel=noreferrer>viewer role</a> and extend it with additional rules as needed:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>kubectl apply -f - <span class=s>&lt;&lt;EOF
+</span></span></span><span class=line><span class=cl><span class=s>apiVersion: rbac.authorization.k8s.io/v1
+</span></span></span><span class=line><span class=cl><span class=s>kind: ClusterRole
+</span></span></span><span class=line><span class=cl><span class=s>metadata:
+</span></span></span><span class=line><span class=cl><span class=s>  name: dashboard-viewer
+</span></span></span><span class=line><span class=cl><span class=s>aggregationRule:
+</span></span></span><span class=line><span class=cl><span class=s>  clusterRoleSelectors:
+</span></span></span><span class=line><span class=cl><span class=s>  - matchLabels:
+</span></span></span><span class=line><span class=cl><span class=s>      rbac.authorization.k8s.io/aggregate-to-view: &#34;true&#34;
+</span></span></span><span class=line><span class=cl><span class=s>  - matchLabels:
+</span></span></span><span class=line><span class=cl><span class=s>      rbac.homelab.k8s.io/aggregate-to-view: &#34;true&#34;
+</span></span></span><span class=line><span class=cl><span class=s>rules: []
+</span></span></span><span class=line><span class=cl><span class=s>
+</span></span></span><span class=line><span class=cl><span class=s>---
+</span></span></span><span class=line><span class=cl><span class=s>apiVersion: rbac.authorization.k8s.io/v1
+</span></span></span><span class=line><span class=cl><span class=s>kind: ClusterRole
+</span></span></span><span class=line><span class=cl><span class=s>metadata:
+</span></span></span><span class=line><span class=cl><span class=s>  name: dashboard-extended-view
+</span></span></span><span class=line><span class=cl><span class=s>  labels:
+</span></span></span><span class=line><span class=cl><span class=s>    rbac.homelab.k8s.io/aggregate-to-view: &#34;true&#34;
+</span></span></span><span class=line><span class=cl><span class=s>rules:
+</span></span></span><span class=line><span class=cl><span class=s>- apiGroups:
+</span></span></span><span class=line><span class=cl><span class=s>  - &#34;&#34;
+</span></span></span><span class=line><span class=cl><span class=s>  resources:
+</span></span></span><span class=line><span class=cl><span class=s>  - nodes
+</span></span></span><span class=line><span class=cl><span class=s>  - extensions
+</span></span></span><span class=line><span class=cl><span class=s>  - apps
+</span></span></span><span class=line><span class=cl><span class=s>  - batch
+</span></span></span><span class=line><span class=cl><span class=s>  - storage
+</span></span></span><span class=line><span class=cl><span class=s>  - networking
+</span></span></span><span class=line><span class=cl><span class=s>  verbs:
+</span></span></span><span class=line><span class=cl><span class=s>  - get
+</span></span></span><span class=line><span class=cl><span class=s>  - list
+</span></span></span><span class=line><span class=cl><span class=s>  - watch
+</span></span></span><span class=line><span class=cl><span class=s>EOF</span>
+</span></span></code></pre></div><p>The <code>ClusterRole</code> provides extended view permissions but still doesn&rsquo;t allow viewing
 <code>Secrets</code> and resources from <code>rbac.authorization.k8s.io</code> API group. Now, let&rsquo;s create
-a dedicated <code>ServiceAccount</code> and bind it to the created <code>ClusterRole</code>:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell>kubectl apply -f - <span style=color:#f1fa8c>&lt;&lt;EOF
-</span><span style=color:#f1fa8c>apiVersion: v1
-</span><span style=color:#f1fa8c>kind: ServiceAccount
-</span><span style=color:#f1fa8c>metadata:
-</span><span style=color:#f1fa8c>  name: dashboard-viewer
-</span><span style=color:#f1fa8c>  namespace: kubernetes-dashboard
-</span><span style=color:#f1fa8c>
-</span><span style=color:#f1fa8c>---
-</span><span style=color:#f1fa8c>apiVersion: rbac.authorization.k8s.io/v1
-</span><span style=color:#f1fa8c>kind: ClusterRoleBinding
-</span><span style=color:#f1fa8c>metadata:
-</span><span style=color:#f1fa8c>  name: dashboard-viewer
-</span><span style=color:#f1fa8c>roleRef:
-</span><span style=color:#f1fa8c>  apiGroup: rbac.authorization.k8s.io
-</span><span style=color:#f1fa8c>  kind: ClusterRole
-</span><span style=color:#f1fa8c>  name: dashboard-viewer
-</span><span style=color:#f1fa8c>subjects:
-</span><span style=color:#f1fa8c>- kind: ServiceAccount
-</span><span style=color:#f1fa8c>  name: dashboard-viewer
-</span><span style=color:#f1fa8c>  namespace: kubernetes-dashboard
-</span><span style=color:#f1fa8c>EOF</span>
-</code></pre></div><p>The Dashboard can be accessed either via <code>kubectl proxy</code>, or via port forwarding:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell>kubectl -n kubernetes-dashboard port-forward service/kubernetes-dashboard 8443:443
-</code></pre></div><p>The Dashboard will be available at <a href=https://localhost:8443/>https://localhost:8443/</a>.</p>
-<p>
-<img src=/blog/2021-12-01/k8s-dashboard-login.png alt="Kubernetes Dashboard Login">
-</p>
-<p>To discover the <code>ServiceAccount</code> token for accessing the Dashboard, run:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell>kubectl -n kubernetes-dashboard get secret <span style=color:#ff79c6>$(</span>kubectl -n kubernetes-dashboard get sa/dashboard-viewer -o <span style=color:#8be9fd;font-style:italic>jsonpath</span><span style=color:#ff79c6>=</span><span style=color:#f1fa8c>&#34;{.secrets[0].name}&#34;</span><span style=color:#ff79c6>)</span> -o go-template<span style=color:#ff79c6>=</span><span style=color:#f1fa8c>&#34;{{.data.token | base64decode}}&#34;</span>
-</code></pre></div><p>
-<img src=/blog/2021-12-01/k8s-dashboard.png alt="Kubernetes Dashboard">
-</p>
-<p>The Dashboard will display notifications about the inability to list <code>Secrets</code> or resources
+a dedicated <code>ServiceAccount</code> and bind it to the created <code>ClusterRole</code>:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>kubectl apply -f - <span class=s>&lt;&lt;EOF
+</span></span></span><span class=line><span class=cl><span class=s>apiVersion: v1
+</span></span></span><span class=line><span class=cl><span class=s>kind: ServiceAccount
+</span></span></span><span class=line><span class=cl><span class=s>metadata:
+</span></span></span><span class=line><span class=cl><span class=s>  name: dashboard-viewer
+</span></span></span><span class=line><span class=cl><span class=s>  namespace: kubernetes-dashboard
+</span></span></span><span class=line><span class=cl><span class=s>
+</span></span></span><span class=line><span class=cl><span class=s>---
+</span></span></span><span class=line><span class=cl><span class=s>apiVersion: rbac.authorization.k8s.io/v1
+</span></span></span><span class=line><span class=cl><span class=s>kind: ClusterRoleBinding
+</span></span></span><span class=line><span class=cl><span class=s>metadata:
+</span></span></span><span class=line><span class=cl><span class=s>  name: dashboard-viewer
+</span></span></span><span class=line><span class=cl><span class=s>roleRef:
+</span></span></span><span class=line><span class=cl><span class=s>  apiGroup: rbac.authorization.k8s.io
+</span></span></span><span class=line><span class=cl><span class=s>  kind: ClusterRole
+</span></span></span><span class=line><span class=cl><span class=s>  name: dashboard-viewer
+</span></span></span><span class=line><span class=cl><span class=s>subjects:
+</span></span></span><span class=line><span class=cl><span class=s>- kind: ServiceAccount
+</span></span></span><span class=line><span class=cl><span class=s>  name: dashboard-viewer
+</span></span></span><span class=line><span class=cl><span class=s>  namespace: kubernetes-dashboard
+</span></span></span><span class=line><span class=cl><span class=s>EOF</span>
+</span></span></code></pre></div><p>The Dashboard can be accessed either via <code>kubectl proxy</code>, or via port forwarding:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>kubectl -n kubernetes-dashboard port-forward service/kubernetes-dashboard 8443:443
+</span></span></code></pre></div><p>The Dashboard will be available at <a href=https://localhost:8443/ target=_blank rel=noreferrer>https://localhost:8443/</a>.</p><p><figure><img src=./k8s-dashboard-login.png alt="Kubernetes Dashboard Login" class="mx-auto my-0 rounded-md"></figure></p><p>To discover the <code>ServiceAccount</code> token for accessing the Dashboard, run:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>kubectl -n kubernetes-dashboard get secret <span class=k>$(</span>kubectl -n kubernetes-dashboard get sa/dashboard-viewer -o <span class=nv>jsonpath</span><span class=o>=</span><span class=s2>&#34;{.secrets[0].name}&#34;</span><span class=k>)</span> -o go-template<span class=o>=</span><span class=s2>&#34;{{.data.token | base64decode}}&#34;</span>
+</span></span></code></pre></div><p><figure><img src=./k8s-dashboard.png alt="Kubernetes Dashboard" class="mx-auto my-0 rounded-md"></figure></p><p>The Dashboard will display notifications about the inability to list <code>Secrets</code> or resources
 from the <code>rbac.authorization.k8s.io</code> API group. This is expected because the <code>ClusterRole</code> doesn&rsquo;t
-allow that.</p>
-<h2 id=conclusion>Conclusion</h2>
-<p>There&rsquo;s been a lot described in this guide and that might be overwhelming.
+allow that.</p><h2 id=conclusion class="relative group">Conclusion <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#conclusion aria-label=Anchor>#</a></span></h2><p>There&rsquo;s been a lot described in this guide and that might be overwhelming.
 Although we have a fully functioning Kubernetes cluster suitable for a local network,
 it&rsquo;s not the end of the story yet. If it is planned for the cluster to be multi-tenant -
 then it will require an integrated solution for AuthN/Z such as Dex. Also, this guide doesn&rsquo;t
 cover how to set up and configure TLS-secured Ingress and authenticated access for the
-services deployed on the cluster. Both of these topics will be covered in later posts.</p>
-<nav class=pagination role=navigation>
-<a class=older-posts href=/secure-kubeflow-ingress-and-authentication/>Next Post &rarr;</a>
-<a class=newer-posts href=/kubeflow-training-operators-and-istio-solving-the-proxy-sidecar-lifecycle-problem-for-aiml-workloads/>&larr; Previous Post</a>
-</nav>
-</div>
-<div class="col-lg-2 col-lg-offset-0
-visible-lg-block
-sidebar-container
-catalog-container">
-<div class=side-catalog>
-<hr class="hidden-sm hidden-xs">
-<h5>
-<a class=catalog-toggle href=#>CONTENTS</a>
-</h5>
-<ul class=catalog-body></ul>
-</div>
-</div>
-<div class="col-lg-8 col-lg-offset-2
-col-md-10 col-md-offset-1
-sidebar-container">
-<section>
-<hr class="hidden-sm hidden-xs">
-<h5><a href=/tags/>FEATURED TAGS</a></h5>
-<div class=tags>
-<a href=/tags/akka title=akka>
-akka
-</a>
-<a href=/tags/cassandra title=cassandra>
-cassandra
-</a>
-<a href=/tags/istio title=istio>
-istio
-</a>
-<a href=/tags/kubeflow title=kubeflow>
-kubeflow
-</a>
-<a href=/tags/kubernetes title=kubernetes>
-kubernetes
-</a>
-<a href=/tags/mesos title=mesos>
-mesos
-</a>
-<a href=/tags/sheduling title=sheduling>
-sheduling
-</a>
-<a href=/tags/spark title=spark>
-spark
-</a>
-</div>
-</section>
-</div>
-</div>
-</div>
-</article>
-<footer class="site-footer clearfix">
-<section class=copyright><a href>datastrophic</a> &copy; 2021</section>
-<section class=poweredby>Proudly generated by <a class=icon-hugo href=http://gohugo.io>HUGO</a></section>
-</footer>
-<script>function loadAsync(f,b){var c=document,d='script',a=c.createElement(d),e=c.getElementsByTagName(d)[0];a.src=f,b&&a.addEventListener('load',function(a){b(null,a)},!1),e.parentNode.insertBefore(a,e)}</script>
-<script>$('#tag_cloud').length!==0&&loadAsync("/js/jquery.tagcloud.js",function(){$.fn.tagcloud.defaults={color:{start:'#bbbbee',end:'#0085a1'}},$('#tag_cloud a').tagcloud()})</script>
-<script>loadAsync("https://cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.js",function(){var a=document.querySelector("nav");a&&FastClick.attach(a)})</script>
-<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-65032691-1','auto'),ga('send','pageview'))</script>
-<script async src=https://www.google-analytics.com/analytics.js></script>
-<script type=text/javascript>function generateCatalog(a){_containerSelector='div.post-container';var h=$(_containerSelector),c,d,e,f,g,b;return c=h.find('h1,h2,h3,h4,h5,h6'),$(a).html(''),c.each(function(){d=$(this).prop('tagName').toLowerCase(),g="#"+$(this).prop('id'),e=$(this).text(),b=$('<a href="'+g+'" rel="nofollow">'+e+'</a>'),f=$('<li class="'+d+'_nav"></li>').append(b),$(a).append(f)}),!0}generateCatalog(".catalog-body"),$(".catalog-toggle").click(function(a){a.preventDefault(),$('.side-catalog').toggleClass("fold")}),loadAsync("/js/jquery.nav.js",function(){$('.catalog-body').onePageNav({currentClass:"active",changeHash:!1,easing:"swing",filter:"",scrollSpeed:700,scrollOffset:0,scrollThreshold:.2,begin:null,end:null,scrollChange:null,padding:80})})</script>
-</body>
-</html>
+services deployed on the cluster. Both of these topics will be covered in later posts.</p></div></section><footer class="max-w-prose pt-8 print:hidden"><div class=flex><picture class="!mb-0 !mt-0 me-4 w-24 h-auto rounded-full"><img width=400 height=400 class="!mb-0 !mt-0 me-4 w-24 h-auto rounded-full" alt="Anton Kirillov" loading=lazy decoding=async src=https://datastrophic.io/img/author.jpg></picture><div class=place-self-center><div class="text-[0.6rem] uppercase leading-3 text-neutral-500 dark:text-neutral-400">Author</div><div class="font-semibold leading-6 text-neutral-800 dark:text-neutral-300">Anton Kirillov</div><div class="text-sm text-neutral-700 dark:text-neutral-400">Technical Leader. Compute and AI Infrastructure</div><div class="text-2xl sm:text-lg"><div class="flex flex-wrap text-neutral-400 dark:text-neutral-500"><a class="px-1 transition-transform hover:scale-125 hover:text-primary-700 dark:hover:text-primary-400" style=will-change:transform href=https://www.linkedin.com/in/datastrophic/ target=_blank aria-label=Linkedin rel="me noopener noreferrer"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 448 512"><path fill="currentColor" d="M416 32H31.9C14.3 32 0 46.5.0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6.0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3zM135.4 416H69V202.2h66.5V416zm-33.2-243c-21.3.0-38.5-17.3-38.5-38.5S80.9 96 102.2 96c21.2.0 38.5 17.3 38.5 38.5.0 21.3-17.2 38.5-38.5 38.5zm282.1 243h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6.0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2.0 79.7 44.3 79.7 101.9V416z"/></svg>
+</span></a><a class="px-1 transition-transform hover:scale-125 hover:text-primary-700 dark:hover:text-primary-400" style=will-change:transform href=https://github.com/datastrophic target=_blank aria-label=Github rel="me noopener noreferrer"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 496 512"><path fill="currentColor" d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6.0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6.0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3.0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1.0-6.2-.3-40.4-.3-61.4.0.0-70 15-84.7-29.8.0.0-11.4-29.1-27.8-36.6.0.0-22.9-15.7 1.6-15.4.0.0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5.0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9.0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4.0 33.7-.3 75.4-.3 83.6.0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6.0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9.0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span></a></div></div></div></div><div class=pt-8><hr class="border-dotted border-neutral-300 dark:border-neutral-600"><div class="flex justify-between pt-3"><span><a class="group flex" href=https://datastrophic.io/kubeflow-training-operators-and-istio-solving-the-proxy-sidecar-lifecycle-problem-for-aiml-workloads/><span class="me-2 text-neutral-700 transition-transform group-hover:-translate-x-[2px] group-hover:text-primary-600 dark:text-neutral dark:group-hover:text-primary-400"><span class="ltr:inline rtl:hidden">&larr;</span><span class="ltr:hidden rtl:inline">&rarr;</span></span>
+<span class="flex flex-col"><span class="mt-[0.1rem] leading-6 group-hover:underline group-hover:decoration-primary-500">Kubeflow Training Operators and Istio: solving the proxy sidecar lifecycle problem for AI/ML workloads</span>
+<span class="mt-[0.1rem] text-xs text-neutral-500 dark:text-neutral-400"><time datetime="2021-10-04 00:00:00 +0000 UTC">4 October 2021</time>
+</span></span></a></span><span><a class="group flex text-right" href=https://datastrophic.io/secure-kubeflow-ingress-and-authentication/><span class="flex flex-col"><span class="mt-[0.1rem] leading-6 group-hover:underline group-hover:decoration-primary-500">Secure Kubeflow Ingress and Authentication with Istio External Auth, Dex, and OAuth2 Proxy</span>
+<span class="mt-[0.1rem] text-xs text-neutral-500 dark:text-neutral-400"><time datetime="2021-12-16 00:00:00 +0000 UTC">16 December 2021</time>
+</span></span><span class="ms-2 text-neutral-700 transition-transform group-hover:-translate-x-[-2px] group-hover:text-primary-600 dark:text-neutral dark:group-hover:text-primary-400"><span class="ltr:inline rtl:hidden">&rarr;</span><span class="ltr:hidden rtl:inline">&larr;</span></span></a></span></div></div></footer></article></main><div class="pointer-events-none absolute bottom-0 end-0 top-[100vh] w-12" id=to-top hidden=true><a href=#the-top class="pointer-events-auto sticky top-[calc(100vh-5.5rem)] flex h-12 w-12 items-center justify-center rounded-full bg-neutral/50 text-xl text-neutral-700 backdrop-blur hover:text-primary-600 dark:bg-neutral-800/50 dark:text-neutral dark:hover:text-primary-400" aria-label="Scroll to top" title="Scroll to top">&uarr;</a></div><footer class="py-10 print:hidden"><div class="flex items-center justify-between"><div><p class="text-sm text-neutral-500 dark:text-neutral-400">© 2025 datastrophic</p></div><div class="flex flex-row items-center"><div class="me-14 cursor-pointer text-sm text-neutral-700 hover:text-primary-600 dark:text-neutral dark:hover:text-primary-400"><button id=appearance-switcher-0 type=button aria-label="appearance switcher"><div class="flex h-12 w-12 items-center justify-center dark:hidden" title="Switch to dark appearance"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 512 512"><path fill="currentColor" d="M32 256C32 132.2 132.3 32 255.8 32c11.36.0 29.7 1.668 40.9 3.746 9.616 1.777 11.75 14.63 3.279 19.44C245 86.5 211.2 144.6 211.2 207.8c0 109.7 99.71 193 208.3 172.3 9.561-1.805 16.28 9.324 10.11 16.95C387.9 448.6 324.8 480 255.8 480 132.1 480 32 379.6 32 256z"/></svg></span></div><div class="hidden h-12 w-12 items-center justify-center dark:flex" title="Switch to light appearance"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 512 512"><path fill="currentColor" d="M256 159.1c-53.02.0-95.1 42.98-95.1 95.1s41.2 96.9 95.1 96.9 95.1-42.98 95.1-95.1S309 159.1 256 159.1zM509.3 347l-63.2-91.9 63.15-91.01c6.332-9.125 1.104-21.74-9.826-23.72l-109-19.7-19.7-109c-1.975-10.93-14.59-16.16-23.72-9.824L256 65.89 164.1 2.736c-9.125-6.332-21.74-1.107-23.72 9.824L121.6 121.6 12.56 141.3C1.633 143.2-3.596 155.9 2.736 164.1L65.89 256 2.74 347.01c-6.332 9.125-1.105 21.74 9.824 23.72l109 19.7 19.7 109c1.975 10.93 14.59 16.16 23.72 9.824L256 446.1l91.01 63.15c9.127 6.334 21.75 1.107 23.72-9.822l19.7-109 109-19.7C510.4 368.8 515.6 356.1 509.3 347zM256 383.1c-70.69.0-127.1-57.31-127.1-127.1.0-70.69 57.31-127.1 127.1-127.1S383.1 186.2 383.1 256c0 70.7-56.4 127.1-127.1 127.1z"/></svg></span></div></button></div></div></div></footer></div></body></html>

@@ -1,450 +1,85 @@
-<!doctype html><html lang=en-us>
-<head>
-<meta charset=utf-8>
-<meta http-equiv=x-ua-compatible content="IE=edge">
-<meta name=viewport content="width=device-width,initial-scale=1">
-<meta property="og:site_name" content="datastrophic">
-<meta property="og:type" content="article">
-<meta property="og:image" content="https://datastrophic.io//img/datastrophic-strip-1.png">
-<meta property="twitter:image" content="https://datastrophic.io//img/datastrophic-strip-1.png">
-<meta name=title content="Apache Spark: core concepts, architecture and internals">
-<meta property="og:title" content="Apache Spark: core concepts, architecture and internals">
-<meta property="twitter:title" content="Apache Spark: core concepts, architecture and internals">
-<meta name=description content="A blog about distributed systems, data platforms, and AI infrastructure">
-<meta property="og:description" content="A blog about distributed systems, data platforms, and AI infrastructure">
-<meta property="twitter:description" content="A blog about distributed systems, data platforms, and AI infrastructure">
-<meta property="twitter:card" content="summary">
-<meta name=keyword content="Spark, Mesos, Kubernetes, Kubeflow, Istio, SMACK stack, Cassandra, Kafka">
-<link rel="shortcut icon" href=/img/favicon.ico>
-<title>Apache Spark: core concepts, architecture and internals</title>
-<link rel=canonical href=/core-concepts-architecture-and-internals-of-apache-spark/>
-<link rel=stylesheet href=/css/bootstrap.min.css>
-<link rel=stylesheet href=/css/hugo-theme-cleanwhite.min.css>
-<link rel=stylesheet href=/css/zanshang.css>
-<link href=//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css rel=stylesheet type=text/css>
-<link rel=stylesheet href=https://datastrophic.io/css/footer.css><link rel=stylesheet href=https://datastrophic.io/css/pager.css><link rel=stylesheet href=https://datastrophic.io/css/overrides.css>
-<script src=/js/jquery.min.js></script>
-<script src=/js/bootstrap.min.js></script>
-<script src=/js/hux-blog.min.js></script>
-</head>
-<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
-<div class=container-fluid>
-<div class="navbar-header page-scroll">
-<button type=button class=navbar-toggle>
-<span class=sr-only>Toggle navigation</span>
-<span class=icon-bar></span>
-<span class=icon-bar></span>
-<span class=icon-bar></span>
-</button>
-</div>
-<div id=huxblog_navbar>
-<div class=navbar-collapse>
-<ul class="nav navbar-nav navbar-right">
-<li>
-<a href=/>Home</a>
-</li>
-<li><a href=/top/archive/>ARCHIVE</a></li>
-<li><a href=/top/about/>ABOUT</a></li>
-</ul>
-</div>
-</div>
-</div>
-</nav>
-<script>var $body=document.body,$toggle=document.querySelector('.navbar-toggle'),$navbar=document.querySelector('#huxblog_navbar'),$collapse=document.querySelector('.navbar-collapse');$toggle.addEventListener('click',handleMagic);function handleMagic(a){$navbar.className.indexOf('in')>0?($navbar.className=" ",setTimeout(function(){$navbar.className.indexOf('in')<0&&($collapse.style.height="0px")},400)):($collapse.style.height="auto",$navbar.className+=" in")}</script>
-<style type=text/css>header.intro-header{background-image:url(/img/datastrophic-strip-1.png);color:#3a4145}</style>
-<header class=intro-header style=background-image:url(/img/datastrophic-strip-1.png)>
-<div class=container>
-<div class=row>
-<div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-<div class=post-heading>
-<div class=tags>
-<a class=tag href=/tags/spark title=spark>
-spark
-</a>
-<a class=tag href=/tags/sheduling title=sheduling>
-sheduling
-</a>
-<a class=tag href=/tags/rdd title=RDD>
-RDD
-</a>
-<a class=tag href=/tags/dag title=DAG>
-DAG
-</a>
-<a class=tag href=/tags/shuffle title=shuffle>
-shuffle
-</a>
-</div>
-<h1>Apache Spark: core concepts, architecture and internals</h1>
-<span class=meta>
-Posted on
-March 3, 2016
-</span>
-</div>
-</div>
-</div>
-</div>
-</header>
-<article>
-<div class=container>
-<div class=row>
-<div class="col-lg-8 col-lg-offset-2
-col-md-10 col-md-offset-1
-post-container">
-<p>This post covers core concepts of Apache Spark such as RDD, DAG, execution workflow, forming stages of tasks, and shuffle implementation and also describes the architecture and main components of Spark Driver. There&rsquo;s a <a href=https://github.com/datastrophic/spark-workshop>github.com/datastrophic/spark-workshop</a> project created alongside this post which contains Spark Applications examples and dockerized Hadoop environment to play with. <a href=http://www.slideshare.net/akirillov/spark-workshop-internals-architecture-and-coding-59035491>Slides are also available at slideshare</a>.</p>
-<h2 id=intro>Intro</h2>
-<p>Spark is a generalized framework for distributed data processing providing functional API for manipulating data at scale, in-memory data caching, and reuse across computations. It applies a set of coarse-grained transformations over partitioned data and relies on the dataset lineage to recompute tasks in case of failures. Worth mentioning is that Spark supports the majority of data formats, has integrations with various storage systems, and can be executed on Mesos or YARN.</p>
-<p>Powerful and concise API in conjunction with rich library makes it easier to perform data operations at scale. E.g. performing backup and restore of Cassandra column families in Parquet format:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#ff79c6>def</span> backup<span style=color:#ff79c6>(</span>path<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>String</span><span style=color:#ff79c6>,</span> config<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>Config</span><span style=color:#ff79c6>)</span> <span style=color:#ff79c6>{</span>
-  sc<span style=color:#ff79c6>.</span>cassandraTable<span style=color:#ff79c6>(</span>config<span style=color:#ff79c6>.</span>keyspace<span style=color:#ff79c6>,</span> config<span style=color:#ff79c6>.</span>table<span style=color:#ff79c6>)</span>
-    <span style=color:#ff79c6>.</span>map<span style=color:#ff79c6>(</span><span style=color:#ff79c6>_</span><span style=color:#ff79c6>.</span>toEvent<span style=color:#ff79c6>).</span>toDF<span style=color:#ff79c6>()</span>
-    <span style=color:#ff79c6>.</span>write<span style=color:#ff79c6>.</span>parquet<span style=color:#ff79c6>(</span>path<span style=color:#ff79c6>)</span>
-<span style=color:#ff79c6>}</span>
-
-<span style=color:#ff79c6>def</span> restore<span style=color:#ff79c6>(</span>path<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>String</span><span style=color:#ff79c6>,</span> config<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>Config</span><span style=color:#ff79c6>)</span> <span style=color:#ff79c6>{</span>
-  sqlContext<span style=color:#ff79c6>.</span>read<span style=color:#ff79c6>.</span>parquet<span style=color:#ff79c6>(</span>path<span style=color:#ff79c6>)</span>
-  <span style=color:#ff79c6>.</span>map<span style=color:#ff79c6>(</span><span style=color:#ff79c6>_</span><span style=color:#ff79c6>.</span>toEvent<span style=color:#ff79c6>)</span>
-  <span style=color:#ff79c6>.</span>saveToCassandra<span style=color:#ff79c6>(</span>config<span style=color:#ff79c6>.</span>keyspace<span style=color:#ff79c6>,</span> config<span style=color:#ff79c6>.</span>table<span style=color:#ff79c6>)</span>
-<span style=color:#ff79c6>}</span>
-</code></pre></div><p>Or run discrepancies analysis comparing the data in different data stores:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala>sqlContext<span style=color:#ff79c6>.</span>sql <span style=color:#ff79c6>{</span>
-  <span style=color:#f1fa8c>&#34;&#34;&#34;
-</span><span style=color:#f1fa8c>     SELECT count()
-</span><span style=color:#f1fa8c>     FROM cassandra_event_rollups
-</span><span style=color:#f1fa8c>     JOIN mongo_event_rollups
-</span><span style=color:#f1fa8c>     ON cassandra_event_rollups.uuid = cassandra_event_rollups.uuid
-</span><span style=color:#f1fa8c>     WHERE cassandra_event_rollups.value != cassandra_event_rollups.value
-</span><span style=color:#f1fa8c>  &#34;&#34;&#34;</span><span style=color:#ff79c6>.</span>stripMargin
-<span style=color:#ff79c6>}</span>
-</code></pre></div><h2 id=recap>Recap</h2>
-<p>Spark is built around the concepts of Resilient Distributed Datasets and Direct Acyclic Graph representing transformations and dependencies between them.</p>
-<p>
-<img src=/blog/2016-03-03/spark-overview.png alt>
-Spark Application (often referred to as Driver Program or Application Master) at a high level consists of SparkContext and user code which interacts with it creating RDDs and performing series of transformations to achieve the final result. These transformations of RDDs are then translated into DAG and submitted to Scheduler to be executed on a set of worker nodes.</p>
-<h3 id=rdd-resilient-distributed-datasets>RDD: Resilient Distributed Datasets</h3>
-<p>RDD could be thought of as an immutable parallel data structure with failure recovery possibilities. It provides API for various transformations and materializations of data as well as for control over caching and partitioning of elements to optimize data placement. RDD can be created either from external storage or from another RDD and stores information about its parents to optimize execution (via pipelining of operations) and recompute partition in case of failure.</p>
-<p>From a developer&rsquo;s point of view, RDD represents distributed immutable data (partitioned data + iterator) and lazily evaluated operations (transformations). As an interface RDD defines five main properties:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#6272a4>//a list of partitions (e.g. splits in Hadoop)
-</span><span style=color:#6272a4></span><span style=color:#ff79c6>def</span> getPartitions<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>Array</span><span style=color:#ff79c6>[</span><span style=color:#8be9fd>Partition</span><span style=color:#ff79c6>]</span>
-
-<span style=color:#6272a4>//a list of dependencies on other RDDs
-</span><span style=color:#6272a4></span><span style=color:#ff79c6>def</span> getDependencies<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>Seq</span><span style=color:#ff79c6>[</span><span style=color:#8be9fd>Dependency</span><span style=color:#ff79c6>[</span><span style=color:#ff79c6>_</span><span style=color:#ff79c6>]]</span>
-
-<span style=color:#6272a4>//a function for computing each split
-</span><span style=color:#6272a4></span><span style=color:#ff79c6>def</span> compute<span style=color:#ff79c6>(</span>split<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>Partition</span><span style=color:#ff79c6>,</span> context<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>TaskContext</span><span style=color:#ff79c6>)</span><span style=color:#ff79c6>:</span> <span style=color:#8be9fd>Iterator</span><span style=color:#ff79c6>[</span><span style=color:#8be9fd>T</span><span style=color:#ff79c6>]</span>
-
-<span style=color:#6272a4>//(optional) a list of preferred locations to compute each split on
-</span><span style=color:#6272a4></span><span style=color:#ff79c6>def</span> getPreferredLocations<span style=color:#ff79c6>(</span>split<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>Partition</span><span style=color:#ff79c6>)</span><span style=color:#ff79c6>:</span> <span style=color:#8be9fd>Seq</span><span style=color:#ff79c6>[</span><span style=color:#8be9fd>String</span><span style=color:#ff79c6>]</span> <span style=color:#ff79c6>=</span> <span style=color:#50fa7b>Nil</span>
-
-<span style=color:#6272a4>//(optional) a partitioner for key-value RDDs
-</span><span style=color:#6272a4></span><span style=color:#ff79c6>val</span> partitioner<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>Option</span><span style=color:#ff79c6>[</span><span style=color:#8be9fd>Partitioner</span><span style=color:#ff79c6>]</span> <span style=color:#ff79c6>=</span> <span style=color:#50fa7b>None</span>
-</code></pre></div><p>Here&rsquo;s an example of RDDs created during a call of method <code>sparkContext.textFile("hdfs://...")</code> which first loads HDFS blocks in memory and then applies map() function to filter out keys creating two RDDs:
-<img src=/blog/2016-03-03/dag-logical-vs-partitions-view.png alt>
-</p>
-<ul>
-<li>HadoopRDD:
-<ul>
-<li>getPartitions = HDFS blocks</li>
-<li>getDependencies = None</li>
-<li>compute = load block in memory</li>
-<li>getPrefferedLocations = HDFS block locations</li>
-<li>partitioner = None</li>
-</ul>
-</li>
-<li>MapPartitionsRDD
-<ul>
-<li>getPartitions = same as parent</li>
-<li>getDependencies = parent RDD</li>
-<li>compute = compute parent and apply map()</li>
-<li>getPrefferedLocations = same as parent</li>
-<li>partitioner = None</li>
-</ul>
-</li>
-</ul>
-<p><strong>RDD Operations</strong>
-Operations on RDDs are divided into several groups:</p>
-<ul>
-<li>Transformations
-<ul>
-<li>apply user function to every element in a partition (or to the whole partition)</li>
-<li>apply aggregation function to the whole dataset (groupBy, sortBy)</li>
-<li>introduce dependencies between RDDs to form DAG</li>
-<li>provide functionality for repartitioning (repartition, partitionBy)</li>
-</ul>
-</li>
-<li>Actions
-<ul>
-<li>trigger job execution</li>
-<li>used to materialize computation results</li>
-</ul>
-</li>
-<li>Extra: persistence
-<ul>
-<li>explicitly store RDDs in memory, on disk or off-heap (cache, persist)</li>
-<li>checkpointing for truncating RDD lineage</li>
-</ul>
-</li>
-</ul>
-<p>Here&rsquo;s a code sample of a job which aggregates data from Cassandra in lambda style combining previously rolled-up data with the data from raw storage and demonstrates some of the transformations and actions available on RDDs</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#6272a4>//aggregate events after specific date for given campaign
-</span><span style=color:#6272a4></span><span style=color:#ff79c6>val</span> events <span style=color:#ff79c6>=</span>  
-    sc<span style=color:#ff79c6>.</span>cassandraTable<span style=color:#ff79c6>(</span><span style=color:#f1fa8c>&#34;demo&#34;</span><span style=color:#ff79c6>,</span> <span style=color:#f1fa8c>&#34;event&#34;</span><span style=color:#ff79c6>)</span>
-      <span style=color:#ff79c6>.</span>map<span style=color:#ff79c6>(</span><span style=color:#ff79c6>_</span><span style=color:#ff79c6>.</span>toEvent<span style=color:#ff79c6>)</span>								
-      <span style=color:#ff79c6>.</span>filter <span style=color:#ff79c6>{</span> e <span style=color:#ff79c6>=&gt;</span>
-        e<span style=color:#ff79c6>.</span>campaignId <span style=color:#ff79c6>==</span> campaignId <span style=color:#ff79c6>&amp;&amp;</span> e<span style=color:#ff79c6>.</span>time<span style=color:#ff79c6>.</span>isAfter<span style=color:#ff79c6>(</span>watermark<span style=color:#ff79c6>)</span>
-      <span style=color:#ff79c6>}</span>
-      <span style=color:#ff79c6>.</span>keyBy<span style=color:#ff79c6>(</span><span style=color:#ff79c6>_</span><span style=color:#ff79c6>.</span>eventType<span style=color:#ff79c6>)</span>
-      <span style=color:#ff79c6>.</span>reduceByKey<span style=color:#ff79c6>(</span><span style=color:#ff79c6>_</span> <span style=color:#ff79c6>+</span> <span style=color:#ff79c6>_</span><span style=color:#ff79c6>)</span>										
-      <span style=color:#ff79c6>.</span>cache<span style=color:#ff79c6>()</span>											
-
-<span style=color:#6272a4>//aggregate campaigns by type
-</span><span style=color:#6272a4></span><span style=color:#ff79c6>val</span> campaigns <span style=color:#ff79c6>=</span> 
-    sc<span style=color:#ff79c6>.</span>cassandraTable<span style=color:#ff79c6>(</span><span style=color:#f1fa8c>&#34;demo&#34;</span><span style=color:#ff79c6>,</span> <span style=color:#f1fa8c>&#34;campaign&#34;</span><span style=color:#ff79c6>)</span>
-      <span style=color:#ff79c6>.</span>map<span style=color:#ff79c6>(</span><span style=color:#ff79c6>_</span><span style=color:#ff79c6>.</span>toCampaign<span style=color:#ff79c6>)</span>
-      <span style=color:#ff79c6>.</span>filter <span style=color:#ff79c6>{</span> c <span style=color:#ff79c6>=&gt;</span> 
-         c<span style=color:#ff79c6>.</span>id <span style=color:#ff79c6>==</span> campaignId <span style=color:#ff79c6>&amp;&amp;</span> c<span style=color:#ff79c6>.</span>time<span style=color:#ff79c6>.</span>isBefore<span style=color:#ff79c6>(</span>watermark<span style=color:#ff79c6>)</span>
-      <span style=color:#ff79c6>}</span>
-      <span style=color:#ff79c6>.</span>keyBy<span style=color:#ff79c6>(</span><span style=color:#ff79c6>_</span><span style=color:#ff79c6>.</span>eventType<span style=color:#ff79c6>)</span>
-      <span style=color:#ff79c6>.</span>reduceByKey<span style=color:#ff79c6>(</span><span style=color:#ff79c6>_</span> <span style=color:#ff79c6>+</span> <span style=color:#ff79c6>_</span><span style=color:#ff79c6>)</span>
-      <span style=color:#ff79c6>.</span>cache<span style=color:#ff79c6>()</span>
-
-<span style=color:#6272a4>//joined rollups and raw events
-</span><span style=color:#6272a4></span><span style=color:#ff79c6>val</span> joinedTotals <span style=color:#ff79c6>=</span> campaigns<span style=color:#ff79c6>.</span>join<span style=color:#ff79c6>(</span>events<span style=color:#ff79c6>)</span>
-           <span style=color:#ff79c6>.</span>map <span style=color:#ff79c6>{</span> <span style=color:#ff79c6>case</span> <span style=color:#ff79c6>(</span>key<span style=color:#ff79c6>,</span> <span style=color:#ff79c6>(</span>campaign<span style=color:#ff79c6>,</span> event<span style=color:#ff79c6>))</span> <span style=color:#ff79c6>=&gt;</span> 
-             <span style=color:#50fa7b>CampaignTotals</span><span style=color:#ff79c6>(</span>campaign<span style=color:#ff79c6>,</span> event<span style=color:#ff79c6>)</span> 
-            <span style=color:#ff79c6>}</span>
-           <span style=color:#ff79c6>.</span>collect<span style=color:#ff79c6>()</span>
-
-<span style=color:#6272a4>//count totals separately
-</span><span style=color:#6272a4></span><span style=color:#ff79c6>val</span> eventTotals <span style=color:#ff79c6>=</span> 
-    events<span style=color:#ff79c6>.</span>map<span style=color:#ff79c6>{</span> <span style=color:#ff79c6>case</span> <span style=color:#ff79c6>(</span>t<span style=color:#ff79c6>,</span> e<span style=color:#ff79c6>)</span> <span style=color:#ff79c6>=&gt;</span> <span style=color:#f1fa8c>s&#34;</span><span style=color:#f1fa8c>$t</span><span style=color:#f1fa8c> -&gt; </span><span style=color:#f1fa8c>${</span>e<span style=color:#ff79c6>.</span>value<span style=color:#f1fa8c>}</span><span style=color:#f1fa8c>&#34;</span> <span style=color:#ff79c6>}</span>
-    <span style=color:#ff79c6>.</span>collect<span style=color:#ff79c6>()</span>
-
-<span style=color:#ff79c6>val</span> campaignTotals <span style=color:#ff79c6>=</span> 
-    campaigns<span style=color:#ff79c6>.</span>map<span style=color:#ff79c6>{</span> <span style=color:#ff79c6>case</span> <span style=color:#ff79c6>(</span>t<span style=color:#ff79c6>,</span> e<span style=color:#ff79c6>)</span> <span style=color:#ff79c6>=&gt;</span> <span style=color:#f1fa8c>s&#34;</span><span style=color:#f1fa8c>$t</span><span style=color:#f1fa8c> -&gt; </span><span style=color:#f1fa8c>${</span>e<span style=color:#ff79c6>.</span>value<span style=color:#f1fa8c>}</span><span style=color:#f1fa8c>&#34;</span> <span style=color:#ff79c6>}</span>
-    <span style=color:#ff79c6>.</span>collect<span style=color:#ff79c6>()</span>
-</code></pre></div><h3 id=execution-workflow-recap>Execution workflow recap</h3>
-<p>
-<img src=/blog/2016-03-03/spark-scheduling-process.png alt>
-Here&rsquo;s a quick recap on the execution workflow before digging deeper into details: user code containing RDD transformations forms Direct Acyclic Graph which is then split into stages of tasks by DAGScheduler. Stages combine tasks that don’t require shuffling/repartitioning of the data. Tasks run on workers and results then returned to the client.</p>
-<h2 id=dag>DAG</h2>
-<p>
-<img src=/blog/2016-03-03/dag-logical-view.png alt>
-Here&rsquo;s a DAG for the code sample above. So basically any data processing workflow could be defined as reading the data source, applying a set of transformations, and materializing the result in different ways. Transformations create dependencies between RDDs and here we can see different types of them.</p>
-<p>The dependencies are usually classified as &ldquo;narrow&rdquo; and &ldquo;wide&rdquo;:
-<img src=/blog/2016-03-03/dag-dependency-types.png alt>
-</p>
-<ul>
-<li>Narrow (&ldquo;pipelineable&rdquo;)
-<ul>
-<li>each partition of the parent RDD is used by at most one partition of the child RDD</li>
-<li>allow for pipelined execution on one cluster node</li>
-<li>failure recovery is more efficient as only lost parent partitions need to be recomputed</li>
-</ul>
-</li>
-<li>Wide (shuffle)
-<ul>
-<li>multiple child partitions may depend on one parent partition</li>
-<li>require data from all parent partitions to be available and to be shuffled across the nodes</li>
-<li>if some partition is lost from all the ancestors a complete recomputation is needed</li>
-</ul>
-</li>
-</ul>
-<h3 id=splitting-dag-into-stages>Splitting DAG into Stages</h3>
-<p>Spark stages are created by breaking the RDD graph at shuffle boundaries
-<img src=/blog/2016-03-03/dag-stages.png alt>
-</p>
-<ul>
-<li>RDD operations with &ldquo;narrow&rdquo; dependencies, like map() and filter(), are pipelined together into one set of tasks in each stage
-operations with shuffle dependencies require multiple stages (one to write a set of map output files, and another to read those files after a barrier).</li>
-<li>In the end, every stage will have only shuffle dependencies on other stages, and may compute multiple operations inside it. The actual pipelining of these operations happens in the <code>RDD.compute()</code> functions of various RDDs</li>
-</ul>
-<p>There are two types of tasks in Spark: <code>ShuffleMapTask</code> which partitions its input for shuffle and <code>ResultTask</code> which sends its output to the driver. The same applies to types of stages: <code>ShuffleMapStage</code> and <code>ResultStage</code> correspondingly.</p>
-<h3 id=shuffle>Shuffle</h3>
-<p>During the shuffle, <code>ShuffleMapTask</code> writes blocks to the local drive, and then the task in the next stages fetches these blocks over the network.</p>
-<ul>
-<li>Shuffle Write
-<ul>
-<li>redistributes data among partitions and writes files to disk</li>
-<li>each <em>hash shuffle</em> task creates one file per “reduce” task (total = MxR)</li>
-<li>sort shuffle task creates one file with regions assigned to the reducer</li>
-<li>sort shuffle uses in-memory sorting with spillover to disk to get the final result</li>
-</ul>
-</li>
-<li>Shuffle Read
-<ul>
-<li>fetches the files and applies reduce() logic</li>
-<li>if data ordering is needed then it is sorted on the “reducer” side for any type of shuffle</li>
-</ul>
-</li>
-</ul>
-<p>In Spark, Sort Shuffle is the default one since 1.2, but Hash Shuffle is available too.</p>
-<p><strong>Sort Shuffle</strong>
-<img src=/blog/2016-03-03/sort-shuffle.png alt>
-</p>
-<ul>
-<li>Incoming records accumulated and sorted in memory according to their target partition ids</li>
-<li>Sorted records are written to file or multiple files if spilled and then merged</li>
-<li><em>index</em> file stores offsets of the data blocks in the data file</li>
-<li>Sorting without deserialization is possible under certain conditions (<a href=https://issues.apache.org/jira/browse/SPARK-7081>SPARK-7081</a>)</li>
-</ul>
-<h2 id=spark-components>Spark Components</h2>
-<p>At 10K foot view there are three major components:
-<img src=/blog/2016-03-03/spark-architecture.png alt>
-</p>
-<ul>
-<li>Spark Driver
-<ul>
-<li>separate process to execute user applications</li>
-<li>creates SparkContext to schedule jobs execution and negotiate with cluster manager</li>
-</ul>
-</li>
-<li>Executors
-<ul>
-<li>run tasks scheduled by the driver</li>
-<li>store computation results in memory, on disk or off-heap</li>
-<li>interact with storage systems</li>
-</ul>
-</li>
-<li>Cluster Manager
-<ul>
-<li>Mesos</li>
-<li>YARN</li>
-<li>Spark Standalone</li>
-</ul>
-</li>
-</ul>
-<p>Spark Driver contains more components responsible for translation of user code into actual jobs executed on a cluster:
-<img src=/blog/2016-03-03/spark-components.png alt>
-</p>
-<ul>
-<li>SparkContext
-<ul>
-<li>represents the connection to a Spark cluster, and can be used to create RDDs, accumulators, and broadcast variables on that cluster</li>
-</ul>
-</li>
-<li>DAGScheduler
-<ul>
-<li>computes a DAG of stages for each job and submits them to TaskScheduler</li>
-<li>determines preferred locations for tasks (based on cache status or shuffle files locations) and finds minimum schedule to run the jobs</li>
-</ul>
-</li>
-<li>TaskScheduler
-<ul>
-<li>responsible for sending tasks to the cluster, running them, retrying if there are failures, and mitigating stragglers</li>
-</ul>
-</li>
-<li>SchedulerBackend
-<ul>
-<li>backend interface for scheduling systems that allows plugging in different implementations(Mesos, YARN, Standalone, local)</li>
-</ul>
-</li>
-<li>BlockManager
-<ul>
-<li>provides interfaces for putting and retrieving blocks both locally and remotely into various stores (memory, disk, and off-heap)</li>
-</ul>
-</li>
-</ul>
-<h3 id=memory-management-in-spark-16>Memory Management in Spark 1.6</h3>
-<p>Executors run as Java processes, so the available memory is equal to the heap size. Internally available memory is split into several regions with specific functions.
-<img src=/blog/2016-03-03/spark-memory-model.png alt>
-</p>
-<ul>
-<li>Execution Memory
-<ul>
-<li>storage for data needed during tasks execution</li>
-<li>shuffle-related data</li>
-</ul>
-</li>
-<li>Storage Memory
-<ul>
-<li>storage of cached RDDs and broadcast variables</li>
-<li>possible to borrow from execution memory
-(spill otherwise)</li>
-<li>safeguard value is 50% of Spark Memory when cached blocks are immune to eviction</li>
-</ul>
-</li>
-<li>User Memory
-<ul>
-<li>user data structures and internal metadata in Spark</li>
-<li>safeguarding against OOM</li>
-</ul>
-</li>
-<li>Reserved memory
-<ul>
-<li>memory needed for running executor itself and not strictly related to Spark</li>
-</ul>
-</li>
-</ul>
-<h2 id=where-to-go-from-here>Where to go from here</h2>
-<ul>
-<li><a href=https://github.com/apache/spark>Spark source code</a> is a great source of information containing great scaladocs and absolutely worth checking out</li>
-<li><a href=http://spark.apache.org/docs/latest/>Official Spark documentation</a></li>
-<li>Great blog on Distributed Systems Architectures containing a lot of Spark-related stuff <a href=http://0x0fff.com/category/spark/>0x0fff</a></li>
-<li><a href=https://github.com/JerryLead/SparkInternals>Spark Internals</a> github project contains extremely deep explanations of different Spark aspects</li>
-</ul>
-<nav class=pagination role=navigation>
-<a class=older-posts href=/resource-allocation-in-mesos-dominant-resource-fairness-explained/>Next Post &rarr;</a>
-<a class=newer-posts href=/data-processing-platforms-architectures-with-spark-mesos-akka-cassandra-and-kafka/>&larr; Previous Post</a>
-</nav>
-</div>
-<div class="col-lg-2 col-lg-offset-0
-visible-lg-block
-sidebar-container
-catalog-container">
-<div class=side-catalog>
-<hr class="hidden-sm hidden-xs">
-<h5>
-<a class=catalog-toggle href=#>CONTENTS</a>
-</h5>
-<ul class=catalog-body></ul>
-</div>
-</div>
-<div class="col-lg-8 col-lg-offset-2
-col-md-10 col-md-offset-1
-sidebar-container">
-<section>
-<hr class="hidden-sm hidden-xs">
-<h5><a href=/tags/>FEATURED TAGS</a></h5>
-<div class=tags>
-<a href=/tags/akka title=akka>
-akka
-</a>
-<a href=/tags/cassandra title=cassandra>
-cassandra
-</a>
-<a href=/tags/istio title=istio>
-istio
-</a>
-<a href=/tags/kubeflow title=kubeflow>
-kubeflow
-</a>
-<a href=/tags/kubernetes title=kubernetes>
-kubernetes
-</a>
-<a href=/tags/mesos title=mesos>
-mesos
-</a>
-<a href=/tags/sheduling title=sheduling>
-sheduling
-</a>
-<a href=/tags/spark title=spark>
-spark
-</a>
-</div>
-</section>
-</div>
-</div>
-</div>
-</article>
-<footer class="site-footer clearfix">
-<section class=copyright><a href>datastrophic</a> &copy; 2021</section>
-<section class=poweredby>Proudly generated by <a class=icon-hugo href=http://gohugo.io>HUGO</a></section>
-</footer>
-<script>function loadAsync(f,b){var c=document,d='script',a=c.createElement(d),e=c.getElementsByTagName(d)[0];a.src=f,b&&a.addEventListener('load',function(a){b(null,a)},!1),e.parentNode.insertBefore(a,e)}</script>
-<script>$('#tag_cloud').length!==0&&loadAsync("/js/jquery.tagcloud.js",function(){$.fn.tagcloud.defaults={color:{start:'#bbbbee',end:'#0085a1'}},$('#tag_cloud a').tagcloud()})</script>
-<script>loadAsync("https://cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.js",function(){var a=document.querySelector("nav");a&&FastClick.attach(a)})</script>
-<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-65032691-1','auto'),ga('send','pageview'))</script>
-<script async src=https://www.google-analytics.com/analytics.js></script>
-<script type=text/javascript>function generateCatalog(a){_containerSelector='div.post-container';var h=$(_containerSelector),c,d,e,f,g,b;return c=h.find('h1,h2,h3,h4,h5,h6'),$(a).html(''),c.each(function(){d=$(this).prop('tagName').toLowerCase(),g="#"+$(this).prop('id'),e=$(this).text(),b=$('<a href="'+g+'" rel="nofollow">'+e+'</a>'),f=$('<li class="'+d+'_nav"></li>').append(b),$(a).append(f)}),!0}generateCatalog(".catalog-body"),$(".catalog-toggle").click(function(a){a.preventDefault(),$('.side-catalog').toggleClass("fold")}),loadAsync("/js/jquery.nav.js",function(){$('.catalog-body').onePageNav({currentClass:"active",changeHash:!1,easing:"swing",filter:"",scrollSpeed:700,scrollOffset:0,scrollThreshold:.2,begin:null,end:null,scrollChange:null,padding:80})})</script>
-</body>
-</html>
+<!doctype html><html lang=en dir=ltr class=scroll-smooth data-default-appearance=light data-auto-appearance=true><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=theme-color content="#FFFFFF"><title>Apache Spark: core concepts, architecture and internals &#183; datastrophic</title><meta name=title content="Apache Spark: core concepts, architecture and internals &#183; datastrophic"><script type=text/javascript src=https://datastrophic.io/js/appearance.min.8a082f81b27f3cb2ee528df0b0bdc39787034cf2cc34d4669fbc9977c929023c.js integrity="sha256-iggvgbJ/PLLuUo3wsL3Dl4cDTPLMNNRmn7yZd8kpAjw="></script><link type=text/css rel=stylesheet href=https://datastrophic.io/css/main.bundle.min.02e0262738dfe4d54f6393381fab23180d51c6764276ae9f9736ba07270c82d3.css integrity="sha256-AuAmJzjf5NVPY5M4H6sjGA1RxnZCdq6flza6BycMgtM="><script defer type=text/javascript id=script-bundle src=https://datastrophic.io/js/main.bundle.min.d4b727caf411cb5c3b421d0d427ed1e3daeafe0d04840327efad4978430edb8c.js integrity="sha256-1LcnyvQRy1w7Qh0NQn7R49rq/g0EhAMn761JeEMO24w=" data-copy=Copy data-copied=Copied></script><meta name=description content="
+      
+        This post covers core concepts of Apache Spark such as RDD, DAG, execution workflow, forming stages of tasks, and shuffle implementation and also describes the architecture and main components of Spark Driver. There’s a github.com/datastrophic/spark-workshop project created alongside this post which contains Spark Applications examples and dockerized Hadoop environment to play with. Slides are also available at slideshare. Intro Spark is a generalized framework for distributed data processing providing functional API for manipulating data at scale, in-memory data caching, and reuse across computations.
+      
+    "><link rel=canonical href=https://datastrophic.io/core-concepts-architecture-and-internals-of-apache-spark/><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/site.webmanifest><meta property="og:url" content="https://datastrophic.io/core-concepts-architecture-and-internals-of-apache-spark/"><meta property="og:site_name" content="datastrophic"><meta property="og:title" content="Apache Spark: core concepts, architecture and internals"><meta property="og:description" content="This post covers core concepts of Apache Spark such as RDD, DAG, execution workflow, forming stages of tasks, and shuffle implementation and also describes the architecture and main components of Spark Driver. There’s a github.com/datastrophic/spark-workshop project created alongside this post which contains Spark Applications examples and dockerized Hadoop environment to play with. Slides are also available at slideshare. Intro Spark is a generalized framework for distributed data processing providing functional API for manipulating data at scale, in-memory data caching, and reuse across computations."><meta property="og:locale" content="en"><meta property="og:type" content="article"><meta property="article:section" content="posts"><meta property="article:published_time" content="2016-03-03T00:00:00+00:00"><meta property="article:modified_time" content="2016-03-03T00:00:00+00:00"><meta property="article:tag" content="Spark"><meta property="article:tag" content="Sheduling"><meta property="article:tag" content="RDD"><meta property="article:tag" content="DAG"><meta property="article:tag" content="Shuffle"><meta name=twitter:card content="summary"><meta name=twitter:title content="Apache Spark: core concepts, architecture and internals"><meta name=twitter:description content="This post covers core concepts of Apache Spark such as RDD, DAG, execution workflow, forming stages of tasks, and shuffle implementation and also describes the architecture and main components of Spark Driver. There’s a github.com/datastrophic/spark-workshop project created alongside this post which contains Spark Applications examples and dockerized Hadoop environment to play with. Slides are also available at slideshare. Intro Spark is a generalized framework for distributed data processing providing functional API for manipulating data at scale, in-memory data caching, and reuse across computations."><script type=application/ld+json>{"@context":"https://schema.org","@type":"Article","articleSection":"","name":"Apache Spark: core concepts, architecture and internals","headline":"Apache Spark: core concepts, architecture and internals","abstract":"This post covers core concepts of Apache Spark such as RDD, DAG, execution workflow, forming stages of tasks, and shuffle implementation and also describes the architecture and main components of Spark Driver. There’s a github.com\/datastrophic\/spark-workshop project created alongside this post which contains Spark Applications examples and dockerized Hadoop environment to play with. Slides are also available at slideshare. Intro Spark is a generalized framework for distributed data processing providing functional API for manipulating data at scale, in-memory data caching, and reuse across computations.","inLanguage":"en","url":"https:\/\/datastrophic.io\/core-concepts-architecture-and-internals-of-apache-spark\/","author":{"@type":"Person","name":"Anton Kirillov"},"copyrightYear":"2016","dateCreated":"2016-03-03T00:00:00\u002b00:00","datePublished":"2016-03-03T00:00:00\u002b00:00","dateModified":"2016-03-03T00:00:00\u002b00:00","keywords":["spark","sheduling","RDD","DAG","shuffle"],"mainEntityOfPage":"true","wordCount":"1579"}</script><script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","item":"https://datastrophic.io/","name":"","position":1},{"@type":"ListItem","item":"https://datastrophic.io/posts/","name":"","position":2},{"@type":"ListItem","item":"https://datastrophic.io/categories/architecture/","name":"Architecture","position":3},{"@type":"ListItem","name":"Apache Spark Core Concepts, Architecture and Internals","position":4}]}</script><meta name=author content="Anton Kirillov"><link href=https://www.linkedin.com/in/datastrophic/ rel=me><link href=https://github.com/datastrophic rel=me><script async src="https://www.googletagmanager.com/gtag/js?id=G-Z9WG27GT0G"></script><script>var dnt,doNotTrack=!1;if(!1&&(dnt=navigator.doNotTrack||window.doNotTrack||navigator.msDoNotTrack,doNotTrack=dnt=="1"||dnt=="yes"),!doNotTrack){window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-Z9WG27GT0G")}</script></head><body class="m-auto flex h-screen max-w-7xl flex-col bg-neutral px-6 text-lg leading-7 text-neutral-900 dark:bg-neutral-800 dark:text-neutral sm:px-14 md:px-24 lg:px-32"><div id=the-top class="absolute flex self-center"><a class="-translate-y-8 rounded-b-lg bg-primary-200 px-3 py-1 text-sm focus:translate-y-0 dark:bg-neutral-600" href=#main-content><span class="pe-2 font-bold text-primary-600 dark:text-primary-400">&darr;</span>Skip to main content</a></div><header class="py-6 font-semibold text-neutral-900 dark:text-neutral sm:py-10 print:hidden"><nav class="flex items-start justify-between sm:items-center"><div class="z-40 flex flex-row items-center"><a class="decoration-primary-500 hover:underline hover:decoration-2 hover:underline-offset-2" rel=me href=/>datastrophic</a></div><label id=menu-button for=menu-controller class="block sm:hidden"><input type=checkbox id=menu-controller class=hidden><div class="cursor-pointer hover:text-primary-600 dark:hover:text-primary-400"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 448 512"><path fill="currentColor" d="M0 96C0 78.33 14.33 64 32 64H416c17.7.0 32 14.33 32 32 0 17.7-14.3 32-32 32H32C14.33 128 0 113.7.0 96zM0 256c0-17.7 14.33-32 32-32H416c17.7.0 32 14.3 32 32s-14.3 32-32 32H32c-17.67.0-32-14.3-32-32zM416 448H32c-17.67.0-32-14.3-32-32s14.33-32 32-32H416c17.7.0 32 14.3 32 32s-14.3 32-32 32z"/></svg></span></div><div id=menu-wrapper class="invisible fixed inset-0 z-30 m-auto h-full w-full cursor-default overflow-auto bg-neutral-100/50 opacity-0 backdrop-blur-sm transition-opacity dark:bg-neutral-900/50"><ul class="mx-auto flex w-full max-w-7xl list-none flex-col overflow-visible px-6 py-6 text-end sm:px-14 sm:py-10 sm:pt-10 md:px-24 lg:px-32"><li class=mb-1><span class="cursor-pointer hover:text-primary-600 dark:hover:text-primary-400"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 320 512"><path fill="currentColor" d="M310.6 361.4c12.5 12.5 12.5 32.75.0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3 54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75.0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75.0-45.25s32.75-12.5 45.25.0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25.0s12.5 32.75.0 45.25l-105.4 105.4L310.6 361.4z"/></svg></span></span></li><li class="group mb-1"><a href=/posts/ title onclick=close_menu()><span class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2">archive</span></a></li><li class="group mb-1"><a href=/about/ title onclick=close_menu()><span class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2">about</span></a></li></ul></div></label><ul class="hidden list-none flex-row text-end sm:flex"><li class="group mb-1 sm:mb-0 sm:me-7 sm:last:me-0"><a href=/posts/ title><span class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2">archive</span></a></li><li class="group mb-1 sm:mb-0 sm:me-7 sm:last:me-0"><a href=/about/ title><span class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2">about</span></a></li></ul></nav></header><div class="relative flex grow flex-col"><main id=main-content class=grow><article><header class=max-w-prose><h1 class="mb-8 mt-0 text-4xl font-extrabold text-neutral-900 dark:text-neutral">Apache Spark: core concepts, architecture and internals</h1><div class="mb-10 text-base text-neutral-500 dark:text-neutral-400 print:hidden"><div class="flex flex-row flex-wrap items-center"><time datetime="2016-03-03 00:00:00 +0000 UTC">3 March 2016</time><span class="px-2 text-primary-500">&#183;</span><span title="Reading time">8 mins</span></div></div></header><section class="prose mt-0 flex max-w-full flex-col dark:prose-invert lg:flex-row"><div class="min-h-0 min-w-0 max-w-prose grow"><p>This post covers core concepts of Apache Spark such as RDD, DAG, execution workflow, forming stages of tasks, and shuffle implementation and also describes the architecture and main components of Spark Driver. There&rsquo;s a <a href=https://github.com/datastrophic/spark-workshop target=_blank rel=noreferrer>github.com/datastrophic/spark-workshop</a> project created alongside this post which contains Spark Applications examples and dockerized Hadoop environment to play with. <a href=http://www.slideshare.net/akirillov/spark-workshop-internals-architecture-and-coding-59035491 target=_blank rel=noreferrer>Slides are also available at slideshare</a>.</p><h2 id=intro class="relative group">Intro <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#intro aria-label=Anchor>#</a></span></h2><p>Spark is a generalized framework for distributed data processing providing functional API for manipulating data at scale, in-memory data caching, and reuse across computations. It applies a set of coarse-grained transformations over partitioned data and relies on the dataset lineage to recompute tasks in case of failures. Worth mentioning is that Spark supports the majority of data formats, has integrations with various storage systems, and can be executed on Mesos or YARN.</p><p>Powerful and concise API in conjunction with rich library makes it easier to perform data operations at scale. E.g. performing backup and restore of Cassandra column families in Parquet format:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-scala data-lang=scala><span class=line><span class=cl><span class=k>def</span> <span class=n>backup</span><span class=o>(</span><span class=n>path</span><span class=k>:</span> <span class=kt>String</span><span class=o>,</span> <span class=n>config</span><span class=k>:</span> <span class=kt>Config</span><span class=o>)</span> <span class=o>{</span>
+</span></span><span class=line><span class=cl>  <span class=n>sc</span><span class=o>.</span><span class=n>cassandraTable</span><span class=o>(</span><span class=n>config</span><span class=o>.</span><span class=n>keyspace</span><span class=o>,</span> <span class=n>config</span><span class=o>.</span><span class=n>table</span><span class=o>)</span>
+</span></span><span class=line><span class=cl>    <span class=o>.</span><span class=n>map</span><span class=o>(</span><span class=k>_</span><span class=o>.</span><span class=n>toEvent</span><span class=o>).</span><span class=n>toDF</span><span class=o>()</span>
+</span></span><span class=line><span class=cl>    <span class=o>.</span><span class=n>write</span><span class=o>.</span><span class=n>parquet</span><span class=o>(</span><span class=n>path</span><span class=o>)</span>
+</span></span><span class=line><span class=cl><span class=o>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=n>restore</span><span class=o>(</span><span class=n>path</span><span class=k>:</span> <span class=kt>String</span><span class=o>,</span> <span class=n>config</span><span class=k>:</span> <span class=kt>Config</span><span class=o>)</span> <span class=o>{</span>
+</span></span><span class=line><span class=cl>  <span class=n>sqlContext</span><span class=o>.</span><span class=n>read</span><span class=o>.</span><span class=n>parquet</span><span class=o>(</span><span class=n>path</span><span class=o>)</span>
+</span></span><span class=line><span class=cl>  <span class=o>.</span><span class=n>map</span><span class=o>(</span><span class=k>_</span><span class=o>.</span><span class=n>toEvent</span><span class=o>)</span>
+</span></span><span class=line><span class=cl>  <span class=o>.</span><span class=n>saveToCassandra</span><span class=o>(</span><span class=n>config</span><span class=o>.</span><span class=n>keyspace</span><span class=o>,</span> <span class=n>config</span><span class=o>.</span><span class=n>table</span><span class=o>)</span>
+</span></span><span class=line><span class=cl><span class=o>}</span>
+</span></span></code></pre></div><p>Or run discrepancies analysis comparing the data in different data stores:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-scala data-lang=scala><span class=line><span class=cl><span class=n>sqlContext</span><span class=o>.</span><span class=n>sql</span> <span class=o>{</span>
+</span></span><span class=line><span class=cl>  <span class=s>&#34;&#34;&#34;
+</span></span></span><span class=line><span class=cl><span class=s>     SELECT count()
+</span></span></span><span class=line><span class=cl><span class=s>     FROM cassandra_event_rollups
+</span></span></span><span class=line><span class=cl><span class=s>     JOIN mongo_event_rollups
+</span></span></span><span class=line><span class=cl><span class=s>     ON cassandra_event_rollups.uuid = cassandra_event_rollups.uuid
+</span></span></span><span class=line><span class=cl><span class=s>     WHERE cassandra_event_rollups.value != cassandra_event_rollups.value
+</span></span></span><span class=line><span class=cl><span class=s>  &#34;&#34;&#34;</span><span class=o>.</span><span class=n>stripMargin</span>
+</span></span><span class=line><span class=cl><span class=o>}</span>
+</span></span></code></pre></div><h2 id=recap class="relative group">Recap <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#recap aria-label=Anchor>#</a></span></h2><p>Spark is built around the concepts of Resilient Distributed Datasets and Direct Acyclic Graph representing transformations and dependencies between them.</p><p><figure><img src=./spark-overview.png alt class="mx-auto my-0 rounded-md"></figure>Spark Application (often referred to as Driver Program or Application Master) at a high level consists of SparkContext and user code which interacts with it creating RDDs and performing series of transformations to achieve the final result. These transformations of RDDs are then translated into DAG and submitted to Scheduler to be executed on a set of worker nodes.</p><h3 id=rdd-resilient-distributed-datasets class="relative group">RDD: Resilient Distributed Datasets <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#rdd-resilient-distributed-datasets aria-label=Anchor>#</a></span></h3><p>RDD could be thought of as an immutable parallel data structure with failure recovery possibilities. It provides API for various transformations and materializations of data as well as for control over caching and partitioning of elements to optimize data placement. RDD can be created either from external storage or from another RDD and stores information about its parents to optimize execution (via pipelining of operations) and recompute partition in case of failure.</p><p>From a developer&rsquo;s point of view, RDD represents distributed immutable data (partitioned data + iterator) and lazily evaluated operations (transformations). As an interface RDD defines five main properties:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-scala data-lang=scala><span class=line><span class=cl><span class=c1>//a list of partitions (e.g. splits in Hadoop)
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=k>def</span> <span class=n>getPartitions</span><span class=k>:</span> <span class=kt>Array</span><span class=o>[</span><span class=kt>Partition</span><span class=o>]</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>//a list of dependencies on other RDDs
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=k>def</span> <span class=n>getDependencies</span><span class=k>:</span> <span class=kt>Seq</span><span class=o>[</span><span class=kt>Dependency</span><span class=o>[</span><span class=k>_</span><span class=o>]]</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>//a function for computing each split
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=k>def</span> <span class=n>compute</span><span class=o>(</span><span class=n>split</span><span class=k>:</span> <span class=kt>Partition</span><span class=o>,</span> <span class=n>context</span><span class=k>:</span> <span class=kt>TaskContext</span><span class=o>)</span><span class=k>:</span> <span class=kt>Iterator</span><span class=o>[</span><span class=kt>T</span><span class=o>]</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>//(optional) a list of preferred locations to compute each split on
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=k>def</span> <span class=n>getPreferredLocations</span><span class=o>(</span><span class=n>split</span><span class=k>:</span> <span class=kt>Partition</span><span class=o>)</span><span class=k>:</span> <span class=kt>Seq</span><span class=o>[</span><span class=kt>String</span><span class=o>]</span> <span class=k>=</span> <span class=nc>Nil</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>//(optional) a partitioner for key-value RDDs
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=k>val</span> <span class=n>partitioner</span><span class=k>:</span> <span class=kt>Option</span><span class=o>[</span><span class=kt>Partitioner</span><span class=o>]</span> <span class=k>=</span> <span class=nc>None</span>
+</span></span></code></pre></div><p>Here&rsquo;s an example of RDDs created during a call of method <code>sparkContext.textFile("hdfs://...")</code> which first loads HDFS blocks in memory and then applies map() function to filter out keys creating two RDDs:<figure><img src=./dag-logical-vs-partitions-view.png alt class="mx-auto my-0 rounded-md"></figure></p><ul><li>HadoopRDD:<ul><li>getPartitions = HDFS blocks</li><li>getDependencies = None</li><li>compute = load block in memory</li><li>getPrefferedLocations = HDFS block locations</li><li>partitioner = None</li></ul></li><li>MapPartitionsRDD<ul><li>getPartitions = same as parent</li><li>getDependencies = parent RDD</li><li>compute = compute parent and apply map()</li><li>getPrefferedLocations = same as parent</li><li>partitioner = None</li></ul></li></ul><p><strong>RDD Operations</strong>
+Operations on RDDs are divided into several groups:</p><ul><li>Transformations<ul><li>apply user function to every element in a partition (or to the whole partition)</li><li>apply aggregation function to the whole dataset (groupBy, sortBy)</li><li>introduce dependencies between RDDs to form DAG</li><li>provide functionality for repartitioning (repartition, partitionBy)</li></ul></li><li>Actions<ul><li>trigger job execution</li><li>used to materialize computation results</li></ul></li><li>Extra: persistence<ul><li>explicitly store RDDs in memory, on disk or off-heap (cache, persist)</li><li>checkpointing for truncating RDD lineage</li></ul></li></ul><p>Here&rsquo;s a code sample of a job which aggregates data from Cassandra in lambda style combining previously rolled-up data with the data from raw storage and demonstrates some of the transformations and actions available on RDDs</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-scala data-lang=scala><span class=line><span class=cl><span class=c1>//aggregate events after specific date for given campaign
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=k>val</span> <span class=n>events</span> <span class=k>=</span>  
+</span></span><span class=line><span class=cl>    <span class=n>sc</span><span class=o>.</span><span class=n>cassandraTable</span><span class=o>(</span><span class=s>&#34;demo&#34;</span><span class=o>,</span> <span class=s>&#34;event&#34;</span><span class=o>)</span>
+</span></span><span class=line><span class=cl>      <span class=o>.</span><span class=n>map</span><span class=o>(</span><span class=k>_</span><span class=o>.</span><span class=n>toEvent</span><span class=o>)</span>								
+</span></span><span class=line><span class=cl>      <span class=o>.</span><span class=n>filter</span> <span class=o>{</span> <span class=n>e</span> <span class=k>=&gt;</span>
+</span></span><span class=line><span class=cl>        <span class=n>e</span><span class=o>.</span><span class=n>campaignId</span> <span class=o>==</span> <span class=n>campaignId</span> <span class=o>&amp;&amp;</span> <span class=n>e</span><span class=o>.</span><span class=n>time</span><span class=o>.</span><span class=n>isAfter</span><span class=o>(</span><span class=n>watermark</span><span class=o>)</span>
+</span></span><span class=line><span class=cl>      <span class=o>}</span>
+</span></span><span class=line><span class=cl>      <span class=o>.</span><span class=n>keyBy</span><span class=o>(</span><span class=k>_</span><span class=o>.</span><span class=n>eventType</span><span class=o>)</span>
+</span></span><span class=line><span class=cl>      <span class=o>.</span><span class=n>reduceByKey</span><span class=o>(</span><span class=k>_</span> <span class=o>+</span> <span class=k>_</span><span class=o>)</span>										
+</span></span><span class=line><span class=cl>      <span class=o>.</span><span class=n>cache</span><span class=o>()</span>											
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>//aggregate campaigns by type
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=k>val</span> <span class=n>campaigns</span> <span class=k>=</span> 
+</span></span><span class=line><span class=cl>    <span class=n>sc</span><span class=o>.</span><span class=n>cassandraTable</span><span class=o>(</span><span class=s>&#34;demo&#34;</span><span class=o>,</span> <span class=s>&#34;campaign&#34;</span><span class=o>)</span>
+</span></span><span class=line><span class=cl>      <span class=o>.</span><span class=n>map</span><span class=o>(</span><span class=k>_</span><span class=o>.</span><span class=n>toCampaign</span><span class=o>)</span>
+</span></span><span class=line><span class=cl>      <span class=o>.</span><span class=n>filter</span> <span class=o>{</span> <span class=n>c</span> <span class=k>=&gt;</span> 
+</span></span><span class=line><span class=cl>         <span class=n>c</span><span class=o>.</span><span class=n>id</span> <span class=o>==</span> <span class=n>campaignId</span> <span class=o>&amp;&amp;</span> <span class=n>c</span><span class=o>.</span><span class=n>time</span><span class=o>.</span><span class=n>isBefore</span><span class=o>(</span><span class=n>watermark</span><span class=o>)</span>
+</span></span><span class=line><span class=cl>      <span class=o>}</span>
+</span></span><span class=line><span class=cl>      <span class=o>.</span><span class=n>keyBy</span><span class=o>(</span><span class=k>_</span><span class=o>.</span><span class=n>eventType</span><span class=o>)</span>
+</span></span><span class=line><span class=cl>      <span class=o>.</span><span class=n>reduceByKey</span><span class=o>(</span><span class=k>_</span> <span class=o>+</span> <span class=k>_</span><span class=o>)</span>
+</span></span><span class=line><span class=cl>      <span class=o>.</span><span class=n>cache</span><span class=o>()</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>//joined rollups and raw events
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=k>val</span> <span class=n>joinedTotals</span> <span class=k>=</span> <span class=n>campaigns</span><span class=o>.</span><span class=n>join</span><span class=o>(</span><span class=n>events</span><span class=o>)</span>
+</span></span><span class=line><span class=cl>           <span class=o>.</span><span class=n>map</span> <span class=o>{</span> <span class=k>case</span> <span class=o>(</span><span class=n>key</span><span class=o>,</span> <span class=o>(</span><span class=n>campaign</span><span class=o>,</span> <span class=n>event</span><span class=o>))</span> <span class=k>=&gt;</span> 
+</span></span><span class=line><span class=cl>             <span class=nc>CampaignTotals</span><span class=o>(</span><span class=n>campaign</span><span class=o>,</span> <span class=n>event</span><span class=o>)</span> 
+</span></span><span class=line><span class=cl>            <span class=o>}</span>
+</span></span><span class=line><span class=cl>           <span class=o>.</span><span class=n>collect</span><span class=o>()</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>//count totals separately
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=k>val</span> <span class=n>eventTotals</span> <span class=k>=</span> 
+</span></span><span class=line><span class=cl>    <span class=n>events</span><span class=o>.</span><span class=n>map</span><span class=o>{</span> <span class=k>case</span> <span class=o>(</span><span class=n>t</span><span class=o>,</span> <span class=n>e</span><span class=o>)</span> <span class=k>=&gt;</span> <span class=s>s&#34;</span><span class=si>$t</span><span class=s> -&gt; </span><span class=si>${</span><span class=n>e</span><span class=o>.</span><span class=n>value</span><span class=si>}</span><span class=s>&#34;</span> <span class=o>}</span>
+</span></span><span class=line><span class=cl>    <span class=o>.</span><span class=n>collect</span><span class=o>()</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>val</span> <span class=n>campaignTotals</span> <span class=k>=</span> 
+</span></span><span class=line><span class=cl>    <span class=n>campaigns</span><span class=o>.</span><span class=n>map</span><span class=o>{</span> <span class=k>case</span> <span class=o>(</span><span class=n>t</span><span class=o>,</span> <span class=n>e</span><span class=o>)</span> <span class=k>=&gt;</span> <span class=s>s&#34;</span><span class=si>$t</span><span class=s> -&gt; </span><span class=si>${</span><span class=n>e</span><span class=o>.</span><span class=n>value</span><span class=si>}</span><span class=s>&#34;</span> <span class=o>}</span>
+</span></span><span class=line><span class=cl>    <span class=o>.</span><span class=n>collect</span><span class=o>()</span>
+</span></span></code></pre></div><h3 id=execution-workflow-recap class="relative group">Execution workflow recap <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#execution-workflow-recap aria-label=Anchor>#</a></span></h3><p><figure><img src=./spark-scheduling-process.png alt class="mx-auto my-0 rounded-md"></figure>Here&rsquo;s a quick recap on the execution workflow before digging deeper into details: user code containing RDD transformations forms Direct Acyclic Graph which is then split into stages of tasks by DAGScheduler. Stages combine tasks that don’t require shuffling/repartitioning of the data. Tasks run on workers and results then returned to the client.</p><h2 id=dag class="relative group">DAG <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#dag aria-label=Anchor>#</a></span></h2><p><figure><img src=./dag-logical-view.png alt class="mx-auto my-0 rounded-md"></figure>Here&rsquo;s a DAG for the code sample above. So basically any data processing workflow could be defined as reading the data source, applying a set of transformations, and materializing the result in different ways. Transformations create dependencies between RDDs and here we can see different types of them.</p><p>The dependencies are usually classified as &ldquo;narrow&rdquo; and &ldquo;wide&rdquo;:<figure><img src=./dag-dependency-types.png alt class="mx-auto my-0 rounded-md"></figure></p><ul><li>Narrow (&ldquo;pipelineable&rdquo;)<ul><li>each partition of the parent RDD is used by at most one partition of the child RDD</li><li>allow for pipelined execution on one cluster node</li><li>failure recovery is more efficient as only lost parent partitions need to be recomputed</li></ul></li><li>Wide (shuffle)<ul><li>multiple child partitions may depend on one parent partition</li><li>require data from all parent partitions to be available and to be shuffled across the nodes</li><li>if some partition is lost from all the ancestors a complete recomputation is needed</li></ul></li></ul><h3 id=splitting-dag-into-stages class="relative group">Splitting DAG into Stages <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#splitting-dag-into-stages aria-label=Anchor>#</a></span></h3><p>Spark stages are created by breaking the RDD graph at shuffle boundaries<figure><img src=./dag-stages.png alt class="mx-auto my-0 rounded-md"></figure></p><ul><li>RDD operations with &ldquo;narrow&rdquo; dependencies, like map() and filter(), are pipelined together into one set of tasks in each stage
+operations with shuffle dependencies require multiple stages (one to write a set of map output files, and another to read those files after a barrier).</li><li>In the end, every stage will have only shuffle dependencies on other stages, and may compute multiple operations inside it. The actual pipelining of these operations happens in the <code>RDD.compute()</code> functions of various RDDs</li></ul><p>There are two types of tasks in Spark: <code>ShuffleMapTask</code> which partitions its input for shuffle and <code>ResultTask</code> which sends its output to the driver. The same applies to types of stages: <code>ShuffleMapStage</code> and <code>ResultStage</code> correspondingly.</p><h3 id=shuffle class="relative group">Shuffle <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#shuffle aria-label=Anchor>#</a></span></h3><p>During the shuffle, <code>ShuffleMapTask</code> writes blocks to the local drive, and then the task in the next stages fetches these blocks over the network.</p><ul><li>Shuffle Write<ul><li>redistributes data among partitions and writes files to disk</li><li>each <em>hash shuffle</em> task creates one file per “reduce” task (total = MxR)</li><li>sort shuffle task creates one file with regions assigned to the reducer</li><li>sort shuffle uses in-memory sorting with spillover to disk to get the final result</li></ul></li><li>Shuffle Read<ul><li>fetches the files and applies reduce() logic</li><li>if data ordering is needed then it is sorted on the “reducer” side for any type of shuffle</li></ul></li></ul><p>In Spark, Sort Shuffle is the default one since 1.2, but Hash Shuffle is available too.</p><p><strong>Sort Shuffle</strong><figure><img src=./sort-shuffle.png alt class="mx-auto my-0 rounded-md"></figure></p><ul><li>Incoming records accumulated and sorted in memory according to their target partition ids</li><li>Sorted records are written to file or multiple files if spilled and then merged</li><li><em>index</em> file stores offsets of the data blocks in the data file</li><li>Sorting without deserialization is possible under certain conditions (<a href=https://issues.apache.org/jira/browse/SPARK-7081 target=_blank rel=noreferrer>SPARK-7081</a>)</li></ul><h2 id=spark-components class="relative group">Spark Components <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#spark-components aria-label=Anchor>#</a></span></h2><p>At 10K foot view there are three major components:<figure><img src=./spark-architecture.png alt class="mx-auto my-0 rounded-md"></figure></p><ul><li>Spark Driver<ul><li>separate process to execute user applications</li><li>creates SparkContext to schedule jobs execution and negotiate with cluster manager</li></ul></li><li>Executors<ul><li>run tasks scheduled by the driver</li><li>store computation results in memory, on disk or off-heap</li><li>interact with storage systems</li></ul></li><li>Cluster Manager<ul><li>Mesos</li><li>YARN</li><li>Spark Standalone</li></ul></li></ul><p>Spark Driver contains more components responsible for translation of user code into actual jobs executed on a cluster:<figure><img src=./spark-components.png alt class="mx-auto my-0 rounded-md"></figure></p><ul><li>SparkContext<ul><li>represents the connection to a Spark cluster, and can be used to create RDDs, accumulators, and broadcast variables on that cluster</li></ul></li><li>DAGScheduler<ul><li>computes a DAG of stages for each job and submits them to TaskScheduler</li><li>determines preferred locations for tasks (based on cache status or shuffle files locations) and finds minimum schedule to run the jobs</li></ul></li><li>TaskScheduler<ul><li>responsible for sending tasks to the cluster, running them, retrying if there are failures, and mitigating stragglers</li></ul></li><li>SchedulerBackend<ul><li>backend interface for scheduling systems that allows plugging in different implementations(Mesos, YARN, Standalone, local)</li></ul></li><li>BlockManager<ul><li>provides interfaces for putting and retrieving blocks both locally and remotely into various stores (memory, disk, and off-heap)</li></ul></li></ul><h3 id=memory-management-in-spark-16 class="relative group">Memory Management in Spark 1.6 <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#memory-management-in-spark-16 aria-label=Anchor>#</a></span></h3><p>Executors run as Java processes, so the available memory is equal to the heap size. Internally available memory is split into several regions with specific functions.<figure><img src=./spark-memory-model.png alt class="mx-auto my-0 rounded-md"></figure></p><ul><li>Execution Memory<ul><li>storage for data needed during tasks execution</li><li>shuffle-related data</li></ul></li><li>Storage Memory<ul><li>storage of cached RDDs and broadcast variables</li><li>possible to borrow from execution memory
+(spill otherwise)</li><li>safeguard value is 50% of Spark Memory when cached blocks are immune to eviction</li></ul></li><li>User Memory<ul><li>user data structures and internal metadata in Spark</li><li>safeguarding against OOM</li></ul></li><li>Reserved memory<ul><li>memory needed for running executor itself and not strictly related to Spark</li></ul></li></ul><h2 id=where-to-go-from-here class="relative group">Where to go from here <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#where-to-go-from-here aria-label=Anchor>#</a></span></h2><ul><li><a href=https://github.com/apache/spark target=_blank rel=noreferrer>Spark source code</a> is a great source of information containing great scaladocs and absolutely worth checking out</li><li><a href=http://spark.apache.org/docs/latest/ target=_blank rel=noreferrer>Official Spark documentation</a></li><li>Great blog on Distributed Systems Architectures containing a lot of Spark-related stuff <a href=http://0x0fff.com/category/spark/ target=_blank rel=noreferrer>0x0fff</a></li><li><a href=https://github.com/JerryLead/SparkInternals target=_blank rel=noreferrer>Spark Internals</a> github project contains extremely deep explanations of different Spark aspects</li></ul></div></section><footer class="max-w-prose pt-8 print:hidden"><div class=flex><picture class="!mb-0 !mt-0 me-4 w-24 h-auto rounded-full"><img width=400 height=400 class="!mb-0 !mt-0 me-4 w-24 h-auto rounded-full" alt="Anton Kirillov" loading=lazy decoding=async src=https://datastrophic.io/img/author.jpg></picture><div class=place-self-center><div class="text-[0.6rem] uppercase leading-3 text-neutral-500 dark:text-neutral-400">Author</div><div class="font-semibold leading-6 text-neutral-800 dark:text-neutral-300">Anton Kirillov</div><div class="text-sm text-neutral-700 dark:text-neutral-400">Technical Leader. Compute and AI Infrastructure</div><div class="text-2xl sm:text-lg"><div class="flex flex-wrap text-neutral-400 dark:text-neutral-500"><a class="px-1 transition-transform hover:scale-125 hover:text-primary-700 dark:hover:text-primary-400" style=will-change:transform href=https://www.linkedin.com/in/datastrophic/ target=_blank aria-label=Linkedin rel="me noopener noreferrer"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 448 512"><path fill="currentColor" d="M416 32H31.9C14.3 32 0 46.5.0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6.0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3zM135.4 416H69V202.2h66.5V416zm-33.2-243c-21.3.0-38.5-17.3-38.5-38.5S80.9 96 102.2 96c21.2.0 38.5 17.3 38.5 38.5.0 21.3-17.2 38.5-38.5 38.5zm282.1 243h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6.0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2.0 79.7 44.3 79.7 101.9V416z"/></svg>
+</span></a><a class="px-1 transition-transform hover:scale-125 hover:text-primary-700 dark:hover:text-primary-400" style=will-change:transform href=https://github.com/datastrophic target=_blank aria-label=Github rel="me noopener noreferrer"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 496 512"><path fill="currentColor" d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6.0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6.0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3.0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1.0-6.2-.3-40.4-.3-61.4.0.0-70 15-84.7-29.8.0.0-11.4-29.1-27.8-36.6.0.0-22.9-15.7 1.6-15.4.0.0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5.0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9.0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4.0 33.7-.3 75.4-.3 83.6.0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6.0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9.0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span></a></div></div></div></div><div class=pt-8><hr class="border-dotted border-neutral-300 dark:border-neutral-600"><div class="flex justify-between pt-3"><span><a class="group flex" href=https://datastrophic.io/data-processing-platforms-architectures-with-spark-mesos-akka-cassandra-and-kafka/><span class="me-2 text-neutral-700 transition-transform group-hover:-translate-x-[2px] group-hover:text-primary-600 dark:text-neutral dark:group-hover:text-primary-400"><span class="ltr:inline rtl:hidden">&larr;</span><span class="ltr:hidden rtl:inline">&rarr;</span></span>
+<span class="flex flex-col"><span class="mt-[0.1rem] leading-6 group-hover:underline group-hover:decoration-primary-500">Data processing platforms architectures with SMACK: Spark, Mesos, Akka, Cassandra and Kafka</span>
+<span class="mt-[0.1rem] text-xs text-neutral-500 dark:text-neutral-400"><time datetime="2015-09-16 00:00:00 +0000 UTC">16 September 2015</time>
+</span></span></a></span><span><a class="group flex text-right" href=https://datastrophic.io/resource-allocation-in-mesos-dominant-resource-fairness-explained/><span class="flex flex-col"><span class="mt-[0.1rem] leading-6 group-hover:underline group-hover:decoration-primary-500">Resource Allocation in Mesos: Dominant Resource Fairness</span>
+<span class="mt-[0.1rem] text-xs text-neutral-500 dark:text-neutral-400"><time datetime="2016-03-27 00:00:00 +0000 UTC">27 March 2016</time>
+</span></span><span class="ms-2 text-neutral-700 transition-transform group-hover:-translate-x-[-2px] group-hover:text-primary-600 dark:text-neutral dark:group-hover:text-primary-400"><span class="ltr:inline rtl:hidden">&rarr;</span><span class="ltr:hidden rtl:inline">&larr;</span></span></a></span></div></div></footer></article></main><div class="pointer-events-none absolute bottom-0 end-0 top-[100vh] w-12" id=to-top hidden=true><a href=#the-top class="pointer-events-auto sticky top-[calc(100vh-5.5rem)] flex h-12 w-12 items-center justify-center rounded-full bg-neutral/50 text-xl text-neutral-700 backdrop-blur hover:text-primary-600 dark:bg-neutral-800/50 dark:text-neutral dark:hover:text-primary-400" aria-label="Scroll to top" title="Scroll to top">&uarr;</a></div><footer class="py-10 print:hidden"><div class="flex items-center justify-between"><div><p class="text-sm text-neutral-500 dark:text-neutral-400">© 2025 datastrophic</p></div><div class="flex flex-row items-center"><div class="me-14 cursor-pointer text-sm text-neutral-700 hover:text-primary-600 dark:text-neutral dark:hover:text-primary-400"><button id=appearance-switcher-0 type=button aria-label="appearance switcher"><div class="flex h-12 w-12 items-center justify-center dark:hidden" title="Switch to dark appearance"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 512 512"><path fill="currentColor" d="M32 256C32 132.2 132.3 32 255.8 32c11.36.0 29.7 1.668 40.9 3.746 9.616 1.777 11.75 14.63 3.279 19.44C245 86.5 211.2 144.6 211.2 207.8c0 109.7 99.71 193 208.3 172.3 9.561-1.805 16.28 9.324 10.11 16.95C387.9 448.6 324.8 480 255.8 480 132.1 480 32 379.6 32 256z"/></svg></span></div><div class="hidden h-12 w-12 items-center justify-center dark:flex" title="Switch to light appearance"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 512 512"><path fill="currentColor" d="M256 159.1c-53.02.0-95.1 42.98-95.1 95.1s41.2 96.9 95.1 96.9 95.1-42.98 95.1-95.1S309 159.1 256 159.1zM509.3 347l-63.2-91.9 63.15-91.01c6.332-9.125 1.104-21.74-9.826-23.72l-109-19.7-19.7-109c-1.975-10.93-14.59-16.16-23.72-9.824L256 65.89 164.1 2.736c-9.125-6.332-21.74-1.107-23.72 9.824L121.6 121.6 12.56 141.3C1.633 143.2-3.596 155.9 2.736 164.1L65.89 256 2.74 347.01c-6.332 9.125-1.105 21.74 9.824 23.72l109 19.7 19.7 109c1.975 10.93 14.59 16.16 23.72 9.824L256 446.1l91.01 63.15c9.127 6.334 21.75 1.107 23.72-9.822l19.7-109 109-19.7C510.4 368.8 515.6 356.1 509.3 347zM256 383.1c-70.69.0-127.1-57.31-127.1-127.1.0-70.69 57.31-127.1 127.1-127.1S383.1 186.2 383.1 256c0 70.7-56.4 127.1-127.1 127.1z"/></svg></span></div></button></div></div></div></footer></div></body></html>

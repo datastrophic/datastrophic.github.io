@@ -1,436 +1,124 @@
-<!doctype html><html lang=en-us>
-<head>
-<meta charset=utf-8>
-<meta http-equiv=x-ua-compatible content="IE=edge">
-<meta name=viewport content="width=device-width,initial-scale=1">
-<meta property="og:site_name" content="datastrophic">
-<meta property="og:type" content="article">
-<meta property="og:image" content="https://datastrophic.io//img/datastrophic-strip-1.png">
-<meta property="twitter:image" content="https://datastrophic.io//img/datastrophic-strip-1.png">
-<meta name=title content="In the Wake of Scala Days 2015">
-<meta property="og:title" content="In the Wake of Scala Days 2015">
-<meta property="twitter:title" content="In the Wake of Scala Days 2015">
-<meta name=description content="A blog about distributed systems, data platforms, and AI infrastructure">
-<meta property="og:description" content="A blog about distributed systems, data platforms, and AI infrastructure">
-<meta property="twitter:description" content="A blog about distributed systems, data platforms, and AI infrastructure">
-<meta property="twitter:card" content="summary">
-<meta name=keyword content="Spark, Mesos, Kubernetes, Kubeflow, Istio, SMACK stack, Cassandra, Kafka">
-<link rel="shortcut icon" href=/img/favicon.ico>
-<title>In the Wake of Scala Days 2015</title>
-<link rel=canonical href=/in-the-wake-of-scala-days-2015/>
-<link rel=stylesheet href=/css/bootstrap.min.css>
-<link rel=stylesheet href=/css/hugo-theme-cleanwhite.min.css>
-<link rel=stylesheet href=/css/zanshang.css>
-<link href=//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css rel=stylesheet type=text/css>
-<link rel=stylesheet href=https://datastrophic.io/css/footer.css><link rel=stylesheet href=https://datastrophic.io/css/pager.css><link rel=stylesheet href=https://datastrophic.io/css/overrides.css>
-<script src=/js/jquery.min.js></script>
-<script src=/js/bootstrap.min.js></script>
-<script src=/js/hux-blog.min.js></script>
-</head>
-<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
-<div class=container-fluid>
-<div class="navbar-header page-scroll">
-<button type=button class=navbar-toggle>
-<span class=sr-only>Toggle navigation</span>
-<span class=icon-bar></span>
-<span class=icon-bar></span>
-<span class=icon-bar></span>
-</button>
-</div>
-<div id=huxblog_navbar>
-<div class=navbar-collapse>
-<ul class="nav navbar-nav navbar-right">
-<li>
-<a href=/>Home</a>
-</li>
-<li><a href=/top/archive/>ARCHIVE</a></li>
-<li><a href=/top/about/>ABOUT</a></li>
-</ul>
-</div>
-</div>
-</div>
-</nav>
-<script>var $body=document.body,$toggle=document.querySelector('.navbar-toggle'),$navbar=document.querySelector('#huxblog_navbar'),$collapse=document.querySelector('.navbar-collapse');$toggle.addEventListener('click',handleMagic);function handleMagic(a){$navbar.className.indexOf('in')>0?($navbar.className=" ",setTimeout(function(){$navbar.className.indexOf('in')<0&&($collapse.style.height="0px")},400)):($collapse.style.height="auto",$navbar.className+=" in")}</script>
-<style type=text/css>header.intro-header{background-image:url(/img/datastrophic-strip-1.png);color:#3a4145}</style>
-<header class=intro-header style=background-image:url(/img/datastrophic-strip-1.png)>
-<div class=container>
-<div class=row>
-<div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-<div class=post-heading>
-<div class=tags>
-<a class=tag href=/tags/scala title=scala>
-scala
-</a>
-</div>
-<h1>In the Wake of Scala Days 2015</h1>
-<span class=meta>
-Posted on
-July 1, 2015
-</span>
-</div>
-</div>
-</div>
-</div>
-</header>
-<article>
-<div class=container>
-<div class=row>
-<div class="col-lg-8 col-lg-offset-2
-col-md-10 col-md-offset-1
-post-container">
-<p>Scala Days Amsterdam conference was full of interesting topics so in this post I&rsquo;ll cover talks on the Scala platform, core concepts for making Scala code more idiomatic, monad transformers, consistency in distributed systems, distributed domain driven design, and a little more.</p>
-<p>This post came out of the post-conference presentation to my team, so the slides are also available <a href=http://slides.com/antonkirillov/in-the-wake-of-scala-days#/>here</a> and contain all the links to related materials and presentations so you can discover more on your own.</p>
-<h3 id=main-themes>Main themes</h3>
-<p>So here are the main themes/areas discussed at Scala Days:</p>
-<ul>
-<li>Reactive Applications - a big topic around non-blocking design with reference to Reactive Streams and Akka</li>
-<li>Big Data/Fast Data - mainly focused on frameworks and architectures like Spark, GraphX, Kafka</li>
-<li>Functional Programming in Scala - topic related functional programming aspects in Scala which mainly covers Scalaz use cases and how-to&rsquo;s</li>
-<li>Scala in practice - notes from production projects experience</li>
-<li>Distributed Systems - a broad topic focused on building systems with inter-node communication like Akka cluster or cluster management with Mesos</li>
-</ul>
-<h3 id=scala-keynote>Scala keynote</h3>
-<p>The talk is available <a href=https://www.parleys.com/tutorial/scala-where-came-from-where-its-going-1>at Parleys</a>, here&rsquo;re some highlights:</p>
-<ul>
-<li>A reactive platform is started to form (like JEE). If you check out the Typesafe website there&rsquo;re a lot of frameworks forming a full stack for application development: DB access with Slick, concurrency/distributed interaction with Akka, Play as a web framework.</li>
-<li>Scala-specific platform with TASTY (Serialized Typed Abstract Syntax Trees)</li>
-<li>DOTC compiler (was close to completion at the moment of the talk)</li>
-<li>Type unions (U&T and U|T) - instead of <code>with</code> mixin trait composition</li>
-<li>Implicits that compose (implicit function types)</li>
-<li>Moving towards more pure functional programming</li>
-</ul>
-<h3 id=tasty>TASTY</h3>
-<p>Java code compilation is bound to JVM, and Scala compiler adds Scala-specific signatures to classifiers that result in a larger size of classifiers and lower effectiveness.</p>
-<p>Another problem that Scala faces is its dependency on JDK/JVM and its need to adapt to version changes (e.g. migrating from Java 7 to Java 8). Besides that JVM is not only one target platform, so that&rsquo;s the place where TASTY comes into play. The main goal is in removing this dependency on specific platform versions. Plus some internal optimizations of code representation aimed to make code faster.</p>
-<p>
-<img src=/blog/2015-07-01/scala-specific-platform-with-tasty.png alt>
-</p>
-<p>#####DOTC
-The long-term plan for the Scala platform is in switching to a new Scala-specific DOTC compiler (based on Dependent Object Types calculus) and switch to work in conjunction with TASTY. For the moment of writing the compiler was close to completion, so for more details about DOTC here&rsquo;s the link to the original paper <a href=http://lampwww.epfl.ch/~amin/dot/fool.pdf>Dependent Object Types: Towards a foundation for Scala’s type system</a>.
-<img src=/blog/2015-07-01/tasty-dotc.png alt>
-</p>
-<h3 id=life-beyond-the-illusion-of-the-present>Life beyond the illusion of the present</h3>
-<p>A <a href=https://www.parleys.com/tutorial/life-beyond-illusion-present>philosophical talk</a> by Jonas Bonér focused on consistency in distributed systems. One of the main ideas was that actually data shouldn&rsquo;t be updated or deleted, it can only be created and read(CR<del>UD</del>). And there&rsquo;s still a number of problems in achieving consistency in distributed systems, but there&rsquo;s a number of approaches to manage it though, like vector clocks, consistency as logical monotonicity (CALM), and commutative replicated data types (CRDTs). Here goes a brief description of them:</p>
-<blockquote>
-<p>Vector clocks is an algorithm for generating a partial ordering of events in a distributed system and detecting causality violations</p>
-</blockquote>
-<p><a href=http://www.bloom-lang.net/calm/>CALM informally</a>:</p>
-<blockquote>
-<p>a block of code is logically monotonic if it satisfies a simple property:
-adding things to the input can only increase the output. By contrast, non-monotonic code may need to “retract” a previous output if more is added to its input.</p>
-</blockquote>
-<p>Conflict-free replicated data type:</p>
-<blockquote>
-<p>is a type of specially designed data structure used to achieve strong eventual consistency and monotonicity (absence of rollbacks). There are two alternative routes to ensuring strong eventual consistency: operation-based CRDTs and state-based CRDTs. The two alternatives are equivalent, as one can emulate the other, but operation-based CRDTs require additional guarantees from the communication middleware</p>
-</blockquote>
-<p><a href=http://pagesperso-systeme.lip6.fr/Marc.Shapiro/papers/RR-6956.pdf>Here&rsquo;s a link to original CRDT paper</a> and <a href=https://medium.com/@qt/a-brief-history-of-replicated-data-ab9dcf1671a0>here&rsquo;s a really good post on CRDTs by Jordan Rule</a></p>
-<h3 id=lambda-architecture-with-spark-streaming-kafka-cassandra>Lambda Architecture with Spark Streaming, Kafka, Cassandra</h3>
-<p>It was mainly a pitch-talk about Kafka-Spark-Cassandra-based architectures (<a href=https://www.parleys.com/tutorial/lambda-architecture-spark-streaming-kafka-cassandra-akka-scala>link to Parleys</a>). What&rsquo;s interesting here is that it looks like a common pattern: using Spark Streaming as an intermediate between Kafka and Cassandra for data ingestion. There&rsquo;re a lot of talks arise lately on the subject of moving from Hadoop to Kafka-Spark-Cassandra-based architectures.</p>
-<p>What about the talk itself, it was mainly describing these systems and providing some code samples. Reference application (<em>killrweather</em>) using all these technologies is available on <a href=https://github.com/killrweather/killrweather>github</a> as well. Helena Edelson demonstrated &ldquo;her nerdy chart&rdquo; with different architecture design strategies and technologies suitable for them:</p>
-<p>
-<img src=/blog/2015-07-01/smack-chart.jpeg alt>
-</p>
-<p>Another interesting part was that DataStax is developing a Cassandra Streaming driver which uses Cassandra as a source and is supposed to be used with Spark.</p>
-<h3 id=how-to-unsuck-your-options-in-futures>How to unsuck your Options in Futures</h3>
-<p><a href=https://www.parleys.com/tutorial/options-futures-how-unsuck-them>Link to the video</a>. Very often you need to unwrap the option value contained in the Future or any other container. This involves writing cumbersome code for extracting the actual value and this cumbersome code grows linearly. But Scalaz library provides a set of monads which are called &ldquo;monad transformers&rdquo; and allow you to unwrap one-level depth values to perform operations with them which results in a single type class/container of expected type in the end.</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#ff79c6>def</span> f1<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>Future</span><span style=color:#ff79c6>[</span><span style=color:#8be9fd>Option</span><span style=color:#ff79c6>[</span><span style=color:#8be9fd>Int</span><span style=color:#ff79c6>]]</span> <span style=color:#ff79c6>=</span> <span style=color:#ff79c6>???</span>
-<span style=color:#ff79c6>def</span> f2<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>Future</span><span style=color:#ff79c6>[</span><span style=color:#8be9fd>Option</span><span style=color:#ff79c6>[</span><span style=color:#8be9fd>Int</span><span style=color:#ff79c6>]]</span> <span style=color:#ff79c6>=</span> <span style=color:#ff79c6>???</span>
-<span style=color:#ff79c6>def</span> f3<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>Future</span><span style=color:#ff79c6>[</span><span style=color:#8be9fd>Option</span><span style=color:#ff79c6>[</span><span style=color:#8be9fd>Int</span><span style=color:#ff79c6>]]</span> <span style=color:#ff79c6>=</span> <span style=color:#ff79c6>???</span>
-
-<span style=color:#ff79c6>val</span> result <span style=color:#ff79c6>=</span> <span style=color:#ff79c6>for</span><span style=color:#ff79c6>{</span>
-    a <span style=color:#ff79c6>&lt;-</span> <span style=color:#50fa7b>OptionT</span><span style=color:#ff79c6>(</span>f1<span style=color:#ff79c6>)</span>
-    b <span style=color:#ff79c6>&lt;-</span> <span style=color:#50fa7b>OptionT</span><span style=color:#ff79c6>(</span>f2<span style=color:#ff79c6>)</span>
-    c <span style=color:#ff79c6>&lt;-</span> <span style=color:#50fa7b>OptionT</span><span style=color:#ff79c6>(</span>f3<span style=color:#ff79c6>)</span>
-<span style=color:#ff79c6>}</span> <span style=color:#ff79c6>yield</span> a <span style=color:#ff79c6>+</span> b <span style=color:#ff79c6>+</span> c
-
-<span style=color:#ff79c6>val</span> finOption<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>Future</span><span style=color:#ff79c6>[</span><span style=color:#8be9fd>Option</span><span style=color:#ff79c6>[</span><span style=color:#8be9fd>Int</span><span style=color:#ff79c6>]]</span> <span style=color:#ff79c6>=</span> result<span style=color:#ff79c6>.</span>run
-</code></pre></div><p>Let&rsquo;s imagine you have different containers and want to perform some operation on their values. For this case, you need to &ldquo;cast&rdquo; (wrap) the given objects to the closest one and then apply the monad transformer.</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#ff79c6>def</span> f1<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>Future</span><span style=color:#ff79c6>[</span><span style=color:#8be9fd>String</span> <span style=color:#8be9fd>\/</span> <span style=color:#8be9fd>Int</span><span style=color:#ff79c6>]</span> <span style=color:#ff79c6>=</span> <span style=color:#ff79c6>???</span>
-<span style=color:#ff79c6>def</span> f2<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>Option</span><span style=color:#ff79c6>[</span><span style=color:#8be9fd>Int</span><span style=color:#ff79c6>]</span> <span style=color:#ff79c6>=</span> <span style=color:#ff79c6>???</span>
-<span style=color:#ff79c6>def</span> f3<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>Future</span><span style=color:#ff79c6>[</span><span style=color:#8be9fd>Int</span><span style=color:#ff79c6>]</span> <span style=color:#ff79c6>=</span> <span style=color:#ff79c6>???</span>
-
-<span style=color:#ff79c6>val</span> result <span style=color:#ff79c6>=</span> <span style=color:#ff79c6>for</span><span style=color:#ff79c6>{</span>
-  a <span style=color:#ff79c6>&lt;-</span> <span style=color:#50fa7b>EitherT</span><span style=color:#ff79c6>(</span>f1<span style=color:#ff79c6>)</span>
-  b <span style=color:#ff79c6>&lt;-</span> <span style=color:#50fa7b>EitherT</span><span style=color:#ff79c6>(</span><span style=color:#50fa7b>Future</span><span style=color:#ff79c6>(</span>f2 \<span style=color:#ff79c6>/&gt;</span> <span style=color:#f1fa8c>&#34;B is missing&#34;</span><span style=color:#ff79c6>))</span>
-  c <span style=color:#ff79c6>&lt;-</span> <span style=color:#50fa7b>EitherT</span><span style=color:#ff79c6>(</span>f3<span style=color:#ff79c6>.</span>map<span style=color:#ff79c6>(</span>v <span style=color:#ff79c6>=&gt;</span> \<span style=color:#ff79c6>/.</span>right<span style=color:#ff79c6>(</span>v<span style=color:#ff79c6>))</span>
-<span style=color:#ff79c6>}</span> <span style=color:#ff79c6>yield</span> a <span style=color:#ff79c6>+</span> b <span style=color:#ff79c6>+</span> c
-
-<span style=color:#ff79c6>val</span> finEither<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>Future</span><span style=color:#ff79c6>[</span><span style=color:#8be9fd>String</span> <span style=color:#8be9fd>\/</span> <span style=color:#8be9fd>Int</span><span style=color:#ff79c6>]</span> <span style=color:#ff79c6>=</span> result<span style=color:#ff79c6>.</span>run
-</code></pre></div><p>And here&rsquo;s how it can look like if we implement it ourselves</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#ff79c6>case</span> <span style=color:#ff79c6>class</span> <span style=color:#50fa7b>FutureOption</span><span style=color:#ff79c6>[</span><span style=color:#8be9fd>A</span><span style=color:#ff79c6>](</span>contents<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>Future</span><span style=color:#ff79c6>[</span><span style=color:#8be9fd>Option</span><span style=color:#ff79c6>[</span><span style=color:#8be9fd>A</span><span style=color:#ff79c6>]]){</span>
-
-  <span style=color:#ff79c6>def</span> flatMap<span style=color:#ff79c6>[</span><span style=color:#8be9fd>B</span><span style=color:#ff79c6>](</span>fn<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>A</span> <span style=color:#ff79c6>=&gt;</span> <span style=color:#50fa7b>FutureOption</span><span style=color:#ff79c6>[</span><span style=color:#8be9fd>B</span><span style=color:#ff79c6>])</span> <span style=color:#ff79c6>=</span> <span style=color:#50fa7b>FutureOption</span><span style=color:#ff79c6>{</span>
-    contents<span style=color:#ff79c6>.</span>flatMap<span style=color:#ff79c6>{</span>
-      <span style=color:#ff79c6>case</span> <span style=color:#50fa7b>Some</span><span style=color:#ff79c6>(</span>value<span style=color:#ff79c6>)</span> <span style=color:#ff79c6>=&gt;</span> fn<span style=color:#ff79c6>(</span>value<span style=color:#ff79c6>).</span>contents
-      <span style=color:#ff79c6>case</span> <span style=color:#50fa7b>None</span> <span style=color:#ff79c6>=&gt;</span> <span style=color:#50fa7b>Future</span><span style=color:#ff79c6>.</span>successful<span style=color:#ff79c6>(</span><span style=color:#50fa7b>None</span><span style=color:#ff79c6>)</span>
-    <span style=color:#ff79c6>}</span>
-  <span style=color:#ff79c6>}</span>
-
-  <span style=color:#ff79c6>def</span> map<span style=color:#ff79c6>[</span><span style=color:#8be9fd>B</span><span style=color:#ff79c6>](</span>fn<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>A</span> <span style=color:#ff79c6>=&gt;</span> B<span style=color:#ff79c6>)</span> <span style=color:#ff79c6>=</span> <span style=color:#50fa7b>FutureOption</span><span style=color:#ff79c6>{</span>
-    contents<span style=color:#ff79c6>.</span>map<span style=color:#ff79c6>{</span> option <span style=color:#ff79c6>=&gt;</span>
-      option<span style=color:#ff79c6>.</span>map<span style=color:#ff79c6>(</span>fn<span style=color:#ff79c6>)</span>
-    <span style=color:#ff79c6>}</span>
-  <span style=color:#ff79c6>}</span>
-<span style=color:#ff79c6>}</span>
-</code></pre></div><p>So why is all this needed? For-comprehensions are a really awesome feature actually which allows writing really concise and readable code. For-comprehensions basically use two operations that should be implemented in used classes: map and flatMap.</p>
-<p>So here we go closer to the Monad. Apart from Category Theory, monad can be thought of as a TypeClass with methods: <code>map</code>, <code>flatMap</code> and <code>create</code> (bind and unit). And to satisfy the for-comprehension contract with our Future-of-Option monad transformer we need to implement map and flatMap.</p>
-<p>Scalaz provides a number of useful monad transformers out of the box. But if you need anything special, you can generalize the given code a bit and use a Monad trait from Scalaz to abstract a bit more.</p>
-<h3 id=understanding-the-backend-of-big-data>Understanding the backend of Big Data</h3>
-<p><a href=https://www.parleys.com/tutorial/understanding-back-end-big-data>The talk</a> was generally about four main topics:</p>
-<ul>
-<li>
-<p>the complexity of building distributed systems and how Functional Programming helps to reduce it. Basically, FP is good at transforming immutable data and forces immutable data structures leading to fewer errors in runtime and providing some sort of compile-time &ldquo;correctness&rdquo; checks upfront</p>
-</li>
-<li>
-<p>cluster management is hard, with static resource allocation cluster resources are used for about 5-10% nowadays because of over-provisioning for handling load spikes. Mixed workloads are the most complex ones to estimate resources.</p>
-</li>
-<li>
-<p>so here comes Mesos which provides dynamic resource allocation and management. And the main components of the ecosystem covered in the talk were Mesos itself, Marathon for scheduling long-running tasks, and Myriad which is the Mesos-YARN bridge</p>
-</li>
-<li>
-<p>finally DCOS GA was released a couple of hours before the talk and it looks really promising, providing central DC management UI and console allowing to easily install Mesos frameworks. It&rsquo;s available for free for Amazon and has a trial version for commodity hardware. It&rsquo;s worth checking it out.</p>
-</li>
-</ul>
-<h3 id=essential-scala>Essential Scala</h3>
-<p>Really impressive <a href=https://www.parleys.com/tutorial/essential-scala-six-core-principles-learning-scala-1>talk by Noel Welsh</a> providing several really simple guidelines to make Scala code better structured and more idiomatic which is crucial when someone just started using Scala or just needs to train the team moving to it. So basically six core concepts form the learning curve of Scala:</p>
-<ul>
-<li>Expressions, types, & values</li>
-<li>Objects and classes</li>
-<li>Algebraic data types</li>
-<li>Structural recursion</li>
-<li>Sequencing computation</li>
-<li>Type classes</li>
-</ul>
-<p>Topics covered in the talk were ADT, Structural recursion, and Sequencing computation</p>
-<h4 id=algebraic-data-types>Algebraic Data Types</h4>
-<ul>
-<li>Goal: translate data description into code</li>
-<li>Model data with logical ORs and ANDs</li>
-<li>Two patterns: product types(ANDs) and sum types(ORs)</li>
-<li>Sum and product together make algebraic data types</li>
-</ul>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#6272a4>//product type: A has a B and C
-</span><span style=color:#6272a4></span><span style=color:#ff79c6>final</span> <span style=color:#ff79c6>case</span> <span style=color:#ff79c6>class</span> <span style=color:#50fa7b>A</span><span style=color:#ff79c6>(</span>b<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>B</span><span style=color:#ff79c6>,</span> c<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>C</span><span style=color:#ff79c6>)</span>
-
-<span style=color:#6272a4>//sum type: A is a B or C
-</span><span style=color:#6272a4></span><span style=color:#ff79c6>sealed</span> <span style=color:#ff79c6>trait</span> <span style=color:#50fa7b>A</span>
-<span style=color:#ff79c6>final</span> <span style=color:#ff79c6>case</span> <span style=color:#ff79c6>class</span> <span style=color:#50fa7b>B</span><span style=color:#ff79c6>()</span> <span style=color:#ff79c6>extends</span> A
-<span style=color:#ff79c6>final</span> <span style=color:#ff79c6>case</span> <span style=color:#ff79c6>class</span> <span style=color:#50fa7b>C</span><span style=color:#ff79c6>()</span> <span style=color:#ff79c6>extends</span> A
-
-<span style=color:#6272a4>//Example: a Calculation either successful and has value or failed and has an error
-</span><span style=color:#6272a4></span><span style=color:#ff79c6>sealed</span> <span style=color:#ff79c6>trait</span> <span style=color:#50fa7b>Calculation</span>
-<span style=color:#ff79c6>final</span> <span style=color:#ff79c6>case</span> <span style=color:#ff79c6>class</span> <span style=color:#50fa7b>Success</span><span style=color:#ff79c6>(</span>value<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>Int</span><span style=color:#ff79c6>)</span> <span style=color:#ff79c6>extends</span> <span style=color:#50fa7b>Calculation</span>
-<span style=color:#ff79c6>final</span> <span style=color:#ff79c6>case</span> <span style=color:#ff79c6>class</span> <span style=color:#50fa7b>Failure</span><span style=color:#ff79c6>(</span>msg<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>String</span><span style=color:#ff79c6>)</span> <span style=color:#ff79c6>extends</span> <span style=color:#50fa7b>Calculation</span> 
-</code></pre></div><h4 id=structural-recursion>Structural recursion</h4>
-<ul>
-<li>Goal: transform algebraic data type</li>
-<li>Two patterns here: pattern-matching & polymorphism</li>
-</ul>
-<blockquote>
-<p>Structural induction is a proof method that is used in mathematical logic, computer science, graph theory, and some other mathematical fields. It is a generalization of mathematical induction over natural numbers and can be further generalized to arbitrary Noetherian induction. Structural recursion is a recursion method bearing the same relationship to structural induction as ordinary recursion bears to ordinary mathematical induction.</p>
-</blockquote>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#6272a4>//pattern matching
-</span><span style=color:#6272a4></span><span style=color:#ff79c6>sealed</span> <span style=color:#ff79c6>trait</span> <span style=color:#50fa7b>A</span> <span style=color:#ff79c6>{</span>
-   <span style=color:#ff79c6>def</span> doSomething<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>H</span> <span style=color:#ff79c6>=</span> <span style=color:#ff79c6>{</span>
-       <span style=color:#ff79c6>this</span> <span style=color:#ff79c6>match</span> <span style=color:#ff79c6>{</span>
-          <span style=color:#ff79c6>case</span> B<span style=color:#ff79c6>(</span>d<span style=color:#ff79c6>,</span> e<span style=color:#ff79c6>)</span> <span style=color:#ff79c6>=&gt;</span> doB<span style=color:#ff79c6>(</span>d<span style=color:#ff79c6>,</span> e<span style=color:#ff79c6>)</span>
-          <span style=color:#ff79c6>case</span> C<span style=color:#ff79c6>(</span>f<span style=color:#ff79c6>,</span> g<span style=color:#ff79c6>)</span> <span style=color:#ff79c6>=&gt;</span> doC<span style=color:#ff79c6>(</span>f<span style=color:#ff79c6>,</span> g<span style=color:#ff79c6>)</span>
-       <span style=color:#ff79c6>}</span>
-   <span style=color:#ff79c6>}</span>
-<span style=color:#ff79c6>}</span>
-
-<span style=color:#ff79c6>final</span> <span style=color:#ff79c6>case</span> <span style=color:#ff79c6>class</span> <span style=color:#50fa7b>B</span><span style=color:#ff79c6>(</span>d<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>D</span><span style=color:#ff79c6>,</span> e<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>E</span><span style=color:#ff79c6>)</span> <span style=color:#ff79c6>extends</span> A
-<span style=color:#ff79c6>final</span> <span style=color:#ff79c6>case</span> <span style=color:#ff79c6>class</span> <span style=color:#50fa7b>C</span><span style=color:#ff79c6>(</span>f<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>F</span><span style=color:#ff79c6>,</span> g<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>G</span><span style=color:#ff79c6>)</span> <span style=color:#ff79c6>extends</span> A
-
-
-<span style=color:#6272a4>//polymorphism
-</span><span style=color:#6272a4></span><span style=color:#ff79c6>sealed</span> <span style=color:#ff79c6>trait</span> <span style=color:#50fa7b>A</span> <span style=color:#ff79c6>{</span>
- <span style=color:#ff79c6>def</span> doSomething<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>H</span>
-<span style=color:#ff79c6>}</span>
-
-<span style=color:#ff79c6>final</span> <span style=color:#ff79c6>case</span> <span style=color:#ff79c6>class</span> <span style=color:#50fa7b>B</span><span style=color:#ff79c6>(</span>d<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>D</span><span style=color:#ff79c6>,</span> e<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>E</span><span style=color:#ff79c6>)</span> <span style=color:#ff79c6>extends</span> A <span style=color:#ff79c6>{</span>
- <span style=color:#ff79c6>def</span> doSomething<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>H</span> <span style=color:#ff79c6>=</span> doB<span style=color:#ff79c6>(</span>d<span style=color:#ff79c6>,</span> e<span style=color:#ff79c6>)</span>
-<span style=color:#ff79c6>}</span>
-
-<span style=color:#ff79c6>final</span> <span style=color:#ff79c6>case</span> <span style=color:#ff79c6>class</span> <span style=color:#50fa7b>C</span><span style=color:#ff79c6>(</span>f<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>F</span><span style=color:#ff79c6>,</span> g<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>G</span><span style=color:#ff79c6>)</span> <span style=color:#ff79c6>extends</span> A <span style=color:#ff79c6>{</span>
- <span style=color:#ff79c6>def</span> doSomething<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>H</span> <span style=color:#ff79c6>=</span> doC<span style=color:#ff79c6>(</span>f<span style=color:#ff79c6>,</span> g<span style=color:#ff79c6>)</span>
-<span style=color:#ff79c6>}</span>
-</code></pre></div><ul>
-<li>The processing algebraic data types immediately follows from the structure of the data</li>
-<li>Can choose between pattern matching and polymorphism</li>
-<li>Pattern matching (within the base trait) is usually preferred</li>
-</ul>
-<h4 id=sequencing-computations>Sequencing Computations</h4>
-<ul>
-<li>Goal: patterns for sequencing computations</li>
-<li>Functional programming is about transforming values &mldr; without introducing side-effects</li>
-<li>A => B => C</li>
-<li>Three patterns: fold, map, and flatMap</li>
-<li>Fold is abstraction over structural recursion</li>
-</ul>
-<p>So here&rsquo;s how we&rsquo;d go with our own fold implementation</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#6272a4>//initial version
-</span><span style=color:#6272a4></span><span style=color:#ff79c6>sealed</span> <span style=color:#ff79c6>trait</span> <span style=color:#50fa7b>A</span> <span style=color:#ff79c6>{</span>
- <span style=color:#ff79c6>def</span> doSomething<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>H</span> <span style=color:#ff79c6>=</span> <span style=color:#ff79c6>{</span>
-   <span style=color:#ff79c6>this</span> <span style=color:#ff79c6>match</span> <span style=color:#ff79c6>{</span>
-     <span style=color:#ff79c6>case</span> B<span style=color:#ff79c6>(</span>d<span style=color:#ff79c6>,</span> e<span style=color:#ff79c6>)</span> <span style=color:#ff79c6>=&gt;</span> doB<span style=color:#ff79c6>(</span>d<span style=color:#ff79c6>,</span> e<span style=color:#ff79c6>)</span>
-     <span style=color:#ff79c6>case</span> C<span style=color:#ff79c6>(</span>f<span style=color:#ff79c6>,</span> g<span style=color:#ff79c6>)</span> <span style=color:#ff79c6>=&gt;</span> doC<span style=color:#ff79c6>(</span>f<span style=color:#ff79c6>,</span> g<span style=color:#ff79c6>)</span>
-   <span style=color:#ff79c6>}</span>
- <span style=color:#ff79c6>}</span>
-<span style=color:#ff79c6>}</span>
-
-<span style=color:#ff79c6>final</span> <span style=color:#ff79c6>case</span> <span style=color:#ff79c6>class</span> <span style=color:#50fa7b>B</span><span style=color:#ff79c6>(</span>d<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>D</span><span style=color:#ff79c6>,</span> e<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>E</span><span style=color:#ff79c6>)</span> <span style=color:#ff79c6>extends</span> A
-<span style=color:#ff79c6>final</span> <span style=color:#ff79c6>case</span> <span style=color:#ff79c6>class</span> <span style=color:#50fa7b>C</span><span style=color:#ff79c6>(</span>f<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>F</span><span style=color:#ff79c6>,</span> g<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>G</span><span style=color:#ff79c6>)</span> <span style=color:#ff79c6>extends</span> A 
-
-
-<span style=color:#6272a4>//first refactoring
-</span><span style=color:#6272a4></span><span style=color:#ff79c6>sealed</span> <span style=color:#ff79c6>trait</span> <span style=color:#50fa7b>A</span> <span style=color:#ff79c6>{</span>
- <span style=color:#ff79c6>def</span> fold<span style=color:#ff79c6>(</span>doB<span style=color:#ff79c6>:</span> <span style=color:#ff79c6>(</span><span style=color:#8be9fd>D</span><span style=color:#ff79c6>,</span> <span style=color:#8be9fd>E</span><span style=color:#ff79c6>)</span> <span style=color:#ff79c6>=&gt;</span> H<span style=color:#ff79c6>,</span> doC<span style=color:#ff79c6>:</span> <span style=color:#ff79c6>(</span><span style=color:#8be9fd>F</span><span style=color:#ff79c6>,</span> <span style=color:#8be9fd>G</span><span style=color:#ff79c6>)</span> <span style=color:#ff79c6>=&gt;</span> H<span style=color:#ff79c6>)</span><span style=color:#ff79c6>:</span> <span style=color:#8be9fd>H</span> <span style=color:#ff79c6>=</span> <span style=color:#ff79c6>{</span>
-    <span style=color:#ff79c6>this</span> <span style=color:#ff79c6>match</span> <span style=color:#ff79c6>{</span>
-		 <span style=color:#ff79c6>case</span> B<span style=color:#ff79c6>(</span>d<span style=color:#ff79c6>,</span> e<span style=color:#ff79c6>)</span> <span style=color:#ff79c6>=&gt;</span> doB<span style=color:#ff79c6>(</span>d<span style=color:#ff79c6>,</span> e<span style=color:#ff79c6>)</span>
-		 <span style=color:#ff79c6>case</span> C<span style=color:#ff79c6>(</span>f<span style=color:#ff79c6>,</span> g<span style=color:#ff79c6>)</span> <span style=color:#ff79c6>=&gt;</span> doC<span style=color:#ff79c6>(</span>f<span style=color:#ff79c6>,</span> g<span style=color:#ff79c6>)</span>
-    <span style=color:#ff79c6>}</span>
- <span style=color:#ff79c6>}</span>
-<span style=color:#ff79c6>}</span>
-
-<span style=color:#ff79c6>final</span> <span style=color:#ff79c6>case</span> <span style=color:#ff79c6>class</span> <span style=color:#50fa7b>B</span><span style=color:#ff79c6>(</span>d<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>D</span><span style=color:#ff79c6>,</span> e<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>E</span><span style=color:#ff79c6>)</span> <span style=color:#ff79c6>extends</span> A
-<span style=color:#ff79c6>final</span> <span style=color:#ff79c6>case</span> <span style=color:#ff79c6>class</span> <span style=color:#50fa7b>C</span><span style=color:#ff79c6>(</span>f<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>F</span><span style=color:#ff79c6>,</span> g<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>G</span><span style=color:#ff79c6>)</span> <span style=color:#ff79c6>extends</span> A
-    
-
-<span style=color:#6272a4>//final result
-</span><span style=color:#6272a4></span><span style=color:#ff79c6>sealed</span> <span style=color:#ff79c6>trait</span> <span style=color:#50fa7b>Result</span><span style=color:#ff79c6>[</span><span style=color:#8be9fd>A</span><span style=color:#ff79c6>]</span> <span style=color:#ff79c6>{</span>
- <span style=color:#ff79c6>def</span> fold<span style=color:#ff79c6>[</span><span style=color:#8be9fd>B</span><span style=color:#ff79c6>](</span>s<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>A</span> <span style=color:#ff79c6>=&gt;</span> B<span style=color:#ff79c6>,</span> f<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>B</span><span style=color:#ff79c6>)</span><span style=color:#ff79c6>:</span> <span style=color:#8be9fd>B</span> <span style=color:#ff79c6>=</span>
-    <span style=color:#ff79c6>this</span> <span style=color:#ff79c6>match</span> <span style=color:#ff79c6>{</span>
-  	 <span style=color:#ff79c6>case</span> <span style=color:#50fa7b>Success</span><span style=color:#ff79c6>(</span>v<span style=color:#ff79c6>)</span> <span style=color:#ff79c6>=&gt;</span> s<span style=color:#ff79c6>(</span>v<span style=color:#ff79c6>)</span>
-  	 <span style=color:#ff79c6>case</span> <span style=color:#50fa7b>Failure</span><span style=color:#ff79c6>()</span> <span style=color:#ff79c6>=&gt;</span> f
-    <span style=color:#ff79c6>}</span>
-<span style=color:#ff79c6>}</span>
-
-<span style=color:#ff79c6>final</span> <span style=color:#ff79c6>case</span> <span style=color:#ff79c6>class</span> <span style=color:#50fa7b>Success</span><span style=color:#ff79c6>[</span><span style=color:#8be9fd>A</span><span style=color:#ff79c6>](</span>value<span style=color:#ff79c6>:</span> <span style=color:#8be9fd>A</span><span style=color:#ff79c6>)</span> <span style=color:#ff79c6>extends</span> <span style=color:#50fa7b>Result</span><span style=color:#ff79c6>[</span><span style=color:#8be9fd>A</span><span style=color:#ff79c6>]</span>
-<span style=color:#ff79c6>final</span> <span style=color:#ff79c6>case</span> <span style=color:#ff79c6>class</span> <span style=color:#50fa7b>Failure</span><span style=color:#ff79c6>[</span><span style=color:#8be9fd>A</span><span style=color:#ff79c6>]()</span> <span style=color:#ff79c6>extends</span> <span style=color:#50fa7b>Result</span><span style=color:#ff79c6>[</span><span style=color:#8be9fd>A</span><span style=color:#ff79c6>]</span>
-</code></pre></div><ul>
-<li>fold is a generic transform for any algebraic data type</li>
-<li>but it&rsquo;s not always the best choice</li>
-<li>not all data is an algebraic data type</li>
-<li>there&rsquo;re other methods easier to use (<code>map</code> and <code>flatMap</code>)</li>
-</ul>
-<p>So main conclusions of the talk are that in fact, Scala is simple, 3 described patterns cover 90% of code (and 4 cover 99%) and that program design in Scala is systematic.</p>
-<h3 id=a-purely-functional-approach-to-building-large-applications>A Purely Functional Approach to Building Large Applications</h3>
-<p>It was a <a href=https://www.parleys.com/tutorial/a-purely-functional-approach-building-large-applications>really <em>monadic</em> talk</a> about Scalaz usage in real projects showing how to properly abstract the logic with monads and wiring functions together.</p>
-<ul>
-<li>Reader monad: in simple words, it&rsquo;s a wrapper providing context for functions that need it. Generally speaking, the scope where such kind of dependency injection is needed is function scope, so here comes the reader that provides the context to the function.</li>
-<li>ReaderT is a monad transformer like we&rsquo;ve seen before which unwraps the values which sit in some monad container like Option or Future</li>
-<li>Kleisli arrow: is a base abstraction for ReaderT and is really handy when it comes to the composition of monadic functions, it&rsquo;s simply a wrapper for a function of type <code>A => F[B]</code>.</li>
-<li>Task monad: a substitute for Scala Future, differs in that sense that occupies thread only at the moment of materialization, which allows performing different transformations lazily lowering the amount of context switching</li>
-</ul>
-<h3 id=easy-scalable-akka-applications>Easy Scalable Akka Applications</h3>
-<p><a href=https://www.parleys.com/tutorial/easy-scalability-akka-1>The talk</a> was focused on distributed domain-driven design and its implementation with Akka.</p>
-<p>Two main approaches discussed were CQRS and Event Sourcing:</p>
-<ul>
-<li>
-<p>Command Query Responsibility Segregation</p>
-<blockquote>
-<p>CQRS at its heart is the notion that you can use a different model to update information than the model you use to read information.</p>
-</blockquote>
-</li>
-<li>
-<p>Event Sourcing</p>
-<blockquote>
-<p>Event Sourcing ensures that all changes to the application state are stored as a sequence of events. Not just can we query these events, we can also use the event log to reconstruct past states, and as a foundation to automatically adjust the state to cope with retroactive changes.</p>
-</blockquote>
-</li>
-</ul>
-<p>A couple of words on the distributed domain-driven design. Some examples of Non-Distributed Domain</p>
-<ul>
-<li>Basic CRUD (Create, Read, Update, Delete)</li>
-<li>Writes and reads to same database (ACID)</li>
-<li>Scaled via multiple identical replicas</li>
-<li>Bottlenecks on contention (reads and writes interfere with each other)</li>
-</ul>
-<p>With Akka and DDDD</p>
-<ul>
-<li>Wouldn’t it be great if you could just keep your domain instances in memory?</li>
-<li>But how to recover from its volatile nature: an event journal!</li>
-</ul>
-<p>So the main idea here is to use Actors to represent domain entities (e.g. bank accounts) and store the state mutations as a commit log with periodical snapshots which is achieved with an <code>akka-persistence</code> module. Cassandra was used for storing the journal so in total the system looks really interesting. CRUD and CQRS were compared and tested with the Gatling stress tool with results available in Boldradius <a href=http://boldradius.com/blog-post/VSQCySkAACcA4k5J/easy-scalability-with-akka>blog post</a>.</p>
-<h3 id=some-other-cool-talks>Some Other Cool Talks</h3>
-<ul>
-<li><a href=https://www.parleys.com/tutorial/scala15_09_effecten_6function-passing-style-a-new-model-asynchronous-distributed-programming>Spores</a>: type-safe function serialization for remote method invocation. Imagine actors passing functions instead of functions+data, immutable data enforced</li>
-<li><a href=https://www.parleys.com/tutorial/project-galbma-actors-vs-types>Project Gålbma: Actors vs. Types</a> - so generally the main goal of this project is to provide typed ActorRefs, in future remove Actor trait and switch to more pure actor model enforcing message-passing behavior</li>
-<li>The <a href=https://www.parleys.com/tutorial/dont-block-yourself>talk about using Finagle in SoundCloud</a> was pretty interesting. Finagle is a high-performance RPC server supporting various protocols, built on Netty, and enforcing functional programming in API. It is really nice and easy-to-use to build a distributed system.</li>
-<li><a href=https://www.parleys.com/tutorial/scala-js-semantics-how-support-performance-javascript-interop>Scala.js talk</a> was pretty interesting in terms of compiler implementation details and it seems that it is mature enough</li>
-<li>Reactive streams topic was pretty interesting especially in terms of back pressure and constructing the data flows model.</li>
-</ul>
-<h3 id=wrapping-up>Wrapping Up</h3>
-<ul>
-<li>Scala language becomes more and more stable in terms of API changes and moves towards improving performance, being more functionally pure as well as growing its own platform</li>
-<li>Scala is widely used as an implementation language in major and emerging distributed data processing/computing frameworks (Akka, Spark, Crunch)</li>
-<li>Scalaz is used in a wide variety of projects for proper abstractions or just for making code more concise and reusable (/, monad transformers)</li>
-<li>There&rsquo;re a lot of Scala libraries/frameworks forming mature ecosystem (e.g. Akka and Play) which can be used for building large distributed applications</li>
-</ul>
-<p>More awesome slides and videos from Scala Days Amsterdam are available at <a href=https://www.parleys.com/channel/scala-days-amsterdam-2015>Parleys</a>!</p>
-<nav class=pagination role=navigation>
-<a class=older-posts href=/evaluating-cassandra-2-1-counters-consistency/>Next Post &rarr;</a>
-</nav>
-</div>
-<div class="col-lg-2 col-lg-offset-0
-visible-lg-block
-sidebar-container
-catalog-container">
-<div class=side-catalog>
-<hr class="hidden-sm hidden-xs">
-<h5>
-<a class=catalog-toggle href=#>CONTENTS</a>
-</h5>
-<ul class=catalog-body></ul>
-</div>
-</div>
-<div class="col-lg-8 col-lg-offset-2
-col-md-10 col-md-offset-1
-sidebar-container">
-<section>
-<hr class="hidden-sm hidden-xs">
-<h5><a href=/tags/>FEATURED TAGS</a></h5>
-<div class=tags>
-<a href=/tags/akka title=akka>
-akka
-</a>
-<a href=/tags/cassandra title=cassandra>
-cassandra
-</a>
-<a href=/tags/istio title=istio>
-istio
-</a>
-<a href=/tags/kubeflow title=kubeflow>
-kubeflow
-</a>
-<a href=/tags/kubernetes title=kubernetes>
-kubernetes
-</a>
-<a href=/tags/mesos title=mesos>
-mesos
-</a>
-<a href=/tags/sheduling title=sheduling>
-sheduling
-</a>
-<a href=/tags/spark title=spark>
-spark
-</a>
-</div>
-</section>
-</div>
-</div>
-</div>
-</article>
-<footer class="site-footer clearfix">
-<section class=copyright><a href>datastrophic</a> &copy; 2021</section>
-<section class=poweredby>Proudly generated by <a class=icon-hugo href=http://gohugo.io>HUGO</a></section>
-</footer>
-<script>function loadAsync(f,b){var c=document,d='script',a=c.createElement(d),e=c.getElementsByTagName(d)[0];a.src=f,b&&a.addEventListener('load',function(a){b(null,a)},!1),e.parentNode.insertBefore(a,e)}</script>
-<script>$('#tag_cloud').length!==0&&loadAsync("/js/jquery.tagcloud.js",function(){$.fn.tagcloud.defaults={color:{start:'#bbbbee',end:'#0085a1'}},$('#tag_cloud a').tagcloud()})</script>
-<script>loadAsync("https://cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.js",function(){var a=document.querySelector("nav");a&&FastClick.attach(a)})</script>
-<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-65032691-1','auto'),ga('send','pageview'))</script>
-<script async src=https://www.google-analytics.com/analytics.js></script>
-<script type=text/javascript>function generateCatalog(a){_containerSelector='div.post-container';var h=$(_containerSelector),c,d,e,f,g,b;return c=h.find('h1,h2,h3,h4,h5,h6'),$(a).html(''),c.each(function(){d=$(this).prop('tagName').toLowerCase(),g="#"+$(this).prop('id'),e=$(this).text(),b=$('<a href="'+g+'" rel="nofollow">'+e+'</a>'),f=$('<li class="'+d+'_nav"></li>').append(b),$(a).append(f)}),!0}generateCatalog(".catalog-body"),$(".catalog-toggle").click(function(a){a.preventDefault(),$('.side-catalog').toggleClass("fold")}),loadAsync("/js/jquery.nav.js",function(){$('.catalog-body').onePageNav({currentClass:"active",changeHash:!1,easing:"swing",filter:"",scrollSpeed:700,scrollOffset:0,scrollThreshold:.2,begin:null,end:null,scrollChange:null,padding:80})})</script>
-</body>
-</html>
+<!doctype html><html lang=en dir=ltr class=scroll-smooth data-default-appearance=light data-auto-appearance=true><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=theme-color content="#FFFFFF"><title>In the Wake of Scala Days 2015 &#183; datastrophic</title><meta name=title content="In the Wake of Scala Days 2015 &#183; datastrophic"><script type=text/javascript src=https://datastrophic.io/js/appearance.min.8a082f81b27f3cb2ee528df0b0bdc39787034cf2cc34d4669fbc9977c929023c.js integrity="sha256-iggvgbJ/PLLuUo3wsL3Dl4cDTPLMNNRmn7yZd8kpAjw="></script><link type=text/css rel=stylesheet href=https://datastrophic.io/css/main.bundle.min.02e0262738dfe4d54f6393381fab23180d51c6764276ae9f9736ba07270c82d3.css integrity="sha256-AuAmJzjf5NVPY5M4H6sjGA1RxnZCdq6flza6BycMgtM="><script defer type=text/javascript id=script-bundle src=https://datastrophic.io/js/main.bundle.min.d4b727caf411cb5c3b421d0d427ed1e3daeafe0d04840327efad4978430edb8c.js integrity="sha256-1LcnyvQRy1w7Qh0NQn7R49rq/g0EhAMn761JeEMO24w=" data-copy=Copy data-copied=Copied></script><meta name=description content="
+      
+        Scala Days Amsterdam conference was full of interesting topics so in this post I&rsquo;ll cover talks on the Scala platform, core concepts for making Scala code more idiomatic, monad transformers, consistency in distributed systems, distributed domain driven design, and a little more.
+      
+    "><link rel=canonical href=https://datastrophic.io/in-the-wake-of-scala-days-2015/><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/site.webmanifest><meta property="og:url" content="https://datastrophic.io/in-the-wake-of-scala-days-2015/"><meta property="og:site_name" content="datastrophic"><meta property="og:title" content="In the Wake of Scala Days 2015"><meta property="og:description" content="Scala Days Amsterdam conference was full of interesting topics so in this post I’ll cover talks on the Scala platform, core concepts for making Scala code more idiomatic, monad transformers, consistency in distributed systems, distributed domain driven design, and a little more."><meta property="og:locale" content="en"><meta property="og:type" content="article"><meta property="article:section" content="posts"><meta property="article:published_time" content="2015-07-01T00:00:00+00:00"><meta property="article:modified_time" content="2015-07-01T00:00:00+00:00"><meta property="article:tag" content="Scala"><meta name=twitter:card content="summary"><meta name=twitter:title content="In the Wake of Scala Days 2015"><meta name=twitter:description content="Scala Days Amsterdam conference was full of interesting topics so in this post I’ll cover talks on the Scala platform, core concepts for making Scala code more idiomatic, monad transformers, consistency in distributed systems, distributed domain driven design, and a little more."><script type=application/ld+json>{"@context":"https://schema.org","@type":"Article","articleSection":"","name":"In the Wake of Scala Days 2015","headline":"In the Wake of Scala Days 2015","abstract":"Scala Days Amsterdam conference was full of interesting topics so in this post I\u0026rsquo;ll cover talks on the Scala platform, core concepts for making Scala code more idiomatic, monad transformers, consistency in distributed systems, distributed domain driven design, and a little more.","inLanguage":"en","url":"https:\/\/datastrophic.io\/in-the-wake-of-scala-days-2015\/","author":{"@type":"Person","name":"Anton Kirillov"},"copyrightYear":"2015","dateCreated":"2015-07-01T00:00:00\u002b00:00","datePublished":"2015-07-01T00:00:00\u002b00:00","dateModified":"2015-07-01T00:00:00\u002b00:00","keywords":["scala"],"mainEntityOfPage":"true","wordCount":"2615"}</script><script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","item":"https://datastrophic.io/","name":"","position":1},{"@type":"ListItem","item":"https://datastrophic.io/posts/","name":"","position":2},{"@type":"ListItem","name":"In the Wake of Scala Days 2015","position":3}]}</script><meta name=author content="Anton Kirillov"><link href=https://www.linkedin.com/in/datastrophic/ rel=me><link href=https://github.com/datastrophic rel=me><script async src="https://www.googletagmanager.com/gtag/js?id=G-Z9WG27GT0G"></script><script>var dnt,doNotTrack=!1;if(!1&&(dnt=navigator.doNotTrack||window.doNotTrack||navigator.msDoNotTrack,doNotTrack=dnt=="1"||dnt=="yes"),!doNotTrack){window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-Z9WG27GT0G")}</script></head><body class="m-auto flex h-screen max-w-7xl flex-col bg-neutral px-6 text-lg leading-7 text-neutral-900 dark:bg-neutral-800 dark:text-neutral sm:px-14 md:px-24 lg:px-32"><div id=the-top class="absolute flex self-center"><a class="-translate-y-8 rounded-b-lg bg-primary-200 px-3 py-1 text-sm focus:translate-y-0 dark:bg-neutral-600" href=#main-content><span class="pe-2 font-bold text-primary-600 dark:text-primary-400">&darr;</span>Skip to main content</a></div><header class="py-6 font-semibold text-neutral-900 dark:text-neutral sm:py-10 print:hidden"><nav class="flex items-start justify-between sm:items-center"><div class="z-40 flex flex-row items-center"><a class="decoration-primary-500 hover:underline hover:decoration-2 hover:underline-offset-2" rel=me href=/>datastrophic</a></div><label id=menu-button for=menu-controller class="block sm:hidden"><input type=checkbox id=menu-controller class=hidden><div class="cursor-pointer hover:text-primary-600 dark:hover:text-primary-400"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 448 512"><path fill="currentColor" d="M0 96C0 78.33 14.33 64 32 64H416c17.7.0 32 14.33 32 32 0 17.7-14.3 32-32 32H32C14.33 128 0 113.7.0 96zM0 256c0-17.7 14.33-32 32-32H416c17.7.0 32 14.3 32 32s-14.3 32-32 32H32c-17.67.0-32-14.3-32-32zM416 448H32c-17.67.0-32-14.3-32-32s14.33-32 32-32H416c17.7.0 32 14.3 32 32s-14.3 32-32 32z"/></svg></span></div><div id=menu-wrapper class="invisible fixed inset-0 z-30 m-auto h-full w-full cursor-default overflow-auto bg-neutral-100/50 opacity-0 backdrop-blur-sm transition-opacity dark:bg-neutral-900/50"><ul class="mx-auto flex w-full max-w-7xl list-none flex-col overflow-visible px-6 py-6 text-end sm:px-14 sm:py-10 sm:pt-10 md:px-24 lg:px-32"><li class=mb-1><span class="cursor-pointer hover:text-primary-600 dark:hover:text-primary-400"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 320 512"><path fill="currentColor" d="M310.6 361.4c12.5 12.5 12.5 32.75.0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3 54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75.0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75.0-45.25s32.75-12.5 45.25.0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25.0s12.5 32.75.0 45.25l-105.4 105.4L310.6 361.4z"/></svg></span></span></li><li class="group mb-1"><a href=/posts/ title onclick=close_menu()><span class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2">archive</span></a></li><li class="group mb-1"><a href=/about/ title onclick=close_menu()><span class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2">about</span></a></li></ul></div></label><ul class="hidden list-none flex-row text-end sm:flex"><li class="group mb-1 sm:mb-0 sm:me-7 sm:last:me-0"><a href=/posts/ title><span class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2">archive</span></a></li><li class="group mb-1 sm:mb-0 sm:me-7 sm:last:me-0"><a href=/about/ title><span class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2">about</span></a></li></ul></nav></header><div class="relative flex grow flex-col"><main id=main-content class=grow><article><header class=max-w-prose><h1 class="mb-8 mt-0 text-4xl font-extrabold text-neutral-900 dark:text-neutral">In the Wake of Scala Days 2015</h1><div class="mb-10 text-base text-neutral-500 dark:text-neutral-400 print:hidden"><div class="flex flex-row flex-wrap items-center"><time datetime="2015-07-01 00:00:00 +0000 UTC">1 July 2015</time><span class="px-2 text-primary-500">&#183;</span><span title="Reading time">13 mins</span></div></div></header><section class="prose mt-0 flex max-w-full flex-col dark:prose-invert lg:flex-row"><div class="min-h-0 min-w-0 max-w-prose grow"><p>Scala Days Amsterdam conference was full of interesting topics so in this post I&rsquo;ll cover talks on the Scala platform, core concepts for making Scala code more idiomatic, monad transformers, consistency in distributed systems, distributed domain driven design, and a little more.</p><p>This post came out of the post-conference presentation to my team, so the slides are also available <a href=http://slides.com/antonkirillov/in-the-wake-of-scala-days#/ target=_blank rel=noreferrer>here</a> and contain all the links to related materials and presentations so you can discover more on your own.</p><h3 id=main-themes class="relative group">Main themes <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#main-themes aria-label=Anchor>#</a></span></h3><p>So here are the main themes/areas discussed at Scala Days:</p><ul><li>Reactive Applications - a big topic around non-blocking design with reference to Reactive Streams and Akka</li><li>Big Data/Fast Data - mainly focused on frameworks and architectures like Spark, GraphX, Kafka</li><li>Functional Programming in Scala - topic related functional programming aspects in Scala which mainly covers Scalaz use cases and how-to&rsquo;s</li><li>Scala in practice - notes from production projects experience</li><li>Distributed Systems - a broad topic focused on building systems with inter-node communication like Akka cluster or cluster management with Mesos</li></ul><h3 id=scala-keynote class="relative group">Scala keynote <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#scala-keynote aria-label=Anchor>#</a></span></h3><p>The talk is available <a href=https://www.parleys.com/tutorial/scala-where-came-from-where-its-going-1 target=_blank rel=noreferrer>at Parleys</a>, here&rsquo;re some highlights:</p><ul><li>A reactive platform is started to form (like JEE). If you check out the Typesafe website there&rsquo;re a lot of frameworks forming a full stack for application development: DB access with Slick, concurrency/distributed interaction with Akka, Play as a web framework.</li><li>Scala-specific platform with TASTY (Serialized Typed Abstract Syntax Trees)</li><li>DOTC compiler (was close to completion at the moment of the talk)</li><li>Type unions (U&amp;T and U|T) - instead of <code>with</code> mixin trait composition</li><li>Implicits that compose (implicit function types)</li><li>Moving towards more pure functional programming</li></ul><h3 id=tasty class="relative group">TASTY <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#tasty aria-label=Anchor>#</a></span></h3><p>Java code compilation is bound to JVM, and Scala compiler adds Scala-specific signatures to classifiers that result in a larger size of classifiers and lower effectiveness.</p><p>Another problem that Scala faces is its dependency on JDK/JVM and its need to adapt to version changes (e.g. migrating from Java 7 to Java 8). Besides that JVM is not only one target platform, so that&rsquo;s the place where TASTY comes into play. The main goal is in removing this dependency on specific platform versions. Plus some internal optimizations of code representation aimed to make code faster.</p><p><figure><img src=./scala-specific-platform-with-tasty.png alt class="mx-auto my-0 rounded-md"></figure></p><p>#####DOTC
+The long-term plan for the Scala platform is in switching to a new Scala-specific DOTC compiler (based on Dependent Object Types calculus) and switch to work in conjunction with TASTY. For the moment of writing the compiler was close to completion, so for more details about DOTC here&rsquo;s the link to the original paper <a href=http://lampwww.epfl.ch/~amin/dot/fool.pdf target=_blank rel=noreferrer>Dependent Object Types: Towards a foundation for Scala’s type system</a>.<figure><img src=./tasty-dotc.png alt class="mx-auto my-0 rounded-md"></figure></p><h3 id=life-beyond-the-illusion-of-the-present class="relative group">Life beyond the illusion of the present <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#life-beyond-the-illusion-of-the-present aria-label=Anchor>#</a></span></h3><p>A <a href=https://www.parleys.com/tutorial/life-beyond-illusion-present target=_blank rel=noreferrer>philosophical talk</a> by Jonas Bonér focused on consistency in distributed systems. One of the main ideas was that actually data shouldn&rsquo;t be updated or deleted, it can only be created and read(CR<del>UD</del>). And there&rsquo;s still a number of problems in achieving consistency in distributed systems, but there&rsquo;s a number of approaches to manage it though, like vector clocks, consistency as logical monotonicity (CALM), and commutative replicated data types (CRDTs). Here goes a brief description of them:</p><blockquote><p>Vector clocks is an algorithm for generating a partial ordering of events in a distributed system and detecting causality violations</p></blockquote><p><a href=http://www.bloom-lang.net/calm/ target=_blank rel=noreferrer>CALM informally</a>:</p><blockquote><p>a block of code is logically monotonic if it satisfies a simple property:
+adding things to the input can only increase the output. By contrast, non-monotonic code may need to “retract” a previous output if more is added to its input.</p></blockquote><p>Conflict-free replicated data type:</p><blockquote><p>is a type of specially designed data structure used to achieve strong eventual consistency and monotonicity (absence of rollbacks). There are two alternative routes to ensuring strong eventual consistency: operation-based CRDTs and state-based CRDTs. The two alternatives are equivalent, as one can emulate the other, but operation-based CRDTs require additional guarantees from the communication middleware</p></blockquote><p><a href=http://pagesperso-systeme.lip6.fr/Marc.Shapiro/papers/RR-6956.pdf target=_blank rel=noreferrer>Here&rsquo;s a link to original CRDT paper</a> and <a href=https://medium.com/@qt/a-brief-history-of-replicated-data-ab9dcf1671a0 target=_blank rel=noreferrer>here&rsquo;s a really good post on CRDTs by Jordan Rule</a></p><h3 id=lambda-architecture-with-spark-streaming-kafka-cassandra class="relative group">Lambda Architecture with Spark Streaming, Kafka, Cassandra <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#lambda-architecture-with-spark-streaming-kafka-cassandra aria-label=Anchor>#</a></span></h3><p>It was mainly a pitch-talk about Kafka-Spark-Cassandra-based architectures (<a href=https://www.parleys.com/tutorial/lambda-architecture-spark-streaming-kafka-cassandra-akka-scala target=_blank rel=noreferrer>link to Parleys</a>). What&rsquo;s interesting here is that it looks like a common pattern: using Spark Streaming as an intermediate between Kafka and Cassandra for data ingestion. There&rsquo;re a lot of talks arise lately on the subject of moving from Hadoop to Kafka-Spark-Cassandra-based architectures.</p><p>What about the talk itself, it was mainly describing these systems and providing some code samples. Reference application (<em>killrweather</em>) using all these technologies is available on <a href=https://github.com/killrweather/killrweather target=_blank rel=noreferrer>github</a> as well. Helena Edelson demonstrated &ldquo;her nerdy chart&rdquo; with different architecture design strategies and technologies suitable for them:</p><p><figure><img src=./smack-chart.jpeg alt class="mx-auto my-0 rounded-md"></figure></p><p>Another interesting part was that DataStax is developing a Cassandra Streaming driver which uses Cassandra as a source and is supposed to be used with Spark.</p><h3 id=how-to-unsuck-your-options-in-futures class="relative group">How to unsuck your Options in Futures <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#how-to-unsuck-your-options-in-futures aria-label=Anchor>#</a></span></h3><p><a href=https://www.parleys.com/tutorial/options-futures-how-unsuck-them target=_blank rel=noreferrer>Link to the video</a>. Very often you need to unwrap the option value contained in the Future or any other container. This involves writing cumbersome code for extracting the actual value and this cumbersome code grows linearly. But Scalaz library provides a set of monads which are called &ldquo;monad transformers&rdquo; and allow you to unwrap one-level depth values to perform operations with them which results in a single type class/container of expected type in the end.</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-scala data-lang=scala><span class=line><span class=cl><span class=k>def</span> <span class=n>f1</span><span class=k>:</span> <span class=kt>Future</span><span class=o>[</span><span class=kt>Option</span><span class=o>[</span><span class=kt>Int</span><span class=o>]]</span> <span class=k>=</span> <span class=o>???</span>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=n>f2</span><span class=k>:</span> <span class=kt>Future</span><span class=o>[</span><span class=kt>Option</span><span class=o>[</span><span class=kt>Int</span><span class=o>]]</span> <span class=k>=</span> <span class=o>???</span>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=n>f3</span><span class=k>:</span> <span class=kt>Future</span><span class=o>[</span><span class=kt>Option</span><span class=o>[</span><span class=kt>Int</span><span class=o>]]</span> <span class=k>=</span> <span class=o>???</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>val</span> <span class=n>result</span> <span class=k>=</span> <span class=k>for</span><span class=o>{</span>
+</span></span><span class=line><span class=cl>    <span class=n>a</span> <span class=k>&lt;-</span> <span class=nc>OptionT</span><span class=o>(</span><span class=n>f1</span><span class=o>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>b</span> <span class=k>&lt;-</span> <span class=nc>OptionT</span><span class=o>(</span><span class=n>f2</span><span class=o>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>c</span> <span class=k>&lt;-</span> <span class=nc>OptionT</span><span class=o>(</span><span class=n>f3</span><span class=o>)</span>
+</span></span><span class=line><span class=cl><span class=o>}</span> <span class=k>yield</span> <span class=n>a</span> <span class=o>+</span> <span class=n>b</span> <span class=o>+</span> <span class=n>c</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>val</span> <span class=n>finOption</span><span class=k>:</span> <span class=kt>Future</span><span class=o>[</span><span class=kt>Option</span><span class=o>[</span><span class=kt>Int</span><span class=o>]]</span> <span class=k>=</span> <span class=n>result</span><span class=o>.</span><span class=n>run</span>
+</span></span></code></pre></div><p>Let&rsquo;s imagine you have different containers and want to perform some operation on their values. For this case, you need to &ldquo;cast&rdquo; (wrap) the given objects to the closest one and then apply the monad transformer.</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-scala data-lang=scala><span class=line><span class=cl><span class=k>def</span> <span class=n>f1</span><span class=k>:</span> <span class=kt>Future</span><span class=o>[</span><span class=kt>String</span> <span class=kt>\/</span> <span class=kt>Int</span><span class=o>]</span> <span class=k>=</span> <span class=o>???</span>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=n>f2</span><span class=k>:</span> <span class=kt>Option</span><span class=o>[</span><span class=kt>Int</span><span class=o>]</span> <span class=k>=</span> <span class=o>???</span>
+</span></span><span class=line><span class=cl><span class=k>def</span> <span class=n>f3</span><span class=k>:</span> <span class=kt>Future</span><span class=o>[</span><span class=kt>Int</span><span class=o>]</span> <span class=k>=</span> <span class=o>???</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>val</span> <span class=n>result</span> <span class=k>=</span> <span class=k>for</span><span class=o>{</span>
+</span></span><span class=line><span class=cl>  <span class=n>a</span> <span class=k>&lt;-</span> <span class=nc>EitherT</span><span class=o>(</span><span class=n>f1</span><span class=o>)</span>
+</span></span><span class=line><span class=cl>  <span class=n>b</span> <span class=k>&lt;-</span> <span class=nc>EitherT</span><span class=o>(</span><span class=nc>Future</span><span class=o>(</span><span class=n>f2</span> <span class=n>\</span><span class=o>/&gt;</span> <span class=s>&#34;B is missing&#34;</span><span class=o>))</span>
+</span></span><span class=line><span class=cl>  <span class=n>c</span> <span class=k>&lt;-</span> <span class=nc>EitherT</span><span class=o>(</span><span class=n>f3</span><span class=o>.</span><span class=n>map</span><span class=o>(</span><span class=n>v</span> <span class=k>=&gt;</span> <span class=n>\</span><span class=o>/.</span><span class=n>right</span><span class=o>(</span><span class=n>v</span><span class=o>))</span>
+</span></span><span class=line><span class=cl><span class=o>}</span> <span class=k>yield</span> <span class=n>a</span> <span class=o>+</span> <span class=n>b</span> <span class=o>+</span> <span class=n>c</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>val</span> <span class=n>finEither</span><span class=k>:</span> <span class=kt>Future</span><span class=o>[</span><span class=kt>String</span> <span class=kt>\/</span> <span class=kt>Int</span><span class=o>]</span> <span class=k>=</span> <span class=n>result</span><span class=o>.</span><span class=n>run</span>
+</span></span></code></pre></div><p>And here&rsquo;s how it can look like if we implement it ourselves</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-scala data-lang=scala><span class=line><span class=cl><span class=k>case</span> <span class=k>class</span> <span class=nc>FutureOption</span><span class=o>[</span><span class=kt>A</span><span class=o>](</span><span class=n>contents</span><span class=k>:</span> <span class=kt>Future</span><span class=o>[</span><span class=kt>Option</span><span class=o>[</span><span class=kt>A</span><span class=o>]]){</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>  <span class=k>def</span> <span class=n>flatMap</span><span class=o>[</span><span class=kt>B</span><span class=o>](</span><span class=n>fn</span><span class=k>:</span> <span class=kt>A</span> <span class=o>=&gt;</span> <span class=nc>FutureOption</span><span class=o>[</span><span class=kt>B</span><span class=o>])</span> <span class=k>=</span> <span class=nc>FutureOption</span><span class=o>{</span>
+</span></span><span class=line><span class=cl>    <span class=n>contents</span><span class=o>.</span><span class=n>flatMap</span><span class=o>{</span>
+</span></span><span class=line><span class=cl>      <span class=k>case</span> <span class=nc>Some</span><span class=o>(</span><span class=n>value</span><span class=o>)</span> <span class=k>=&gt;</span> <span class=n>fn</span><span class=o>(</span><span class=n>value</span><span class=o>).</span><span class=n>contents</span>
+</span></span><span class=line><span class=cl>      <span class=k>case</span> <span class=nc>None</span> <span class=k>=&gt;</span> <span class=nc>Future</span><span class=o>.</span><span class=n>successful</span><span class=o>(</span><span class=nc>None</span><span class=o>)</span>
+</span></span><span class=line><span class=cl>    <span class=o>}</span>
+</span></span><span class=line><span class=cl>  <span class=o>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>  <span class=k>def</span> <span class=n>map</span><span class=o>[</span><span class=kt>B</span><span class=o>](</span><span class=n>fn</span><span class=k>:</span> <span class=kt>A</span> <span class=o>=&gt;</span> <span class=n>B</span><span class=o>)</span> <span class=k>=</span> <span class=nc>FutureOption</span><span class=o>{</span>
+</span></span><span class=line><span class=cl>    <span class=n>contents</span><span class=o>.</span><span class=n>map</span><span class=o>{</span> <span class=n>option</span> <span class=k>=&gt;</span>
+</span></span><span class=line><span class=cl>      <span class=n>option</span><span class=o>.</span><span class=n>map</span><span class=o>(</span><span class=n>fn</span><span class=o>)</span>
+</span></span><span class=line><span class=cl>    <span class=o>}</span>
+</span></span><span class=line><span class=cl>  <span class=o>}</span>
+</span></span><span class=line><span class=cl><span class=o>}</span>
+</span></span></code></pre></div><p>So why is all this needed? For-comprehensions are a really awesome feature actually which allows writing really concise and readable code. For-comprehensions basically use two operations that should be implemented in used classes: map and flatMap.</p><p>So here we go closer to the Monad. Apart from Category Theory, monad can be thought of as a TypeClass with methods: <code>map</code>, <code>flatMap</code> and <code>create</code> (bind and unit). And to satisfy the for-comprehension contract with our Future-of-Option monad transformer we need to implement map and flatMap.</p><p>Scalaz provides a number of useful monad transformers out of the box. But if you need anything special, you can generalize the given code a bit and use a Monad trait from Scalaz to abstract a bit more.</p><h3 id=understanding-the-backend-of-big-data class="relative group">Understanding the backend of Big Data <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#understanding-the-backend-of-big-data aria-label=Anchor>#</a></span></h3><p><a href=https://www.parleys.com/tutorial/understanding-back-end-big-data target=_blank rel=noreferrer>The talk</a> was generally about four main topics:</p><ul><li><p>the complexity of building distributed systems and how Functional Programming helps to reduce it. Basically, FP is good at transforming immutable data and forces immutable data structures leading to fewer errors in runtime and providing some sort of compile-time &ldquo;correctness&rdquo; checks upfront</p></li><li><p>cluster management is hard, with static resource allocation cluster resources are used for about 5-10% nowadays because of over-provisioning for handling load spikes. Mixed workloads are the most complex ones to estimate resources.</p></li><li><p>so here comes Mesos which provides dynamic resource allocation and management. And the main components of the ecosystem covered in the talk were Mesos itself, Marathon for scheduling long-running tasks, and Myriad which is the Mesos-YARN bridge</p></li><li><p>finally DCOS GA was released a couple of hours before the talk and it looks really promising, providing central DC management UI and console allowing to easily install Mesos frameworks. It&rsquo;s available for free for Amazon and has a trial version for commodity hardware. It&rsquo;s worth checking it out.</p></li></ul><h3 id=essential-scala class="relative group">Essential Scala <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#essential-scala aria-label=Anchor>#</a></span></h3><p>Really impressive <a href=https://www.parleys.com/tutorial/essential-scala-six-core-principles-learning-scala-1 target=_blank rel=noreferrer>talk by Noel Welsh</a> providing several really simple guidelines to make Scala code better structured and more idiomatic which is crucial when someone just started using Scala or just needs to train the team moving to it. So basically six core concepts form the learning curve of Scala:</p><ul><li>Expressions, types, & values</li><li>Objects and classes</li><li>Algebraic data types</li><li>Structural recursion</li><li>Sequencing computation</li><li>Type classes</li></ul><p>Topics covered in the talk were ADT, Structural recursion, and Sequencing computation</p><h4 id=algebraic-data-types class="relative group">Algebraic Data Types <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#algebraic-data-types aria-label=Anchor>#</a></span></h4><ul><li>Goal: translate data description into code</li><li>Model data with logical ORs and ANDs</li><li>Two patterns: product types(ANDs) and sum types(ORs)</li><li>Sum and product together make algebraic data types</li></ul><div class=highlight><pre tabindex=0 class=chroma><code class=language-scala data-lang=scala><span class=line><span class=cl><span class=c1>//product type: A has a B and C
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=k>final</span> <span class=k>case</span> <span class=k>class</span> <span class=nc>A</span><span class=o>(</span><span class=n>b</span><span class=k>:</span> <span class=kt>B</span><span class=o>,</span> <span class=n>c</span><span class=k>:</span> <span class=kt>C</span><span class=o>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>//sum type: A is a B or C
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=k>sealed</span> <span class=k>trait</span> <span class=nc>A</span>
+</span></span><span class=line><span class=cl><span class=k>final</span> <span class=k>case</span> <span class=k>class</span> <span class=nc>B</span><span class=o>()</span> <span class=k>extends</span> <span class=n>A</span>
+</span></span><span class=line><span class=cl><span class=k>final</span> <span class=k>case</span> <span class=k>class</span> <span class=nc>C</span><span class=o>()</span> <span class=k>extends</span> <span class=n>A</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>//Example: a Calculation either successful and has value or failed and has an error
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=k>sealed</span> <span class=k>trait</span> <span class=nc>Calculation</span>
+</span></span><span class=line><span class=cl><span class=k>final</span> <span class=k>case</span> <span class=k>class</span> <span class=nc>Success</span><span class=o>(</span><span class=n>value</span><span class=k>:</span> <span class=kt>Int</span><span class=o>)</span> <span class=k>extends</span> <span class=nc>Calculation</span>
+</span></span><span class=line><span class=cl><span class=k>final</span> <span class=k>case</span> <span class=k>class</span> <span class=nc>Failure</span><span class=o>(</span><span class=n>msg</span><span class=k>:</span> <span class=kt>String</span><span class=o>)</span> <span class=k>extends</span> <span class=nc>Calculation</span> 
+</span></span></code></pre></div><h4 id=structural-recursion class="relative group">Structural recursion <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#structural-recursion aria-label=Anchor>#</a></span></h4><ul><li>Goal: transform algebraic data type</li><li>Two patterns here: pattern-matching & polymorphism</li></ul><blockquote><p>Structural induction is a proof method that is used in mathematical logic, computer science, graph theory, and some other mathematical fields. It is a generalization of mathematical induction over natural numbers and can be further generalized to arbitrary Noetherian induction. Structural recursion is a recursion method bearing the same relationship to structural induction as ordinary recursion bears to ordinary mathematical induction.</p></blockquote><div class=highlight><pre tabindex=0 class=chroma><code class=language-scala data-lang=scala><span class=line><span class=cl><span class=c1>//pattern matching
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=k>sealed</span> <span class=k>trait</span> <span class=nc>A</span> <span class=o>{</span>
+</span></span><span class=line><span class=cl>   <span class=k>def</span> <span class=n>doSomething</span><span class=k>:</span> <span class=kt>H</span> <span class=o>=</span> <span class=o>{</span>
+</span></span><span class=line><span class=cl>       <span class=k>this</span> <span class=k>match</span> <span class=o>{</span>
+</span></span><span class=line><span class=cl>          <span class=k>case</span> <span class=n>B</span><span class=o>(</span><span class=n>d</span><span class=o>,</span> <span class=n>e</span><span class=o>)</span> <span class=k>=&gt;</span> <span class=n>doB</span><span class=o>(</span><span class=n>d</span><span class=o>,</span> <span class=n>e</span><span class=o>)</span>
+</span></span><span class=line><span class=cl>          <span class=k>case</span> <span class=n>C</span><span class=o>(</span><span class=n>f</span><span class=o>,</span> <span class=n>g</span><span class=o>)</span> <span class=k>=&gt;</span> <span class=n>doC</span><span class=o>(</span><span class=n>f</span><span class=o>,</span> <span class=n>g</span><span class=o>)</span>
+</span></span><span class=line><span class=cl>       <span class=o>}</span>
+</span></span><span class=line><span class=cl>   <span class=o>}</span>
+</span></span><span class=line><span class=cl><span class=o>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>final</span> <span class=k>case</span> <span class=k>class</span> <span class=nc>B</span><span class=o>(</span><span class=n>d</span><span class=k>:</span> <span class=kt>D</span><span class=o>,</span> <span class=n>e</span><span class=k>:</span> <span class=kt>E</span><span class=o>)</span> <span class=k>extends</span> <span class=n>A</span>
+</span></span><span class=line><span class=cl><span class=k>final</span> <span class=k>case</span> <span class=k>class</span> <span class=nc>C</span><span class=o>(</span><span class=n>f</span><span class=k>:</span> <span class=kt>F</span><span class=o>,</span> <span class=n>g</span><span class=k>:</span> <span class=kt>G</span><span class=o>)</span> <span class=k>extends</span> <span class=n>A</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>//polymorphism
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=k>sealed</span> <span class=k>trait</span> <span class=nc>A</span> <span class=o>{</span>
+</span></span><span class=line><span class=cl> <span class=k>def</span> <span class=n>doSomething</span><span class=k>:</span> <span class=kt>H</span>
+</span></span><span class=line><span class=cl><span class=o>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>final</span> <span class=k>case</span> <span class=k>class</span> <span class=nc>B</span><span class=o>(</span><span class=n>d</span><span class=k>:</span> <span class=kt>D</span><span class=o>,</span> <span class=n>e</span><span class=k>:</span> <span class=kt>E</span><span class=o>)</span> <span class=k>extends</span> <span class=n>A</span> <span class=o>{</span>
+</span></span><span class=line><span class=cl> <span class=k>def</span> <span class=n>doSomething</span><span class=k>:</span> <span class=kt>H</span> <span class=o>=</span> <span class=n>doB</span><span class=o>(</span><span class=n>d</span><span class=o>,</span> <span class=n>e</span><span class=o>)</span>
+</span></span><span class=line><span class=cl><span class=o>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>final</span> <span class=k>case</span> <span class=k>class</span> <span class=nc>C</span><span class=o>(</span><span class=n>f</span><span class=k>:</span> <span class=kt>F</span><span class=o>,</span> <span class=n>g</span><span class=k>:</span> <span class=kt>G</span><span class=o>)</span> <span class=k>extends</span> <span class=n>A</span> <span class=o>{</span>
+</span></span><span class=line><span class=cl> <span class=k>def</span> <span class=n>doSomething</span><span class=k>:</span> <span class=kt>H</span> <span class=o>=</span> <span class=n>doC</span><span class=o>(</span><span class=n>f</span><span class=o>,</span> <span class=n>g</span><span class=o>)</span>
+</span></span><span class=line><span class=cl><span class=o>}</span>
+</span></span></code></pre></div><ul><li>The processing algebraic data types immediately follows from the structure of the data</li><li>Can choose between pattern matching and polymorphism</li><li>Pattern matching (within the base trait) is usually preferred</li></ul><h4 id=sequencing-computations class="relative group">Sequencing Computations <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#sequencing-computations aria-label=Anchor>#</a></span></h4><ul><li>Goal: patterns for sequencing computations</li><li>Functional programming is about transforming values &mldr; without introducing side-effects</li><li>A => B => C</li><li>Three patterns: fold, map, and flatMap</li><li>Fold is abstraction over structural recursion</li></ul><p>So here&rsquo;s how we&rsquo;d go with our own fold implementation</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-scala data-lang=scala><span class=line><span class=cl><span class=c1>//initial version
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=k>sealed</span> <span class=k>trait</span> <span class=nc>A</span> <span class=o>{</span>
+</span></span><span class=line><span class=cl> <span class=k>def</span> <span class=n>doSomething</span><span class=k>:</span> <span class=kt>H</span> <span class=o>=</span> <span class=o>{</span>
+</span></span><span class=line><span class=cl>   <span class=k>this</span> <span class=k>match</span> <span class=o>{</span>
+</span></span><span class=line><span class=cl>     <span class=k>case</span> <span class=n>B</span><span class=o>(</span><span class=n>d</span><span class=o>,</span> <span class=n>e</span><span class=o>)</span> <span class=k>=&gt;</span> <span class=n>doB</span><span class=o>(</span><span class=n>d</span><span class=o>,</span> <span class=n>e</span><span class=o>)</span>
+</span></span><span class=line><span class=cl>     <span class=k>case</span> <span class=n>C</span><span class=o>(</span><span class=n>f</span><span class=o>,</span> <span class=n>g</span><span class=o>)</span> <span class=k>=&gt;</span> <span class=n>doC</span><span class=o>(</span><span class=n>f</span><span class=o>,</span> <span class=n>g</span><span class=o>)</span>
+</span></span><span class=line><span class=cl>   <span class=o>}</span>
+</span></span><span class=line><span class=cl> <span class=o>}</span>
+</span></span><span class=line><span class=cl><span class=o>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>final</span> <span class=k>case</span> <span class=k>class</span> <span class=nc>B</span><span class=o>(</span><span class=n>d</span><span class=k>:</span> <span class=kt>D</span><span class=o>,</span> <span class=n>e</span><span class=k>:</span> <span class=kt>E</span><span class=o>)</span> <span class=k>extends</span> <span class=n>A</span>
+</span></span><span class=line><span class=cl><span class=k>final</span> <span class=k>case</span> <span class=k>class</span> <span class=nc>C</span><span class=o>(</span><span class=n>f</span><span class=k>:</span> <span class=kt>F</span><span class=o>,</span> <span class=n>g</span><span class=k>:</span> <span class=kt>G</span><span class=o>)</span> <span class=k>extends</span> <span class=n>A</span> 
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>//first refactoring
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=k>sealed</span> <span class=k>trait</span> <span class=nc>A</span> <span class=o>{</span>
+</span></span><span class=line><span class=cl> <span class=k>def</span> <span class=n>fold</span><span class=o>(</span><span class=n>doB</span><span class=k>:</span> <span class=o>(</span><span class=kt>D</span><span class=o>,</span> <span class=kt>E</span><span class=o>)</span> <span class=k>=&gt;</span> <span class=n>H</span><span class=o>,</span> <span class=n>doC</span><span class=k>:</span> <span class=o>(</span><span class=kt>F</span><span class=o>,</span> <span class=kt>G</span><span class=o>)</span> <span class=k>=&gt;</span> <span class=n>H</span><span class=o>)</span><span class=k>:</span> <span class=kt>H</span> <span class=o>=</span> <span class=o>{</span>
+</span></span><span class=line><span class=cl>    <span class=k>this</span> <span class=k>match</span> <span class=o>{</span>
+</span></span><span class=line><span class=cl>		 <span class=k>case</span> <span class=n>B</span><span class=o>(</span><span class=n>d</span><span class=o>,</span> <span class=n>e</span><span class=o>)</span> <span class=k>=&gt;</span> <span class=n>doB</span><span class=o>(</span><span class=n>d</span><span class=o>,</span> <span class=n>e</span><span class=o>)</span>
+</span></span><span class=line><span class=cl>		 <span class=k>case</span> <span class=n>C</span><span class=o>(</span><span class=n>f</span><span class=o>,</span> <span class=n>g</span><span class=o>)</span> <span class=k>=&gt;</span> <span class=n>doC</span><span class=o>(</span><span class=n>f</span><span class=o>,</span> <span class=n>g</span><span class=o>)</span>
+</span></span><span class=line><span class=cl>    <span class=o>}</span>
+</span></span><span class=line><span class=cl> <span class=o>}</span>
+</span></span><span class=line><span class=cl><span class=o>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>final</span> <span class=k>case</span> <span class=k>class</span> <span class=nc>B</span><span class=o>(</span><span class=n>d</span><span class=k>:</span> <span class=kt>D</span><span class=o>,</span> <span class=n>e</span><span class=k>:</span> <span class=kt>E</span><span class=o>)</span> <span class=k>extends</span> <span class=n>A</span>
+</span></span><span class=line><span class=cl><span class=k>final</span> <span class=k>case</span> <span class=k>class</span> <span class=nc>C</span><span class=o>(</span><span class=n>f</span><span class=k>:</span> <span class=kt>F</span><span class=o>,</span> <span class=n>g</span><span class=k>:</span> <span class=kt>G</span><span class=o>)</span> <span class=k>extends</span> <span class=n>A</span>
+</span></span><span class=line><span class=cl>    
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>//final result
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=k>sealed</span> <span class=k>trait</span> <span class=nc>Result</span><span class=o>[</span><span class=kt>A</span><span class=o>]</span> <span class=o>{</span>
+</span></span><span class=line><span class=cl> <span class=k>def</span> <span class=n>fold</span><span class=o>[</span><span class=kt>B</span><span class=o>](</span><span class=n>s</span><span class=k>:</span> <span class=kt>A</span> <span class=o>=&gt;</span> <span class=n>B</span><span class=o>,</span> <span class=n>f</span><span class=k>:</span> <span class=kt>B</span><span class=o>)</span><span class=k>:</span> <span class=kt>B</span> <span class=o>=</span>
+</span></span><span class=line><span class=cl>    <span class=k>this</span> <span class=k>match</span> <span class=o>{</span>
+</span></span><span class=line><span class=cl>  	 <span class=k>case</span> <span class=nc>Success</span><span class=o>(</span><span class=n>v</span><span class=o>)</span> <span class=k>=&gt;</span> <span class=n>s</span><span class=o>(</span><span class=n>v</span><span class=o>)</span>
+</span></span><span class=line><span class=cl>  	 <span class=k>case</span> <span class=nc>Failure</span><span class=o>()</span> <span class=k>=&gt;</span> <span class=n>f</span>
+</span></span><span class=line><span class=cl>    <span class=o>}</span>
+</span></span><span class=line><span class=cl><span class=o>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>final</span> <span class=k>case</span> <span class=k>class</span> <span class=nc>Success</span><span class=o>[</span><span class=kt>A</span><span class=o>](</span><span class=n>value</span><span class=k>:</span> <span class=kt>A</span><span class=o>)</span> <span class=k>extends</span> <span class=nc>Result</span><span class=o>[</span><span class=kt>A</span><span class=o>]</span>
+</span></span><span class=line><span class=cl><span class=k>final</span> <span class=k>case</span> <span class=k>class</span> <span class=nc>Failure</span><span class=o>[</span><span class=kt>A</span><span class=o>]()</span> <span class=k>extends</span> <span class=nc>Result</span><span class=o>[</span><span class=kt>A</span><span class=o>]</span>
+</span></span></code></pre></div><ul><li>fold is a generic transform for any algebraic data type</li><li>but it&rsquo;s not always the best choice</li><li>not all data is an algebraic data type</li><li>there&rsquo;re other methods easier to use (<code>map</code> and <code>flatMap</code>)</li></ul><p>So main conclusions of the talk are that in fact, Scala is simple, 3 described patterns cover 90% of code (and 4 cover 99%) and that program design in Scala is systematic.</p><h3 id=a-purely-functional-approach-to-building-large-applications class="relative group">A Purely Functional Approach to Building Large Applications <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#a-purely-functional-approach-to-building-large-applications aria-label=Anchor>#</a></span></h3><p>It was a <a href=https://www.parleys.com/tutorial/a-purely-functional-approach-building-large-applications target=_blank rel=noreferrer>really <em>monadic</em> talk</a> about Scalaz usage in real projects showing how to properly abstract the logic with monads and wiring functions together.</p><ul><li>Reader monad: in simple words, it&rsquo;s a wrapper providing context for functions that need it. Generally speaking, the scope where such kind of dependency injection is needed is function scope, so here comes the reader that provides the context to the function.</li><li>ReaderT is a monad transformer like we&rsquo;ve seen before which unwraps the values which sit in some monad container like Option or Future</li><li>Kleisli arrow: is a base abstraction for ReaderT and is really handy when it comes to the composition of monadic functions, it&rsquo;s simply a wrapper for a function of type <code>A => F[B]</code>.</li><li>Task monad: a substitute for Scala Future, differs in that sense that occupies thread only at the moment of materialization, which allows performing different transformations lazily lowering the amount of context switching</li></ul><h3 id=easy-scalable-akka-applications class="relative group">Easy Scalable Akka Applications <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#easy-scalable-akka-applications aria-label=Anchor>#</a></span></h3><p><a href=https://www.parleys.com/tutorial/easy-scalability-akka-1 target=_blank rel=noreferrer>The talk</a> was focused on distributed domain-driven design and its implementation with Akka.</p><p>Two main approaches discussed were CQRS and Event Sourcing:</p><ul><li><p>Command Query Responsibility Segregation</p><blockquote><p>CQRS at its heart is the notion that you can use a different model to update information than the model you use to read information.</p></blockquote></li><li><p>Event Sourcing</p><blockquote><p>Event Sourcing ensures that all changes to the application state are stored as a sequence of events. Not just can we query these events, we can also use the event log to reconstruct past states, and as a foundation to automatically adjust the state to cope with retroactive changes.</p></blockquote></li></ul><p>A couple of words on the distributed domain-driven design. Some examples of Non-Distributed Domain</p><ul><li>Basic CRUD (Create, Read, Update, Delete)</li><li>Writes and reads to same database (ACID)</li><li>Scaled via multiple identical replicas</li><li>Bottlenecks on contention (reads and writes interfere with each other)</li></ul><p>With Akka and DDDD</p><ul><li>Wouldn’t it be great if you could just keep your domain instances in memory?</li><li>But how to recover from its volatile nature: an event journal!</li></ul><p>So the main idea here is to use Actors to represent domain entities (e.g. bank accounts) and store the state mutations as a commit log with periodical snapshots which is achieved with an <code>akka-persistence</code> module. Cassandra was used for storing the journal so in total the system looks really interesting. CRUD and CQRS were compared and tested with the Gatling stress tool with results available in Boldradius <a href=http://boldradius.com/blog-post/VSQCySkAACcA4k5J/easy-scalability-with-akka target=_blank rel=noreferrer>blog post</a>.</p><h3 id=some-other-cool-talks class="relative group">Some Other Cool Talks <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#some-other-cool-talks aria-label=Anchor>#</a></span></h3><ul><li><a href=https://www.parleys.com/tutorial/scala15_09_effecten_6function-passing-style-a-new-model-asynchronous-distributed-programming target=_blank rel=noreferrer>Spores</a>: type-safe function serialization for remote method invocation. Imagine actors passing functions instead of functions+data, immutable data enforced</li><li><a href=https://www.parleys.com/tutorial/project-galbma-actors-vs-types target=_blank rel=noreferrer>Project Gålbma: Actors vs. Types</a> - so generally the main goal of this project is to provide typed ActorRefs, in future remove Actor trait and switch to more pure actor model enforcing message-passing behavior</li><li>The <a href=https://www.parleys.com/tutorial/dont-block-yourself target=_blank rel=noreferrer>talk about using Finagle in SoundCloud</a> was pretty interesting. Finagle is a high-performance RPC server supporting various protocols, built on Netty, and enforcing functional programming in API. It is really nice and easy-to-use to build a distributed system.</li><li><a href=https://www.parleys.com/tutorial/scala-js-semantics-how-support-performance-javascript-interop target=_blank rel=noreferrer>Scala.js talk</a> was pretty interesting in terms of compiler implementation details and it seems that it is mature enough</li><li>Reactive streams topic was pretty interesting especially in terms of back pressure and constructing the data flows model.</li></ul><h3 id=wrapping-up class="relative group">Wrapping Up <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#wrapping-up aria-label=Anchor>#</a></span></h3><ul><li>Scala language becomes more and more stable in terms of API changes and moves towards improving performance, being more functionally pure as well as growing its own platform</li><li>Scala is widely used as an implementation language in major and emerging distributed data processing/computing frameworks (Akka, Spark, Crunch)</li><li>Scalaz is used in a wide variety of projects for proper abstractions or just for making code more concise and reusable (/, monad transformers)</li><li>There&rsquo;re a lot of Scala libraries/frameworks forming mature ecosystem (e.g. Akka and Play) which can be used for building large distributed applications</li></ul><p>More awesome slides and videos from Scala Days Amsterdam are available at <a href=https://www.parleys.com/channel/scala-days-amsterdam-2015 target=_blank rel=noreferrer>Parleys</a>!</p></div></section><footer class="max-w-prose pt-8 print:hidden"><div class=flex><picture class="!mb-0 !mt-0 me-4 w-24 h-auto rounded-full"><img width=400 height=400 class="!mb-0 !mt-0 me-4 w-24 h-auto rounded-full" alt="Anton Kirillov" loading=lazy decoding=async src=https://datastrophic.io/img/author.jpg></picture><div class=place-self-center><div class="text-[0.6rem] uppercase leading-3 text-neutral-500 dark:text-neutral-400">Author</div><div class="font-semibold leading-6 text-neutral-800 dark:text-neutral-300">Anton Kirillov</div><div class="text-sm text-neutral-700 dark:text-neutral-400">Technical Leader. Compute and AI Infrastructure</div><div class="text-2xl sm:text-lg"><div class="flex flex-wrap text-neutral-400 dark:text-neutral-500"><a class="px-1 transition-transform hover:scale-125 hover:text-primary-700 dark:hover:text-primary-400" style=will-change:transform href=https://www.linkedin.com/in/datastrophic/ target=_blank aria-label=Linkedin rel="me noopener noreferrer"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 448 512"><path fill="currentColor" d="M416 32H31.9C14.3 32 0 46.5.0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6.0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3zM135.4 416H69V202.2h66.5V416zm-33.2-243c-21.3.0-38.5-17.3-38.5-38.5S80.9 96 102.2 96c21.2.0 38.5 17.3 38.5 38.5.0 21.3-17.2 38.5-38.5 38.5zm282.1 243h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6.0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2.0 79.7 44.3 79.7 101.9V416z"/></svg>
+</span></a><a class="px-1 transition-transform hover:scale-125 hover:text-primary-700 dark:hover:text-primary-400" style=will-change:transform href=https://github.com/datastrophic target=_blank aria-label=Github rel="me noopener noreferrer"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 496 512"><path fill="currentColor" d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6.0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6.0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3.0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1.0-6.2-.3-40.4-.3-61.4.0.0-70 15-84.7-29.8.0.0-11.4-29.1-27.8-36.6.0.0-22.9-15.7 1.6-15.4.0.0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5.0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9.0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4.0 33.7-.3 75.4-.3 83.6.0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6.0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9.0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span></a></div></div></div></div><div class=pt-8><hr class="border-dotted border-neutral-300 dark:border-neutral-600"><div class="flex justify-between pt-3"><span></span><span><a class="group flex text-right" href=https://datastrophic.io/evaluating-cassandra-2-1-counters-consistency/><span class="flex flex-col"><span class="mt-[0.1rem] leading-6 group-hover:underline group-hover:decoration-primary-500">Cassandra 2.1 Counters: Testing Consistency During Node Failures</span>
+<span class="mt-[0.1rem] text-xs text-neutral-500 dark:text-neutral-400"><time datetime="2015-09-03 00:00:00 +0000 UTC">3 September 2015</time>
+</span></span><span class="ms-2 text-neutral-700 transition-transform group-hover:-translate-x-[-2px] group-hover:text-primary-600 dark:text-neutral dark:group-hover:text-primary-400"><span class="ltr:inline rtl:hidden">&rarr;</span><span class="ltr:hidden rtl:inline">&larr;</span></span></a></span></div></div></footer></article></main><div class="pointer-events-none absolute bottom-0 end-0 top-[100vh] w-12" id=to-top hidden=true><a href=#the-top class="pointer-events-auto sticky top-[calc(100vh-5.5rem)] flex h-12 w-12 items-center justify-center rounded-full bg-neutral/50 text-xl text-neutral-700 backdrop-blur hover:text-primary-600 dark:bg-neutral-800/50 dark:text-neutral dark:hover:text-primary-400" aria-label="Scroll to top" title="Scroll to top">&uarr;</a></div><footer class="py-10 print:hidden"><div class="flex items-center justify-between"><div><p class="text-sm text-neutral-500 dark:text-neutral-400">© 2025 datastrophic</p></div><div class="flex flex-row items-center"><div class="me-14 cursor-pointer text-sm text-neutral-700 hover:text-primary-600 dark:text-neutral dark:hover:text-primary-400"><button id=appearance-switcher-0 type=button aria-label="appearance switcher"><div class="flex h-12 w-12 items-center justify-center dark:hidden" title="Switch to dark appearance"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 512 512"><path fill="currentColor" d="M32 256C32 132.2 132.3 32 255.8 32c11.36.0 29.7 1.668 40.9 3.746 9.616 1.777 11.75 14.63 3.279 19.44C245 86.5 211.2 144.6 211.2 207.8c0 109.7 99.71 193 208.3 172.3 9.561-1.805 16.28 9.324 10.11 16.95C387.9 448.6 324.8 480 255.8 480 132.1 480 32 379.6 32 256z"/></svg></span></div><div class="hidden h-12 w-12 items-center justify-center dark:flex" title="Switch to light appearance"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 512 512"><path fill="currentColor" d="M256 159.1c-53.02.0-95.1 42.98-95.1 95.1s41.2 96.9 95.1 96.9 95.1-42.98 95.1-95.1S309 159.1 256 159.1zM509.3 347l-63.2-91.9 63.15-91.01c6.332-9.125 1.104-21.74-9.826-23.72l-109-19.7-19.7-109c-1.975-10.93-14.59-16.16-23.72-9.824L256 65.89 164.1 2.736c-9.125-6.332-21.74-1.107-23.72 9.824L121.6 121.6 12.56 141.3C1.633 143.2-3.596 155.9 2.736 164.1L65.89 256 2.74 347.01c-6.332 9.125-1.105 21.74 9.824 23.72l109 19.7 19.7 109c1.975 10.93 14.59 16.16 23.72 9.824L256 446.1l91.01 63.15c9.127 6.334 21.75 1.107 23.72-9.822l19.7-109 109-19.7C510.4 368.8 515.6 356.1 509.3 347zM256 383.1c-70.69.0-127.1-57.31-127.1-127.1.0-70.69 57.31-127.1 127.1-127.1S383.1 186.2 383.1 256c0 70.7-56.4 127.1-127.1 127.1z"/></svg></span></div></button></div></div></div></footer></div></body></html>

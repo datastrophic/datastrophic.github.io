@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://datastrophic.io/sitemap.xml
