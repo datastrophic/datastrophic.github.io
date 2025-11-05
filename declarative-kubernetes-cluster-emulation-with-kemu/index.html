@@ -139,7 +139,7 @@
     "keywords": ["kubernetes","emulation","kind","kwok","kemu"],
     
     "mainEntityOfPage": "true",
-    "wordCount": "2568"
+    "wordCount": "2577"
   }
   </script>
     
@@ -456,7 +456,7 @@ constrained in their ability to rapidly expand capacity on demand.</p>
 <p>Maximizing infrastructure efficiency through optimized scheduling and high-density bin packing is
 critical for achieving high workload throughput and resource utilization. Introducing scheduler
 modifications at production scale is risky: configuration errors can render workloads unschedulable,
-causing multi-day delays for dozens or hundreds of AI practitioners, idling capacity, wasted on-demand
+causing multi-day delays for dozens or hundreds of ML engineers, idling capacity, wasted on-demand
 resources, and delayed delivery. It is imperative that scheduler modifications with a big blast
 radius are tested and verified in a safe environment before shipping to production.</p>
 <p>This problem is not new, and virtual/emulated clusters for scheduling experimentation and workload
@@ -1103,9 +1103,9 @@ to observe cluster saturation and workload status:
 <p>From the dashboard, we can see that while all jobs are in the <code>Running</code> state, there are pods
 in the <code>Pending</code> state while unallocated capacity remains available.</p>
 <p>What we&rsquo;re observing is partial admission - a common scheduling problem in Kubernetes
-clusters. Pods created by jobs are not scheduled in batch but rather one-by-one
-resulting in fragmentation and inability to schedule all pods even if there is
-cluster capacity available.</p>
+clusters. The Kubernetes Scheduler processes pods individually without job-level awareness.
+Pods created by jobs are not scheduled in batch but rather one-by-one resulting in
+fragmentation and inability to schedule all pods even if there is cluster capacity available.</p>
 <p>For distributed training workloads that require all workers to start simultaneously
 (all-or-nothing semantics), this partial admission creates a deadlock situation.
 This simple experiment reveals a scheduling issue that would be expensive to discover
