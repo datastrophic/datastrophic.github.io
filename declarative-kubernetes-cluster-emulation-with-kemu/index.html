@@ -70,7 +70,7 @@
     name="description"
     content="
       
-        Optimizing AI workload scheduling requires extensive experimentation and observation, but testing scheduler modifications in production is risky — configuration errors can cause multi-day delays and wasted capacity. This post introduces KEMU, a declarative Kubernetes Emulator Utility that replaces fragmented multi-tool cluster setups with a single configuration specification, enabling safe experimentation with large-scale GPU clusters on minimal resources.
+        Optimizing AI workload scheduling requires extensive experimentation and observation, but testing scheduler modifications in production is risky - configuration errors can cause multi-day delays and wasted capacity. This post introduces KEMU, a declarative Kubernetes Emulator Utility that replaces fragmented multi-tool cluster setups with a single configuration specification, enabling safe experimentation with large-scale GPU clusters on minimal resources.
       
     "
   />
@@ -97,7 +97,7 @@
   <meta property="og:url" content="https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/">
   <meta property="og:site_name" content="datastrophic">
   <meta property="og:title" content="KEMU: A Declarative Approach to Emulating Kubernetes Clusters at Scale">
-  <meta property="og:description" content="Optimizing AI workload scheduling requires extensive experimentation and observation, but testing scheduler modifications in production is risky — configuration errors can cause multi-day delays and wasted capacity. This post introduces KEMU, a declarative Kubernetes Emulator Utility that replaces fragmented multi-tool cluster setups with a single configuration specification, enabling safe experimentation with large-scale GPU clusters on minimal resources.">
+  <meta property="og:description" content="Optimizing AI workload scheduling requires extensive experimentation and observation, but testing scheduler modifications in production is risky - configuration errors can cause multi-day delays and wasted capacity. This post introduces KEMU, a declarative Kubernetes Emulator Utility that replaces fragmented multi-tool cluster setups with a single configuration specification, enabling safe experimentation with large-scale GPU clusters on minimal resources.">
   <meta property="og:locale" content="en">
   <meta property="og:type" content="article">
     <meta property="article:section" content="posts">
@@ -112,7 +112,7 @@
   
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="KEMU: A Declarative Approach to Emulating Kubernetes Clusters at Scale">
-  <meta name="twitter:description" content="Optimizing AI workload scheduling requires extensive experimentation and observation, but testing scheduler modifications in production is risky — configuration errors can cause multi-day delays and wasted capacity. This post introduces KEMU, a declarative Kubernetes Emulator Utility that replaces fragmented multi-tool cluster setups with a single configuration specification, enabling safe experimentation with large-scale GPU clusters on minimal resources.">
+  <meta name="twitter:description" content="Optimizing AI workload scheduling requires extensive experimentation and observation, but testing scheduler modifications in production is risky - configuration errors can cause multi-day delays and wasted capacity. This post introduces KEMU, a declarative Kubernetes Emulator Utility that replaces fragmented multi-tool cluster setups with a single configuration specification, enabling safe experimentation with large-scale GPU clusters on minimal resources.">
 
   
   <script type="application/ld+json">
@@ -123,7 +123,7 @@
     "name": "KEMU: A Declarative Approach to Emulating Kubernetes Clusters at Scale",
     "headline": "KEMU: A Declarative Approach to Emulating Kubernetes Clusters at Scale",
     
-    "abstract": "Optimizing AI workload scheduling requires extensive experimentation and observation, but testing scheduler modifications in production is risky — configuration errors can cause multi-day delays and wasted capacity. This post introduces KEMU, a declarative Kubernetes Emulator Utility that replaces fragmented multi-tool cluster setups with a single configuration specification, enabling safe experimentation with large-scale GPU clusters on minimal resources.",
+    "abstract": "Optimizing AI workload scheduling requires extensive experimentation and observation, but testing scheduler modifications in production is risky - configuration errors can cause multi-day delays and wasted capacity. This post introduces KEMU, a declarative Kubernetes Emulator Utility that replaces fragmented multi-tool cluster setups with a single configuration specification, enabling safe experimentation with large-scale GPU clusters on minimal resources.",
     "inLanguage": "en",
     "url" : "https:\/\/datastrophic.io\/declarative-kubernetes-cluster-emulation-with-kemu\/",
     "author" : {
@@ -449,7 +449,7 @@
       
       <div class="min-h-0 min-w-0 max-w-prose grow">
         <p>Optimizing scheduling efficiency for AI workloads requires extensive experimentation and observation.
-Extended GPU procurement lead times — often spanning months — mean existing infrastructure must be
+Extended GPU procurement lead times, often spanning months, mean existing infrastructure must be
 maximized for utilization to avoid capacity bottlenecks. For high-end GPUs, supply constraints
 eliminate cloud autoscaling advantages, making both cloud and on-premises environments equally
 constrained in their ability to rapidly expand capacity on demand.</p>
@@ -467,7 +467,7 @@ production GPU cluster setup.</p>
 <h2 id="requirements" class="relative group">Requirements <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#requirements" aria-label="Anchor">#</a></span></h2><p>Let&rsquo;s consider the following cluster setup to provide background for the functionality of the emulated cluster:</p>
 <ul>
 <li>A Kubernetes cluster with 1,000+ GPU nodes of different types;</li>
-<li>The nodes are spread across several data centers/availability zones;</li>
+<li>The nodes are spread across multiple topology domains (availability zones, racks);</li>
 <li>Specialized scheduling and training operators are running on the cluster;</li>
 <li>Observability is provided via the Prometheus stack.</li>
 </ul>

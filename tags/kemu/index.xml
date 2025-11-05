@@ -14,7 +14,7 @@
       <link>https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/</link>
       <pubDate>Tue, 04 Nov 2025 00:00:00 +0000</pubDate>
       <guid>https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/</guid>
-      <description>Optimizing AI workload scheduling requires extensive experimentation and observation, but testing scheduler modifications in production is risky — configuration errors can cause multi-day delays and wasted capacity. This post introduces KEMU, a declarative Kubernetes Emulator Utility that replaces fragmented multi-tool cluster setups with a single configuration specification, enabling safe experimentation with large-scale GPU clusters on minimal resources.</description>
+      <description>Optimizing AI workload scheduling requires extensive experimentation and observation, but testing scheduler modifications in production is risky - configuration errors can cause multi-day delays and wasted capacity. This post introduces KEMU, a declarative Kubernetes Emulator Utility that replaces fragmented multi-tool cluster setups with a single configuration specification, enabling safe experimentation with large-scale GPU clusters on minimal resources.</description>
     </item>
   </channel>
 </rss>
