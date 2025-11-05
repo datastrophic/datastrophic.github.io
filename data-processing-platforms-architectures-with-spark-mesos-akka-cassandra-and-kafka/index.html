@@ -1,140 +1,1104 @@
-<!doctype html><html lang=en dir=ltr class=scroll-smooth data-default-appearance=light data-auto-appearance=true><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=theme-color content="#FFFFFF"><title>Data processing platforms architectures with SMACK: Spark, Mesos, Akka, Cassandra and Kafka &#183; datastrophic</title><meta name=title content="Data processing platforms architectures with SMACK: Spark, Mesos, Akka, Cassandra and Kafka &#183; datastrophic"><script type=text/javascript src=https://datastrophic.io/js/appearance.min.8a082f81b27f3cb2ee528df0b0bdc39787034cf2cc34d4669fbc9977c929023c.js integrity="sha256-iggvgbJ/PLLuUo3wsL3Dl4cDTPLMNNRmn7yZd8kpAjw="></script><link type=text/css rel=stylesheet href=https://datastrophic.io/css/main.bundle.min.8ddd6ca5d23ba630c6633e1e51f0ac292850c4d2af977565a9c52e2a3179e5c9.css integrity="sha256-jd1spdI7pjDGYz4eUfCsKShQxNKvl3VlqcUuKjF55ck="><script defer type=text/javascript id=script-bundle src=https://datastrophic.io/js/main.bundle.min.d4b727caf411cb5c3b421d0d427ed1e3daeafe0d04840327efad4978430edb8c.js integrity="sha256-1LcnyvQRy1w7Qh0NQn7R49rq/g0EhAMn761JeEMO24w=" data-copy=Copy data-copied=Copied></script><meta name=description content="
+
+
+
+
+
+
+
+<!doctype html>
+<html
+  lang="en"
+  dir="ltr"
+  class="scroll-smooth"
+  data-default-appearance="light"
+  data-auto-appearance="true"
+><head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#FFFFFF" />
+  
+  <title>Data processing platforms architectures with SMACK: Spark, Mesos, Akka, Cassandra and Kafka &middot; datastrophic</title>
+    <meta name="title" content="Data processing platforms architectures with SMACK: Spark, Mesos, Akka, Cassandra and Kafka &middot; datastrophic" />
+  
+  
+  
+  
+  
+  <script
+    type="text/javascript"
+    src="https://datastrophic.io/js/appearance.min.8a082f81b27f3cb2ee528df0b0bdc39787034cf2cc34d4669fbc9977c929023c.js"
+    integrity="sha256-iggvgbJ/PLLuUo3wsL3Dl4cDTPLMNNRmn7yZd8kpAjw="
+  ></script>
+  
+  
+  
+  
+  
+  
+  
+    
+  
+  
+  <link
+    type="text/css"
+    rel="stylesheet"
+    href="https://datastrophic.io/css/main.bundle.min.8ddd6ca5d23ba630c6633e1e51f0ac292850c4d2af977565a9c52e2a3179e5c9.css"
+    integrity="sha256-jd1spdI7pjDGYz4eUfCsKShQxNKvl3VlqcUuKjF55ck="
+  />
+  
+  
+  
+  
+    
+    
+  
+  
+  
+    
+    <script
+      defer
+      type="text/javascript"
+      id="script-bundle"
+      src="https://datastrophic.io/js/main.bundle.min.d4b727caf411cb5c3b421d0d427ed1e3daeafe0d04840327efad4978430edb8c.js"
+      integrity="sha256-1LcnyvQRy1w7Qh0NQn7R49rq/g0EhAMn761JeEMO24w="
+      data-copy="Copy"
+      data-copied="Copied"
+    ></script>
+  
+  
+  <meta
+    name="description"
+    content="
       
         This post is a follow-up of the talk given at Big Data AW meetup in Stockholm and focused on different use cases and design approaches for building scalable data processing platforms with SMACK(Spark, Mesos, Akka, Cassandra, Kafka) stack. While stack is really concise and consists of only several components it is possible to implement different system designs which list not only purely batch or stream processing, but more complex Lambda and Kappa architectures as well.
       
-    "><link rel=canonical href=https://datastrophic.io/data-processing-platforms-architectures-with-spark-mesos-akka-cassandra-and-kafka/><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/site.webmanifest><meta property="og:url" content="https://datastrophic.io/data-processing-platforms-architectures-with-spark-mesos-akka-cassandra-and-kafka/"><meta property="og:site_name" content="datastrophic"><meta property="og:title" content="Data processing platforms architectures with SMACK: Spark, Mesos, Akka, Cassandra and Kafka"><meta property="og:description" content="This post is a follow-up of the talk given at Big Data AW meetup in Stockholm and focused on different use cases and design approaches for building scalable data processing platforms with SMACK(Spark, Mesos, Akka, Cassandra, Kafka) stack. While stack is really concise and consists of only several components it is possible to implement different system designs which list not only purely batch or stream processing, but more complex Lambda and Kappa architectures as well."><meta property="og:locale" content="en"><meta property="og:type" content="article"><meta property="article:section" content="posts"><meta property="article:published_time" content="2015-09-16T00:00:00+00:00"><meta property="article:modified_time" content="2015-09-16T00:00:00+00:00"><meta property="article:tag" content="Spark"><meta property="article:tag" content="Mesos"><meta property="article:tag" content="Akka"><meta property="article:tag" content="Cassandra"><meta property="article:tag" content="Kafka"><meta property="article:tag" content="SMACK"><meta name=twitter:card content="summary"><meta name=twitter:title content="Data processing platforms architectures with SMACK: Spark, Mesos, Akka, Cassandra and Kafka"><meta name=twitter:description content="This post is a follow-up of the talk given at Big Data AW meetup in Stockholm and focused on different use cases and design approaches for building scalable data processing platforms with SMACK(Spark, Mesos, Akka, Cassandra, Kafka) stack. While stack is really concise and consists of only several components it is possible to implement different system designs which list not only purely batch or stream processing, but more complex Lambda and Kappa architectures as well."><script type=application/ld+json>{"@context":"https://schema.org","@type":"Article","articleSection":"","name":"Data processing platforms architectures with SMACK: Spark, Mesos, Akka, Cassandra and Kafka","headline":"Data processing platforms architectures with SMACK: Spark, Mesos, Akka, Cassandra and Kafka","abstract":"This post is a follow-up of the talk given at Big Data AW meetup in Stockholm and focused on different use cases and design approaches for building scalable data processing platforms with SMACK(Spark, Mesos, Akka, Cassandra, Kafka) stack. While stack is really concise and consists of only several components it is possible to implement different system designs which list not only purely batch or stream processing, but more complex Lambda and Kappa architectures as well.","inLanguage":"en","url":"https:\/\/datastrophic.io\/data-processing-platforms-architectures-with-spark-mesos-akka-cassandra-and-kafka\/","author":{"@type":"Person","name":"Anton Kirillov"},"copyrightYear":"2015","dateCreated":"2015-09-16T00:00:00\u002b00:00","datePublished":"2015-09-16T00:00:00\u002b00:00","dateModified":"2015-09-16T00:00:00\u002b00:00","keywords":["spark","mesos","akka","cassandra","kafka","SMACK"],"mainEntityOfPage":"true","wordCount":"2393"}</script><script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","item":"https://datastrophic.io/","name":"","position":1},{"@type":"ListItem","item":"https://datastrophic.io/posts/","name":"","position":2},{"@type":"ListItem","name":"Data Processing Platforms Architectures With Smack Spark, Mesos, Akka, Cassandra and Kafka","position":3}]}</script><meta name=author content="Anton Kirillov"><link href=https://www.linkedin.com/in/datastrophic/ rel=me><link href=https://github.com/datastrophic rel=me><script async src="https://www.googletagmanager.com/gtag/js?id=G-Z9WG27GT0G"></script><script>var dnt,doNotTrack=!1;if(!1&&(dnt=navigator.doNotTrack||window.doNotTrack||navigator.msDoNotTrack,doNotTrack=dnt=="1"||dnt=="yes"),!doNotTrack){window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-Z9WG27GT0G")}</script></head><body class="m-auto flex h-screen max-w-7xl flex-col bg-neutral px-6 text-lg leading-7 text-neutral-900 dark:bg-neutral-800 dark:text-neutral sm:px-14 md:px-24 lg:px-32"><div id=the-top class="absolute flex self-center"><a class="-translate-y-8 rounded-b-lg bg-primary-200 px-3 py-1 text-sm focus:translate-y-0 dark:bg-neutral-600" href=#main-content><span class="pe-2 font-bold text-primary-600 dark:text-primary-400">&darr;</span>Skip to main content</a></div><header class="py-6 font-semibold text-neutral-900 dark:text-neutral sm:py-10 print:hidden"><nav class="flex items-start justify-between sm:items-center"><div class="z-40 flex flex-row items-center"><a class="decoration-primary-500 hover:underline hover:decoration-2 hover:underline-offset-2" rel=me href=/>datastrophic</a></div><label id=menu-button for=menu-controller class="block sm:hidden"><input type=checkbox id=menu-controller class=hidden><div class="cursor-pointer hover:text-primary-600 dark:hover:text-primary-400"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 448 512"><path fill="currentColor" d="M0 96C0 78.33 14.33 64 32 64H416c17.7.0 32 14.33 32 32 0 17.7-14.3 32-32 32H32C14.33 128 0 113.7.0 96zM0 256c0-17.7 14.33-32 32-32H416c17.7.0 32 14.3 32 32s-14.3 32-32 32H32c-17.67.0-32-14.3-32-32zM416 448H32c-17.67.0-32-14.3-32-32s14.33-32 32-32H416c17.7.0 32 14.3 32 32s-14.3 32-32 32z"/></svg></span></div><div id=menu-wrapper class="invisible fixed inset-0 z-30 m-auto h-full w-full cursor-default overflow-auto bg-neutral-100/50 opacity-0 backdrop-blur-sm transition-opacity dark:bg-neutral-900/50"><ul class="mx-auto flex w-full max-w-7xl list-none flex-col overflow-visible px-6 py-6 text-end sm:px-14 sm:py-10 sm:pt-10 md:px-24 lg:px-32"><li class=mb-1><span class="cursor-pointer hover:text-primary-600 dark:hover:text-primary-400"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 320 512"><path fill="currentColor" d="M310.6 361.4c12.5 12.5 12.5 32.75.0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3 54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75.0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75.0-45.25s32.75-12.5 45.25.0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25.0s12.5 32.75.0 45.25l-105.4 105.4L310.6 361.4z"/></svg></span></span></li><li class="group mb-1"><a href=/posts/ title onclick=close_menu()><span class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2">archive</span></a></li><li class="group mb-1"><a href=/about/ title onclick=close_menu()><span class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2">about</span></a></li></ul></div></label><ul class="hidden list-none flex-row text-end sm:flex"><li class="group mb-1 sm:mb-0 sm:me-7 sm:last:me-0"><a href=/posts/ title><span class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2">archive</span></a></li><li class="group mb-1 sm:mb-0 sm:me-7 sm:last:me-0"><a href=/about/ title><span class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2">about</span></a></li></ul></nav></header><div class="relative flex grow flex-col"><main id=main-content class=grow><article><header class=max-w-prose><h1 class="mb-8 mt-0 text-4xl font-extrabold text-neutral-900 dark:text-neutral">Data processing platforms architectures with SMACK: Spark, Mesos, Akka, Cassandra and Kafka</h1><div class="mb-10 text-base text-neutral-500 dark:text-neutral-400 print:hidden"><div class="flex flex-row flex-wrap items-center"><time datetime="2015-09-16 00:00:00 +0000 UTC">16 September 2015</time><span class="px-2 text-primary-500">&#183;</span><span title="Reading time">12 mins</span></div><div class="my-1 flex flex-wrap text-xs leading-relaxed text-neutral-500 dark:text-neutral-400"><a href=https://datastrophic.io/tags/spark/ class="mx-1 my-1 rounded-md border border-neutral-200 px-1 py-[1px] hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:hover:border-primary-600 dark:hover:text-primary-400">Spark</a>
-<a href=https://datastrophic.io/tags/mesos/ class="mx-1 my-1 rounded-md border border-neutral-200 px-1 py-[1px] hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:hover:border-primary-600 dark:hover:text-primary-400">Mesos</a>
-<a href=https://datastrophic.io/tags/akka/ class="mx-1 my-1 rounded-md border border-neutral-200 px-1 py-[1px] hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:hover:border-primary-600 dark:hover:text-primary-400">Akka</a>
-<a href=https://datastrophic.io/tags/cassandra/ class="mx-1 my-1 rounded-md border border-neutral-200 px-1 py-[1px] hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:hover:border-primary-600 dark:hover:text-primary-400">Cassandra</a>
-<a href=https://datastrophic.io/tags/kafka/ class="mx-1 my-1 rounded-md border border-neutral-200 px-1 py-[1px] hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:hover:border-primary-600 dark:hover:text-primary-400">Kafka</a>
-<a href=https://datastrophic.io/tags/smack/ class="mx-1 my-1 rounded-md border border-neutral-200 px-1 py-[1px] hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:hover:border-primary-600 dark:hover:text-primary-400">SMACK</a></div></div></header><section class="prose mt-0 flex max-w-full flex-col dark:prose-invert lg:flex-row"><div class="min-h-0 min-w-0 max-w-prose grow"><p>This post is a follow-up of the <a href=http://www.slideshare.net/akirillov/data-processing-platforms-architectures-with-spark-mesos-akka-cassandra-and-kafka target=_blank rel=noreferrer>talk given at Big Data AW meetup</a> in Stockholm and focused on different use cases and design approaches for building scalable data processing platforms with SMACK(Spark, Mesos, Akka, Cassandra, Kafka) stack. While stack is really concise and consists of only several components it is possible to implement different system designs which list not only purely batch or stream processing, but more complex Lambda and Kappa architectures as well. So let&rsquo;s start with a really short overview to be on the same page and continue with designs and examples coming from production projects experience.</p><h2 id=recap class="relative group">Recap <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#recap aria-label=Anchor>#</a></span></h2><p><figure><img src=./logos.jpeg alt class="mx-auto my-0 rounded-md"></figure></p><ul><li><p><a href=http://spark.apache.org/ target=_blank rel=noreferrer>Spark</a> - fast and general engine for distributed, large-scale data processing</p></li><li><p><a href=http://mesos.apache.org/ target=_blank rel=noreferrer>Mesos</a> - cluster resource management system that provides efficient resource isolation and sharing across distributed applications</p></li><li><p><a href=http://akka.io/ target=_blank rel=noreferrer>Akka</a> - a toolkit and runtime for building highly concurrent, distributed, and resilient message-driven applications on the JVM</p></li><li><p><a href=http://cassandra.apache.org/ target=_blank rel=noreferrer>Cassandra</a> - distributed, a highly available database designed to handle large amounts of data across multiple datacenters</p></li><li><p><a href=http://kafka.apache.org/ target=_blank rel=noreferrer>Kafka</a> - a high-throughput, low-latency distributed messaging system/commit log designed for handling real-time data feeds</p></li></ul><h2 id=storage-layer-cassandra class="relative group">Storage layer: Cassandra <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#storage-layer-cassandra aria-label=Anchor>#</a></span></h2><p><figure><img src=./cassadnra-xdcr.png alt class="mx-auto my-0 rounded-md"></figure>Cassandra is well-known for its high availability and high-throughput characteristics and is able to handle enormous write loads and survive cluster nodes failures. In terms of the CAP theorem, Cassandra provides tunable consistency/availability for operations.</p><p>What is more interesting when it comes to data processing is that Cassandra is linearly scalable(increased loads could be addressed by just adding more nodes to a cluster) and it provides cross-datacenter replication(XDCR) capabilities. Actually, XDCR provides not only replication but a set of really interesting use cases to be used for:</p><ul><li>geo-distributed datacenters handling data specific for the region or located closer to customers</li><li>data migration across datacenters: recovery after failures or moving data to a new DC</li><li>separate operational and analytics workloads</li></ul><p>But all these features come for their own price and with Cassandra, this price is its data model, which could be thought of just as a nested sorted map that is distributed across cluster nodes by partition key, and entries are sorted/grouped by clustering columns. Here&rsquo;s a small example:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-sql data-lang=sql><span class=line><span class=cl><span class=k>CREATE</span><span class=w> </span><span class=k>TABLE</span><span class=w> </span><span class=n>campaign</span><span class=p>(</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=n>id</span><span class=w> </span><span class=n>uuid</span><span class=p>,</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=k>year</span><span class=w> </span><span class=nb>int</span><span class=p>,</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=k>month</span><span class=w> </span><span class=nb>int</span><span class=p>,</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=k>day</span><span class=w> </span><span class=nb>int</span><span class=p>,</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=n>views</span><span class=w> </span><span class=nb>bigint</span><span class=p>,</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=n>clicks</span><span class=w> </span><span class=nb>bigint</span><span class=p>,</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=k>PRIMARY</span><span class=w> </span><span class=k>KEY</span><span class=w> </span><span class=p>(</span><span class=n>id</span><span class=p>,</span><span class=w> </span><span class=k>year</span><span class=p>,</span><span class=w> </span><span class=k>month</span><span class=p>,</span><span class=w> </span><span class=k>day</span><span class=p>)</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=w></span><span class=p>);</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=w>
-</span></span></span><span class=line><span class=cl><span class=w></span><span class=k>INSERT</span><span class=w> </span><span class=k>INTO</span><span class=w> </span><span class=n>campaign</span><span class=p>(</span><span class=n>id</span><span class=p>,</span><span class=w> </span><span class=k>year</span><span class=p>,</span><span class=w> </span><span class=k>month</span><span class=p>,</span><span class=w> </span><span class=k>day</span><span class=p>,</span><span class=w> </span><span class=n>views</span><span class=p>,</span><span class=w> </span><span class=n>clicks</span><span class=p>)</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=w></span><span class=k>VALUES</span><span class=p>(</span><span class=mi>40</span><span class=n>b08953</span><span class=o>-</span><span class=n>a</span><span class=err>…</span><span class=p>,</span><span class=mi>2015</span><span class=p>,</span><span class=w> </span><span class=mi>9</span><span class=p>,</span><span class=w> </span><span class=mi>10</span><span class=p>,</span><span class=w> </span><span class=mi>1000</span><span class=p>,</span><span class=w> </span><span class=mi>42</span><span class=p>);</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=w>
-</span></span></span><span class=line><span class=cl><span class=w></span><span class=k>SELECT</span><span class=w> </span><span class=n>views</span><span class=p>,</span><span class=w> </span><span class=n>clicks</span><span class=w> </span><span class=k>FROM</span><span class=w> </span><span class=n>campaign</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=w></span><span class=k>WHERE</span><span class=w> </span><span class=n>id</span><span class=o>=</span><span class=mi>40</span><span class=n>b08953</span><span class=o>-</span><span class=n>a</span><span class=err>…</span><span class=w> </span><span class=k>and</span><span class=w> </span><span class=k>year</span><span class=o>=</span><span class=mi>2015</span><span class=w> </span><span class=k>and</span><span class=w> </span><span class=k>month</span><span class=o>&gt;</span><span class=mi>8</span><span class=p>;</span><span class=w>
-</span></span></span></code></pre></div><p>To get specific data in some range the full key must be specified and no range clauses are allowed except for the last column in the list. This constraint is introduced to limit multiple scans for different ranges which will produce random access to disks and lower down the performance. This means that the data model should be carefully designed against the read queries to limit the number of reads/scans which leads to lesser flexibility when it comes to supporting new queries. <a href=http://slides.com/antonkirillov/cassandra-data-modelling-101#/ target=_blank rel=noreferrer>Here are C* data modeling 101</a> slides that provide several examples of how CQL tables are represented internally.</p><p>But what if one has some tables that need to be joined somehow with other tables? Let&rsquo;s consider the next case: calculate total views per campaign for a given month for all campaigns.</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-sql data-lang=sql><span class=line><span class=cl><span class=k>CREATE</span><span class=w> </span><span class=k>TABLE</span><span class=w> </span><span class=n>event</span><span class=p>(</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=n>id</span><span class=w> </span><span class=n>uuid</span><span class=p>,</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=n>ad_id</span><span class=w> </span><span class=n>uuid</span><span class=p>,</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=n>campaign</span><span class=w> </span><span class=n>uuid</span><span class=p>,</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=n>ts</span><span class=w> </span><span class=nb>bigint</span><span class=p>,</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=k>type</span><span class=w> </span><span class=nb>text</span><span class=p>,</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=k>PRIMARY</span><span class=w> </span><span class=k>KEY</span><span class=p>(</span><span class=n>id</span><span class=p>)</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=w></span><span class=p>);</span><span class=w>
-</span></span></span></code></pre></div><p>With the given model, the only way to achieve this goal is to read all campaigns, read all events, sum the proper ones (with matched campaign id) and assign them to the campaign. And it looks really challenging to implement such a sort of application because the amount of data stored in Cassandra could be really huge and won&rsquo;t fit the memory. So the processing of such sort of data should be done in a distributed manner and Spark perfectly fits this use case.</p><h2 id=processing-layer-spark class="relative group">Processing layer: Spark <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#processing-layer-spark aria-label=Anchor>#</a></span></h2><p><figure><img src=./spark-basics-scheduler.png alt class="mx-auto my-0 rounded-md"></figure>The main abstraction Spark operates with is RDD(Resilient Distributed Dataset, a distributed collection of elements) and the workflow consists of four main phases:</p><ul><li>RDD operations(transformations and actions) form DAG (Direct Acyclic Graph)</li><li>DAG is split into stages of tasks which are then submitted to the cluster manager</li><li>stages combine tasks that don’t require shuffling/repartitioning</li><li>tasks run on workers and results then return to the client</li></ul><p>Here&rsquo;s how one can solve the above problem with Spark and Cassandra:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-scala data-lang=scala><span class=line><span class=cl><span class=k>val</span> <span class=n>sc</span> <span class=k>=</span> <span class=k>new</span> <span class=nc>SparkContext</span><span class=o>(</span><span class=n>conf</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=k>case</span> <span class=k>class</span> <span class=nc>Event</span><span class=o>(</span><span class=n>id</span><span class=k>:</span> <span class=kt>UUID</span><span class=o>,</span> <span class=n>ad_id</span><span class=k>:</span> <span class=kt>UUID</span><span class=o>,</span> <span class=n>campaign</span><span class=k>:</span> <span class=kt>UUID</span><span class=o>,</span> <span class=n>ts</span><span class=k>:</span> <span class=kt>Long</span><span class=o>,</span> <span class=n>`type`</span><span class=k>:</span> <span class=kt>String</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=n>sc</span><span class=o>.</span><span class=n>cassandraTable</span><span class=o>[</span><span class=kt>Event</span><span class=o>](</span><span class=s>&#34;keyspace&#34;</span><span class=o>,</span> <span class=s>&#34;event&#34;</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>  <span class=o>.</span><span class=n>filter</span><span class=o>(</span><span class=n>e</span> <span class=k>=&gt;</span> <span class=n>e</span><span class=o>.</span><span class=n>`type`</span> <span class=o>==</span> <span class=s>&#34;view&#34;</span> <span class=o>&amp;&amp;</span> <span class=n>checkMonth</span><span class=o>(</span><span class=n>e</span><span class=o>.</span><span class=n>ts</span><span class=o>))</span>
-</span></span><span class=line><span class=cl>  <span class=o>.</span><span class=n>map</span><span class=o>(</span><span class=n>e</span> <span class=k>=&gt;</span> <span class=o>(</span><span class=n>e</span><span class=o>.</span><span class=n>campaign</span><span class=o>,</span> <span class=mi>1</span><span class=o>))</span>
-</span></span><span class=line><span class=cl>  <span class=o>.</span><span class=n>reduceByKey</span><span class=o>(</span><span class=k>_</span> <span class=o>+</span> <span class=k>_</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>  <span class=o>.</span><span class=n>collect</span><span class=o>()</span>
-</span></span></code></pre></div><p>Interaction with Cassandra is performed via <a href=https://github.com/datastax/spark-cassandra-connector target=_blank rel=noreferrer>spark-cassandra-connector</a> which makes it really easy and straightforward. There&rsquo;s one more interesting option to work with NoSQL stores - SparkSQL, which translates SQL statements into a series of RDD operations.</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-scala data-lang=scala><span class=line><span class=cl><span class=k>case</span> <span class=k>class</span> <span class=nc>CampaignReport</span><span class=o>(</span><span class=n>id</span><span class=k>:</span> <span class=kt>String</span><span class=o>,</span> <span class=n>views</span><span class=k>:</span> <span class=kt>Long</span><span class=o>,</span> <span class=n>clicks</span><span class=k>:</span> <span class=kt>Long</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=n>sql</span><span class=o>(</span><span class=s>&#34;&#34;&#34;SELECT campaign.id as id, campaign.views as views, 
-</span></span></span><span class=line><span class=cl><span class=s>   campaign.clicks as clicks, event.type as type
-</span></span></span><span class=line><span class=cl><span class=s>        FROM campaign
-</span></span></span><span class=line><span class=cl><span class=s>        JOIN event ON campaign.id = event.campaign
-</span></span></span><span class=line><span class=cl><span class=s>    &#34;&#34;&#34;</span><span class=o>).</span><span class=n>rdd</span>
-</span></span><span class=line><span class=cl><span class=o>.</span><span class=n>groupBy</span><span class=o>(</span><span class=n>row</span> <span class=k>=&gt;</span> <span class=n>row</span><span class=o>.</span><span class=n>getAs</span><span class=o>[</span><span class=kt>String</span><span class=o>](</span><span class=s>&#34;id&#34;</span><span class=o>))</span>
-</span></span><span class=line><span class=cl><span class=o>.</span><span class=n>map</span><span class=o>{</span> <span class=k>case</span> <span class=o>(</span><span class=n>id</span><span class=o>,</span> <span class=n>rows</span><span class=o>)</span> <span class=k>=&gt;</span>
-</span></span><span class=line><span class=cl>   <span class=k>val</span> <span class=n>views</span> <span class=k>=</span> <span class=n>rows</span><span class=o>.</span><span class=n>head</span><span class=o>.</span><span class=n>getAs</span><span class=o>[</span><span class=kt>Long</span><span class=o>](</span><span class=s>&#34;views&#34;</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>   <span class=k>val</span> <span class=n>clicks</span> <span class=k>=</span> <span class=n>rows</span><span class=o>.</span><span class=n>head</span><span class=o>.</span><span class=n>getAs</span><span class=o>[</span><span class=kt>Long</span><span class=o>](</span><span class=s>&#34;clicks&#34;</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>   <span class=k>val</span> <span class=n>res</span> <span class=k>=</span> <span class=n>rows</span><span class=o>.</span><span class=n>groupBy</span><span class=o>(</span><span class=n>row</span> <span class=k>=&gt;</span> <span class=n>row</span><span class=o>.</span><span class=n>getAs</span><span class=o>[</span><span class=kt>String</span><span class=o>](</span><span class=s>&#34;type&#34;</span><span class=o>)).</span><span class=n>mapValues</span><span class=o>(</span><span class=k>_</span><span class=o>.</span><span class=n>size</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>   <span class=nc>CampaignReport</span><span class=o>(</span><span class=n>id</span><span class=o>,</span> <span class=n>views</span> <span class=k>=</span> <span class=n>views</span> <span class=o>+</span> <span class=n>res</span><span class=o>(</span><span class=s>&#34;view&#34;</span><span class=o>),</span> <span class=n>clicks</span> <span class=k>=</span> <span class=n>clicks</span> <span class=o>+</span> <span class=n>res</span><span class=o>(</span><span class=s>&#34;click&#34;</span><span class=o>))</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=o>}.</span><span class=n>saveToCassandra</span><span class=o>(</span><span class=err>“</span><span class=n>keyspace</span><span class=err>”</span><span class=o>,</span> <span class=err>“</span><span class=n>campaign_report</span><span class=err>”</span><span class=o>)</span>
-</span></span></code></pre></div><p>With several lines of code, it&rsquo;s possible to implement naive Lamba design which of course could be much more sophisticated, but this example shows just how easy this can be achieved.</p><h2 id=almost-mapreduce-bringing-processing-closer-to-data class="relative group">Almost MapReduce: bringing processing closer to data <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#almost-mapreduce-bringing-processing-closer-to-data aria-label=Anchor>#</a></span></h2><p>Spark-Cassandra connector is data locality aware and reads the data from the closest node in a cluster thus minimizing the amount of data transferred around the network. To fully facilitate Spark-C* connector data locality awareness, Spark workers should be collocated with Cassandra nodes.</p><p><figure><img src=./cassandra-spark.png alt class="mx-auto my-0 rounded-md"></figure>Alongside Spark collocation with Cassandra, it makes sense to separate your operational (or write-heavy) cluster from one for analytics:</p><ul><li>clusters can be scaled independently</li><li>data is replicated by Cassandra, no extra work is needed</li><li>analytics cluster has different Read/Write load patterns</li><li>analytics cluster could contain additional data (e.g. dictionaries) and processing results</li><li>Spark resource impact is limited to only one cluster</li></ul><p>Let&rsquo;s look at Spark applications deployment options one more time:<figure><img src=./spark-cluster-managers.png alt class="mx-auto my-0 rounded-md"></figure>There are three main options available for cluster resource managers:</p><ul><li>Spark Standalone - Spark master and Workers are installed and executed as standalone applications (which obviously introduces some ops overhead and support only static resource allocation per worker)</li><li>YARN is really nice if you already have a Hadoop ecosystem</li><li>Mesos which from the beginning was designed for dynamic allocation of cluster resources and not only for running Hadoop applications but for handling heterogeneous workloads</li></ul><h2 id=mesos-architecture class="relative group">Mesos architecture <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#mesos-architecture aria-label=Anchor>#</a></span></h2><p><figure><img src=./mesos-architecture.png alt class="mx-auto my-0 rounded-md"></figure>Mesos cluster consists of Master nodes that are responsible for resource offers and scheduling and Slave nodes which do the actual heavy lifting of tasks execution. In HA mode with multiple Masters ZooKeeper is used for leader election and service discovery. Applications executed on Mesos are called Frameworks and utilize API to handle resource offers and submit tasks to Mesos. Generally, the process of task execution consists of these steps:</p><ul><li>Slaves publish available resources to Master</li><li>Master sends resource offers to Frameworks</li><li>Scheduler replies with tasks and resources needed per task</li><li>Master sends tasks to slaves</li></ul><h2 id=bringing-spark-mesos-and-cassandra-together class="relative group">Bringing Spark, Mesos, and Cassandra together <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#bringing-spark-mesos-and-cassandra-together aria-label=Anchor>#</a></span></h2><p>As said before Spark workers should be collocated with Cassandra nodes to enforce data locality awareness thus lowering the amount of network traffic and Cassandra cluster load. Here&rsquo;s one of the possible deployment scenarios on how to achieve this with Mesos.<figure><img src=./spark-mesos-cassandra.png alt class="mx-auto my-0 rounded-md"></figure></p><ul><li>Mesos Masters and ZooKeepers collocated</li><li>Mesos Slaves and Cassandra nodes collocated to enforce better data locality for Spark</li><li>Spark binaries deployed to all worker nodes and <code>spark-env.sh</code> is configured with proper master endpoints and executor jar location</li><li>Spark Executor JAR uploaded to S3/HDFS</li></ul><p>With provided setup Spark job can be submitted to the cluster with simple <code>spark-submit</code> invocation from any worker nodes having Spark binaries installed and assembly jar containing actual job logic uploaded</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>spark-submit --class io.datastrophic.SparkJob /etc/jobs/spark-jobs.jar
-</span></span></code></pre></div><p>There exist options to run Dockerized Spark so that there&rsquo;s no need to distribute binaries across every single cluster node.</p><h3 id=scheduled-long-running-tasks class="relative group">Scheduled long-running tasks <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#scheduled-long-running-tasks aria-label=Anchor>#</a></span></h3><p>Every data processing system sooner or later faces the necessity of running two types of jobs: scheduled/periodic jobs like periodic batch aggregations and long-running ones which are the case for stream processing. The main requirement for both of these types is fault tolerance - jobs must continue running even in case of cluster nodes failures. Mesos ecosystem comes with two great frameworks supporting each of these types of jobs.</p><p><strong>Marathon</strong> is a framework for fault-tolerant execution of long-running tasks supporting HA mode with ZooKeeper, able to run Docker, and having a nice REST API. Here&rsquo;s an example of a simple job configuration running <code>spark-submit</code> as a shell command:<figure><img src=./marathon.jpeg alt class="mx-auto my-0 rounded-md"></figure></p><p><strong>Chronos</strong> has the same characteristics as Marathon but is designed for running scheduled jobs and in general, it is distributed HA cron supporting graphs of jobs. Here&rsquo;s an example of an S3 compaction job configuration which is implemented as a simple bash script:<figure><img src=./chronos.jpeg alt class="mx-auto my-0 rounded-md"></figure></p><p>There are plenty of frameworks already available or under active development which targeted to integrate widely used systems with Mesos resource management capabilities. Just to name some of them:</p><ul><li>Hadoop</li><li>Cassandra</li><li>Kafka</li><li>Myriad: YARN on Mesos</li><li>Storm</li><li>Samza</li></ul><h2 id=ingesting-the-data class="relative group">Ingesting the data <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#ingesting-the-data aria-label=Anchor>#</a></span></h2><p>So far so good: the storage layer is designed, resource management is set up and jobs are configured. The only thing which is not there yet is the data to process.<figure><img src=./architecture-ingestion.png alt class="mx-auto my-0 rounded-md"></figure>Assuming that incoming data will arrive at high rates the endpoints which will receive it should meet next requirements:</p><ul><li>provide high throughput/low latency</li><li>being resilient</li><li>allow easy scalability</li><li>support back pressure</li></ul><p>Backpressure is not a must, but it would be nice to have this as an option to handle load spikes.</p><p>Akka perfectly fits the requirements and basically, it was designed to provide this feature set. So what&rsquo;s is Akka:</p><ul><li>actor model implementation for JVM</li><li>message-based and asynchronous</li><li>enforces no shared mutable state</li><li>easy scalable from one process to a cluster of machines</li><li>actors form hierarchies with parental supervision</li><li>not only concurrency framework: <code>akka-http</code>, <code>akka-streams</code>, and <code>akka-persistence</code></li></ul><p>Here&rsquo;s a simplified example of three actors which handle JSON HttpRequest, parse it into domain model case class and save it to Cassandra:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-scala data-lang=scala><span class=line><span class=cl><span class=k>class</span> <span class=nc>HttpActor</span> <span class=k>extends</span> <span class=nc>Actor</span> <span class=o>{</span>
-</span></span><span class=line><span class=cl>  <span class=k>def</span> <span class=n>receive</span> <span class=k>=</span> <span class=o>{</span>
-</span></span><span class=line><span class=cl>    <span class=k>case</span> <span class=n>req</span><span class=k>:</span> <span class=kt>HttpRequest</span> <span class=o>=&gt;</span> 
-</span></span><span class=line><span class=cl>      <span class=n>system</span><span class=o>.</span><span class=n>actorOf</span><span class=o>(</span><span class=nc>Props</span><span class=o>[</span><span class=kt>JsonParserActor</span><span class=o>])</span> <span class=o>!</span> <span class=n>req</span><span class=o>.</span><span class=n>body</span>
-</span></span><span class=line><span class=cl>    <span class=k>case</span> <span class=n>e</span><span class=k>:</span> <span class=kt>Event</span> <span class=o>=&gt;</span>
-</span></span><span class=line><span class=cl>      <span class=n>system</span><span class=o>.</span><span class=n>actorOf</span><span class=o>(</span><span class=nc>Props</span><span class=o>[</span><span class=kt>CassandraWriterActor</span><span class=o>])</span> <span class=o>!</span> <span class=n>e</span>
-</span></span><span class=line><span class=cl>  <span class=o>}</span>
-</span></span><span class=line><span class=cl><span class=o>}</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=k>class</span> <span class=nc>JsonParserActor</span> <span class=k>extends</span> <span class=nc>Actor</span> <span class=o>{</span>
-</span></span><span class=line><span class=cl>  <span class=k>def</span> <span class=n>receive</span> <span class=k>=</span> <span class=o>{</span>
-</span></span><span class=line><span class=cl>    <span class=k>case</span> <span class=n>s</span><span class=k>:</span> <span class=kt>String</span> <span class=o>=&gt;</span> <span class=nc>Try</span><span class=o>(</span><span class=nc>Json</span><span class=o>.</span><span class=n>parse</span><span class=o>(</span><span class=n>s</span><span class=o>).</span><span class=n>as</span><span class=o>[</span><span class=kt>Event</span><span class=o>])</span> <span class=k>match</span> <span class=o>{</span>
-</span></span><span class=line><span class=cl>      <span class=k>case</span> <span class=nc>Failure</span><span class=o>(</span><span class=n>ex</span><span class=o>)</span> <span class=k>=&gt;</span> <span class=c1>//error handling code
-</span></span></span><span class=line><span class=cl><span class=c1></span>      <span class=k>case</span> <span class=nc>Success</span><span class=o>(</span><span class=n>event</span><span class=o>)</span> <span class=k>=&gt;</span> <span class=n>sender</span> <span class=o>!</span> <span class=n>event</span>
-</span></span><span class=line><span class=cl>    <span class=o>}</span>
-</span></span><span class=line><span class=cl>  <span class=o>}</span>
-</span></span><span class=line><span class=cl><span class=o>}</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=k>class</span> <span class=nc>CassandraWriterActor</span> <span class=k>extends</span> <span class=nc>Actor</span> <span class=k>with</span> <span class=nc>ActorLogging</span> <span class=o>{</span>
-</span></span><span class=line><span class=cl>  <span class=c1>//for demo purposes, session initialized here
-</span></span></span><span class=line><span class=cl><span class=c1></span>  <span class=k>val</span> <span class=n>session</span> <span class=k>=</span> <span class=nc>Cluster</span><span class=o>.</span><span class=n>builder</span><span class=o>()</span>
-</span></span><span class=line><span class=cl>    <span class=o>.</span><span class=n>addContactPoint</span><span class=o>(</span><span class=s>&#34;cassandra.host&#34;</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>    <span class=o>.</span><span class=n>build</span><span class=o>()</span>
-</span></span><span class=line><span class=cl>    <span class=o>.</span><span class=n>connect</span><span class=o>()</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>  <span class=k>override</span> <span class=k>def</span> <span class=n>receive</span><span class=k>:</span> <span class=kt>Receive</span> <span class=o>=</span> <span class=o>{</span>
-</span></span><span class=line><span class=cl>    <span class=k>case</span> <span class=n>event</span><span class=k>:</span> <span class=kt>Event</span> <span class=o>=&gt;</span>
-</span></span><span class=line><span class=cl>      <span class=k>val</span> <span class=n>statement</span> <span class=k>=</span> <span class=k>new</span> <span class=nc>SimpleStatement</span><span class=o>(</span><span class=n>event</span><span class=o>.</span><span class=n>createQuery</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>        <span class=o>.</span><span class=n>setConsistencyLevel</span><span class=o>(</span><span class=nc>ConsistencyLevel</span><span class=o>.</span><span class=nc>QUORUM</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>      <span class=nc>Try</span><span class=o>(</span><span class=n>session</span><span class=o>.</span><span class=n>execute</span><span class=o>(</span><span class=n>statement</span><span class=o>))</span> <span class=k>match</span> <span class=o>{</span>
-</span></span><span class=line><span class=cl>        <span class=k>case</span> <span class=nc>Failure</span><span class=o>(</span><span class=n>ex</span><span class=o>)</span> <span class=k>=&gt;</span> <span class=c1>//error handling code
-</span></span></span><span class=line><span class=cl><span class=c1></span>        <span class=k>case</span> <span class=nc>Success</span> <span class=k>=&gt;</span> <span class=n>sender</span> <span class=o>!</span> <span class=nc>WriteSuccessfull</span>
-</span></span><span class=line><span class=cl>      <span class=o>}</span>
-</span></span><span class=line><span class=cl>  <span class=o>}</span>
-</span></span><span class=line><span class=cl><span class=o>}</span>
-</span></span></code></pre></div><p>It looks like only several lines of code are needed to make everything work, but while writing raw data (events) to Cassandra with Akka is easy there is a number of gotchas:</p><ul><li>Cassandra is still designed for fast serving but not batch processing, so pre-aggregation of incoming data is needed</li><li>computation time of aggregations/rollups will grow with the amount of data</li><li>actors are not suitable for performing aggregation due to the stateless design model</li><li>micro-batches could partially solve the problem</li><li>some sort of reliable buffer for raw data is still needed</li></ul><h2 id=kafka-as-a-buffer-for-incoming-data class="relative group">Kafka as a buffer for incoming data <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#kafka-as-a-buffer-for-incoming-data aria-label=Anchor>#</a></span></h2><p><figure><img src=./architecture-ingestion-kafka.png alt class="mx-auto my-0 rounded-md"></figure>For keeping incoming data with some retention and its further pre-aggregation/processing some sort of distributed commit log could be used. In this case, consumers will read data in batches, process it, and store it into Cassandra in form of pre-aggregates. Here&rsquo;s an example of publishing JSON data coming over HTTP to Kafka with <code>akka-http</code>:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-scala data-lang=scala><span class=line><span class=cl><span class=k>val</span> <span class=n>config</span> <span class=k>=</span> <span class=k>new</span> <span class=nc>ProducerConfig</span><span class=o>(</span><span class=nc>KafkaConfig</span><span class=o>())</span>
-</span></span><span class=line><span class=cl><span class=k>lazy</span> <span class=k>val</span> <span class=n>producer</span> <span class=k>=</span> <span class=k>new</span> <span class=nc>KafkaProducer</span><span class=o>[</span><span class=kt>A</span>, <span class=kt>A</span><span class=o>](</span><span class=n>config</span><span class=o>)</span>
-</span></span><span class=line><span class=cl><span class=k>val</span> <span class=n>topic</span> <span class=k>=</span> <span class=err>“</span><span class=n>raw_events</span><span class=err>”</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=k>val</span> <span class=n>routes</span><span class=k>:</span> <span class=kt>Route</span> <span class=o>=</span> <span class=o>{</span>
-</span></span><span class=line><span class=cl>  <span class=n>post</span><span class=o>{</span>
-</span></span><span class=line><span class=cl>    <span class=n>decodeRequest</span><span class=o>{</span>
-</span></span><span class=line><span class=cl>      <span class=n>entity</span><span class=o>(</span><span class=n>as</span><span class=o>[</span><span class=kt>String</span><span class=o>]){</span> <span class=n>str</span> <span class=k>=&gt;</span>
-</span></span><span class=line><span class=cl>        <span class=nc>JsonParser</span><span class=o>.</span><span class=n>parse</span><span class=o>(</span><span class=n>str</span><span class=o>).</span><span class=n>validate</span><span class=o>[</span><span class=kt>Event</span><span class=o>]</span> <span class=k>match</span> <span class=o>{</span>
-</span></span><span class=line><span class=cl>          <span class=k>case</span> <span class=n>s</span><span class=k>:</span> <span class=kt>JsSuccess</span><span class=o>[</span><span class=kt>String</span><span class=o>]</span> <span class=k>=&gt;</span> <span class=n>producer</span><span class=o>.</span><span class=n>send</span><span class=o>(</span><span class=k>new</span> <span class=nc>KeyedMessage</span><span class=o>(</span><span class=n>topic</span><span class=o>,</span> <span class=n>str</span><span class=o>))</span>
-</span></span><span class=line><span class=cl>          <span class=k>case</span> <span class=n>e</span><span class=k>:</span> <span class=kt>JsError</span> <span class=o>=&gt;</span> <span class=nc>BadRequest</span> <span class=o>-&gt;</span> <span class=nc>JsError</span><span class=o>.</span><span class=n>toFlatJson</span><span class=o>(</span><span class=n>e</span><span class=o>).</span><span class=n>toString</span><span class=o>()</span>
-</span></span><span class=line><span class=cl>        <span class=o>}</span>
-</span></span><span class=line><span class=cl>      <span class=o>}</span>
-</span></span><span class=line><span class=cl>    <span class=o>}</span>
-</span></span><span class=line><span class=cl>  <span class=o>}</span>    
-</span></span><span class=line><span class=cl><span class=o>}</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=k>object</span> <span class=nc>AkkaHttpMicroservice</span> <span class=k>extends</span> <span class=nc>App</span> <span class=k>with</span> <span class=nc>Service</span> <span class=o>{</span>
-</span></span><span class=line><span class=cl>  <span class=nc>Http</span><span class=o>().</span><span class=n>bindAndHandle</span><span class=o>(</span><span class=n>routes</span><span class=o>,</span> <span class=n>config</span><span class=o>.</span><span class=n>getString</span><span class=o>(</span><span class=s>&#34;http.interface&#34;</span><span class=o>),</span> <span class=n>config</span><span class=o>.</span><span class=n>getInt</span><span class=o>(</span><span class=s>&#34;http.port&#34;</span><span class=o>))</span>
-</span></span><span class=line><span class=cl><span class=o>}</span>
-</span></span></code></pre></div><h2 id=consuming-the-data-spark-streaming class="relative group">Consuming the data: Spark Streaming <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#consuming-the-data-spark-streaming aria-label=Anchor>#</a></span></h2><p>While Akka is still could be used for consuming stream data from Kafka, having Spark in your ecosystem brings Spark Streaming as an option to solve the problem:</p><ul><li>it supports a variety of data sources</li><li>provides at-least-once semantics</li><li>exactly-once semantics available with Kafka Direct and idempotent storage<figure><img src=./spark-streaming.png alt class="mx-auto my-0 rounded-md"></figure></li></ul><p>Consuming event stream from Kinesis with Spark Streaming example:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-scala data-lang=scala><span class=line><span class=cl><span class=k>val</span> <span class=n>ssc</span> <span class=k>=</span> <span class=k>new</span> <span class=nc>StreamingContext</span><span class=o>(</span><span class=n>conf</span><span class=o>,</span> <span class=nc>Seconds</span><span class=o>(</span><span class=mi>10</span><span class=o>))</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=k>val</span> <span class=n>kinesisStream</span> <span class=k>=</span> <span class=nc>KinesisUtils</span><span class=o>.</span><span class=n>createStream</span><span class=o>(</span><span class=n>ssc</span><span class=o>,</span><span class=n>appName</span><span class=o>,</span><span class=n>streamName</span><span class=o>,</span>
-</span></span><span class=line><span class=cl>   <span class=n>endpointURL</span><span class=o>,</span><span class=n>regionName</span><span class=o>,</span> <span class=nc>InitialPositionInStream</span><span class=o>.</span><span class=nc>LATEST</span><span class=o>,</span>     
-</span></span><span class=line><span class=cl>   <span class=nc>Duration</span><span class=o>(</span><span class=n>checkpointInterval</span><span class=o>),</span> <span class=nc>StorageLevel</span><span class=o>.</span><span class=nc>MEMORY_ONLY</span><span class=o>)</span>
-</span></span><span class=line><span class=cl><span class=o>}</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=c1>//transforming given stream to Event and saving to C*
-</span></span></span><span class=line><span class=cl><span class=c1></span><span class=n>kinesisStream</span><span class=o>.</span><span class=n>map</span><span class=o>(</span><span class=nc>JsonUtils</span><span class=o>.</span><span class=n>byteArrayToEvent</span><span class=o>)</span>
-</span></span><span class=line><span class=cl><span class=o>.</span><span class=n>saveToCassandra</span><span class=o>(</span><span class=n>keyspace</span><span class=o>,</span> <span class=n>table</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=n>ssc</span><span class=o>.</span><span class=n>start</span><span class=o>()</span>
-</span></span><span class=line><span class=cl><span class=n>ssc</span><span class=o>.</span><span class=n>awaitTermination</span><span class=o>()</span>
-</span></span></code></pre></div><h2 id=designing-for-failure-backups-and-patching class="relative group">Designing for Failure: Backups and Patching <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#designing-for-failure-backups-and-patching aria-label=Anchor>#</a></span></h2><p>Usually, this is the most boring part of any system but it&rsquo;s really important when there exists any possibility that the data which came into the system could be invalid or when all the analytics data center crushes.<figure><img src=./architecture-ingestion-kafka-spark.png alt class="mx-auto my-0 rounded-md"></figure></p><p>So why not store the data in Kafka/Kinesis? For the moment of writing Kinesis has only one day of retention and without backups, in case of a failure, all processing results could be lost. While Kafka supports much larger retention periods, the cost of hardware ownership should be considered because for example, S3 storage is way cheaper than multiple instances running Kafka as well as S3 SLA are really good.</p><p>Apart from having backups the restoring/patching strategies should be designed upfront and tested so that any problems with data could be quickly fixed. Programmer&rsquo;s mistake in aggregation job or duplicate data could break the accuracy of the computation results so fixing the error shouldn&rsquo;t be a big problem. One thing to make all these operations easier is to enforce idempotency in the data model so that multiple repetitions of the same operations produce the same results(e.g. an SQL update is an idempotent operation while the counter increment is not).</p><p>Here is an example of a Spark job which reads S3 backup and loads it into Cassandra:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-scala data-lang=scala><span class=line><span class=cl><span class=k>val</span> <span class=n>sc</span> <span class=k>=</span> <span class=k>new</span> <span class=nc>SparkContext</span><span class=o>(</span><span class=n>conf</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=n>sc</span><span class=o>.</span><span class=n>textFile</span><span class=o>(</span><span class=s>s&#34;s3n://bucket/2015/*/*.gz&#34;</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>  <span class=o>.</span><span class=n>map</span><span class=o>(</span><span class=n>s</span> <span class=k>=&gt;</span> <span class=nc>Try</span><span class=o>(</span><span class=nc>JsonUtils</span><span class=o>.</span><span class=n>stringToEvent</span><span class=o>(</span><span class=n>s</span><span class=o>)))</span>
-</span></span><span class=line><span class=cl>  <span class=o>.</span><span class=n>filter</span><span class=o>(</span><span class=k>_</span><span class=o>.</span><span class=n>isSuccess</span><span class=o>).</span><span class=n>map</span><span class=o>(</span><span class=k>_</span><span class=o>.</span><span class=n>get</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>  <span class=o>.</span><span class=n>saveToCassandra</span><span class=o>(</span><span class=n>config</span><span class=o>.</span><span class=n>keyspace</span><span class=o>,</span> <span class=n>config</span><span class=o>.</span><span class=n>table</span><span class=o>)</span>
-</span></span></code></pre></div><h2 id=the-big-picture class="relative group">The Big picture <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#the-big-picture aria-label=Anchor>#</a></span></h2><p>The high-level design of data platform built with SMACK<figure><img src=./architecture-big-picture.png alt class="mx-auto my-0 rounded-md"></figure></p><p>So what does the SMACK stack provide:</p><ul><li>a concise toolbox for a wide variety of data processing scenarios</li><li>battle-tested and widely used software with large communities</li><li>easy scalability and replication of data while preserving low latencies</li><li>unified cluster management for heterogeneous loads</li><li>single platform for any kind of applications</li><li>implementation platform for different architecture designs (batch, streaming, Lambda, Kappa)</li><li>fast time-to-market (e.g. for MVP verification)</li></ul></div></section><footer class="max-w-prose pt-8 print:hidden"><div class=flex><picture class="!mb-0 !mt-0 me-4 w-24 h-auto rounded-full"><img width=400 height=400 class="!mb-0 !mt-0 me-4 w-24 h-auto rounded-full" alt="Anton Kirillov" loading=lazy decoding=async src=https://datastrophic.io/img/author.jpg></picture><div class=place-self-center><div class="text-[0.6rem] uppercase leading-3 text-neutral-500 dark:text-neutral-400">Author</div><div class="font-semibold leading-6 text-neutral-800 dark:text-neutral-300">Anton Kirillov</div><div class="text-sm text-neutral-700 dark:text-neutral-400">Technical Leader. Compute and AI Infrastructure</div><div class="text-2xl sm:text-lg"><div class="flex flex-wrap text-neutral-400 dark:text-neutral-500"><a class="px-1 transition-transform hover:scale-125 hover:text-primary-700 dark:hover:text-primary-400" style=will-change:transform href=https://www.linkedin.com/in/datastrophic/ target=_blank aria-label=Linkedin rel="me noopener noreferrer"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 448 512"><path fill="currentColor" d="M416 32H31.9C14.3 32 0 46.5.0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6.0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3zM135.4 416H69V202.2h66.5V416zm-33.2-243c-21.3.0-38.5-17.3-38.5-38.5S80.9 96 102.2 96c21.2.0 38.5 17.3 38.5 38.5.0 21.3-17.2 38.5-38.5 38.5zm282.1 243h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6.0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2.0 79.7 44.3 79.7 101.9V416z"/></svg>
-</span></a><a class="px-1 transition-transform hover:scale-125 hover:text-primary-700 dark:hover:text-primary-400" style=will-change:transform href=https://github.com/datastrophic target=_blank aria-label=Github rel="me noopener noreferrer"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 496 512"><path fill="currentColor" d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6.0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6.0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3.0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1.0-6.2-.3-40.4-.3-61.4.0.0-70 15-84.7-29.8.0.0-11.4-29.1-27.8-36.6.0.0-22.9-15.7 1.6-15.4.0.0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5.0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9.0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4.0 33.7-.3 75.4-.3 83.6.0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6.0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9.0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span></a></div></div></div></div><div class=pt-8><hr class="border-dotted border-neutral-300 dark:border-neutral-600"><div class="flex justify-between pt-3"><span><a class="group flex" href=https://datastrophic.io/evaluating-cassandra-2-1-counters-consistency/><span class="me-2 text-neutral-700 transition-transform group-hover:-translate-x-[2px] group-hover:text-primary-600 dark:text-neutral dark:group-hover:text-primary-400"><span class="ltr:inline rtl:hidden">&larr;</span><span class="ltr:hidden rtl:inline">&rarr;</span></span>
-<span class="flex flex-col"><span class="mt-[0.1rem] leading-6 group-hover:underline group-hover:decoration-primary-500">Cassandra 2.1 Counters: Testing Consistency During Node Failures</span>
-<span class="mt-[0.1rem] text-xs text-neutral-500 dark:text-neutral-400"><time datetime="2015-09-03 00:00:00 +0000 UTC">3 September 2015</time>
-</span></span></a></span><span><a class="group flex text-right" href=https://datastrophic.io/core-concepts-architecture-and-internals-of-apache-spark/><span class="flex flex-col"><span class="mt-[0.1rem] leading-6 group-hover:underline group-hover:decoration-primary-500">Apache Spark: core concepts, architecture and internals</span>
-<span class="mt-[0.1rem] text-xs text-neutral-500 dark:text-neutral-400"><time datetime="2016-03-03 00:00:00 +0000 UTC">3 March 2016</time>
-</span></span><span class="ms-2 text-neutral-700 transition-transform group-hover:-translate-x-[-2px] group-hover:text-primary-600 dark:text-neutral dark:group-hover:text-primary-400"><span class="ltr:inline rtl:hidden">&rarr;</span><span class="ltr:hidden rtl:inline">&larr;</span></span></a></span></div></div></footer></article></main><div class="pointer-events-none absolute bottom-0 end-0 top-[100vh] w-12" id=to-top hidden=true><a href=#the-top class="pointer-events-auto sticky top-[calc(100vh-5.5rem)] flex h-12 w-12 items-center justify-center rounded-full bg-neutral/50 text-xl text-neutral-700 backdrop-blur hover:text-primary-600 dark:bg-neutral-800/50 dark:text-neutral dark:hover:text-primary-400" aria-label="Scroll to top" title="Scroll to top">&uarr;</a></div><footer class="py-10 print:hidden"><div class="flex items-center justify-between"><div><p class="text-sm text-neutral-500 dark:text-neutral-400">© 2025 datastrophic</p></div><div class="flex flex-row items-center"><div class="me-14 cursor-pointer text-sm text-neutral-700 hover:text-primary-600 dark:text-neutral dark:hover:text-primary-400"><button id=appearance-switcher-0 type=button aria-label="appearance switcher"><div class="flex h-12 w-12 items-center justify-center dark:hidden" title="Switch to dark appearance"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 512 512"><path fill="currentColor" d="M32 256C32 132.2 132.3 32 255.8 32c11.36.0 29.7 1.668 40.9 3.746 9.616 1.777 11.75 14.63 3.279 19.44C245 86.5 211.2 144.6 211.2 207.8c0 109.7 99.71 193 208.3 172.3 9.561-1.805 16.28 9.324 10.11 16.95C387.9 448.6 324.8 480 255.8 480 132.1 480 32 379.6 32 256z"/></svg></span></div><div class="hidden h-12 w-12 items-center justify-center dark:flex" title="Switch to light appearance"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 512 512"><path fill="currentColor" d="M256 159.1c-53.02.0-95.1 42.98-95.1 95.1s41.2 96.9 95.1 96.9 95.1-42.98 95.1-95.1S309 159.1 256 159.1zM509.3 347l-63.2-91.9 63.15-91.01c6.332-9.125 1.104-21.74-9.826-23.72l-109-19.7-19.7-109c-1.975-10.93-14.59-16.16-23.72-9.824L256 65.89 164.1 2.736c-9.125-6.332-21.74-1.107-23.72 9.824L121.6 121.6 12.56 141.3C1.633 143.2-3.596 155.9 2.736 164.1L65.89 256 2.74 347.01c-6.332 9.125-1.105 21.74 9.824 23.72l109 19.7 19.7 109c1.975 10.93 14.59 16.16 23.72 9.824L256 446.1l91.01 63.15c9.127 6.334 21.75 1.107 23.72-9.822l19.7-109 109-19.7C510.4 368.8 515.6 356.1 509.3 347zM256 383.1c-70.69.0-127.1-57.31-127.1-127.1.0-70.69 57.31-127.1 127.1-127.1S383.1 186.2 383.1 256c0 70.7-56.4 127.1-127.1 127.1z"/></svg></span></div></button></div></div></div></footer></div></body></html>
+    "
+  />
+  
+  
+  
+  
+    <link rel="canonical" href="https://datastrophic.io/data-processing-platforms-architectures-with-spark-mesos-akka-cassandra-and-kafka/" />
+  
+  
+  
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+  
+  
+  
+  
+  
+  
+  
+  
+  <meta property="og:url" content="https://datastrophic.io/data-processing-platforms-architectures-with-spark-mesos-akka-cassandra-and-kafka/">
+  <meta property="og:site_name" content="datastrophic">
+  <meta property="og:title" content="Data processing platforms architectures with SMACK: Spark, Mesos, Akka, Cassandra and Kafka">
+  <meta property="og:description" content="This post is a follow-up of the talk given at Big Data AW meetup in Stockholm and focused on different use cases and design approaches for building scalable data processing platforms with SMACK(Spark, Mesos, Akka, Cassandra, Kafka) stack. While stack is really concise and consists of only several components it is possible to implement different system designs which list not only purely batch or stream processing, but more complex Lambda and Kappa architectures as well.">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2015-09-16T00:00:00+00:00">
+    <meta property="article:modified_time" content="2015-09-16T00:00:00+00:00">
+    <meta property="article:tag" content="Spark">
+    <meta property="article:tag" content="Mesos">
+    <meta property="article:tag" content="Akka">
+    <meta property="article:tag" content="Cassandra">
+    <meta property="article:tag" content="Kafka">
+    <meta property="article:tag" content="SMACK">
+
+  
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Data processing platforms architectures with SMACK: Spark, Mesos, Akka, Cassandra and Kafka">
+  <meta name="twitter:description" content="This post is a follow-up of the talk given at Big Data AW meetup in Stockholm and focused on different use cases and design approaches for building scalable data processing platforms with SMACK(Spark, Mesos, Akka, Cassandra, Kafka) stack. While stack is really concise and consists of only several components it is possible to implement different system designs which list not only purely batch or stream processing, but more complex Lambda and Kappa architectures as well.">
+
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "articleSection": "",
+    "name": "Data processing platforms architectures with SMACK: Spark, Mesos, Akka, Cassandra and Kafka",
+    "headline": "Data processing platforms architectures with SMACK: Spark, Mesos, Akka, Cassandra and Kafka",
+    
+    "abstract": "This post is a follow-up of the talk given at Big Data AW meetup in Stockholm and focused on different use cases and design approaches for building scalable data processing platforms with SMACK(Spark, Mesos, Akka, Cassandra, Kafka) stack. While stack is really concise and consists of only several components it is possible to implement different system designs which list not only purely batch or stream processing, but more complex Lambda and Kappa architectures as well.",
+    "inLanguage": "en",
+    "url" : "https:\/\/datastrophic.io\/data-processing-platforms-architectures-with-spark-mesos-akka-cassandra-and-kafka\/",
+    "author" : {
+      "@type": "Person",
+      "name": "Anton Kirillov"
+    },
+    "copyrightYear": "2015",
+    "dateCreated": "2015-09-16T00:00:00\u002b00:00",
+    "datePublished": "2015-09-16T00:00:00\u002b00:00",
+    
+    "dateModified": "2015-09-16T00:00:00\u002b00:00",
+    
+    "keywords": ["spark","mesos","akka","cassandra","kafka","SMACK"],
+    
+    "mainEntityOfPage": "true",
+    "wordCount": "2393"
+  }
+  </script>
+    
+    <script type="application/ld+json">
+    {
+   "@context": "https://schema.org",
+   "@type": "BreadcrumbList",
+   "itemListElement": [
+     {
+       "@type": "ListItem",
+       "item": "https://datastrophic.io/",
+       "name": "",
+       "position": 1
+     },
+     {
+       "@type": "ListItem",
+       "item": "https://datastrophic.io/posts/",
+       "name": "",
+       "position": 2
+     },
+     {
+       "@type": "ListItem",
+       "name": "Data Processing Platforms Architectures With Smack Spark, Mesos, Akka, Cassandra and Kafka",
+       "position": 3
+     }
+   ]
+ }
+  </script>
+
+  
+  
+    <meta name="author" content="Anton Kirillov" />
+  
+  
+    
+      <link href="https://www.linkedin.com/in/datastrophic/" rel="me" />
+    
+      <link href="https://github.com/datastrophic" rel="me" />
+    
+  
+  
+  
+
+
+
+
+
+
+
+  
+  
+  
+  
+  
+  
+      <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z9WG27GT0G"></script>
+      <script>
+        var doNotTrack = false;
+        if ( false ) {
+          var dnt = (navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack);
+          var doNotTrack = (dnt == "1" || dnt == "yes");
+        }
+        if (!doNotTrack) {
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-Z9WG27GT0G');
+        }
+      </script>
+
+
+  
+  
+</head>
+<body
+    class="m-auto flex h-screen max-w-7xl flex-col bg-neutral px-6 text-lg leading-7 text-neutral-900 dark:bg-neutral-800 dark:text-neutral sm:px-14 md:px-24 lg:px-32"
+  >
+    <div id="the-top" class="absolute flex self-center">
+      <a
+        class="-translate-y-8 rounded-b-lg bg-primary-200 px-3 py-1 text-sm focus:translate-y-0 dark:bg-neutral-600"
+        href="#main-content"
+        ><span class="pe-2 font-bold text-primary-600 dark:text-primary-400">&darr;</span
+        >Skip to main content</a
+      >
+    </div>
+    
+    
+      <header class="py-6 font-semibold text-neutral-900 dark:text-neutral sm:py-10 print:hidden">
+  <nav class="flex items-start justify-between sm:items-center">
+    
+    <div class="z-40 flex flex-row items-center">
+      
+  <a
+    class="decoration-primary-500 hover:underline hover:decoration-2 hover:underline-offset-2"
+    rel="me"
+    href="/"
+    >datastrophic</a
+  >
+
+    </div>
+    
+      
+      <label id="menu-button" for="menu-controller" class="block sm:hidden">
+        <input type="checkbox" id="menu-controller" class="hidden" />
+        <div class="cursor-pointer hover:text-primary-600 dark:hover:text-primary-400">
+          <span class="icon relative inline-block px-1 align-text-bottom"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentColor" d="M0 96C0 78.33 14.33 64 32 64H416C433.7 64 448 78.33 448 96C448 113.7 433.7 128 416 128H32C14.33 128 0 113.7 0 96zM0 256C0 238.3 14.33 224 32 224H416C433.7 224 448 238.3 448 256C448 273.7 433.7 288 416 288H32C14.33 288 0 273.7 0 256zM416 448H32C14.33 448 0 433.7 0 416C0 398.3 14.33 384 32 384H416C433.7 384 448 398.3 448 416C448 433.7 433.7 448 416 448z"/></svg>
+</span>
+        </div>
+        <div
+          id="menu-wrapper"
+          class="invisible fixed inset-0 z-30 m-auto h-full w-full cursor-default overflow-auto bg-neutral-100/50 opacity-0 backdrop-blur-sm transition-opacity dark:bg-neutral-900/50"
+        >
+          <ul
+            class="mx-auto flex w-full max-w-7xl list-none flex-col overflow-visible px-6 py-6 text-end sm:px-14 sm:py-10 sm:pt-10 md:px-24 lg:px-32"
+          >
+            <li class="mb-1">
+              <span class="cursor-pointer hover:text-primary-600 dark:hover:text-primary-400"
+                ><span class="icon relative inline-block px-1 align-text-bottom"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path fill="currentColor" d="M310.6 361.4c12.5 12.5 12.5 32.75 0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3L54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75 0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25l-105.4 105.4L310.6 361.4z"/></svg>
+</span></span
+              >
+            </li>
+            
+              
+                
+                <li class="group mb-1">
+                  
+                    <a
+                      href="/posts/"
+                      title=""
+                      onclick="close_menu()"
+                      
+                      ><span
+                          class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2"
+                          >archive</span
+                        >
+                      </a
+                    >
+                  
+                </li>
+              
+                
+                <li class="group mb-1">
+                  
+                    <a
+                      href="/about/"
+                      title=""
+                      onclick="close_menu()"
+                      
+                      ><span
+                          class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2"
+                          >about</span
+                        >
+                      </a
+                    >
+                  
+                </li>
+              
+              
+            
+          </ul>
+        </div>
+      </label>
+      
+      <ul class="hidden list-none flex-row text-end sm:flex">
+        
+          
+            
+            <li class="group mb-1 sm:mb-0 sm:me-7 sm:last:me-0">
+              
+                <a
+                  href="/posts/"
+                  title=""
+                  
+                  ><span
+                      class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2"
+                      >archive</span
+                    >
+                  </a
+                >
+              
+            </li>
+          
+            
+            <li class="group mb-1 sm:mb-0 sm:me-7 sm:last:me-0">
+              
+                <a
+                  href="/about/"
+                  title=""
+                  
+                  ><span
+                      class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2"
+                      >about</span
+                    >
+                  </a
+                >
+              
+            </li>
+          
+          
+
+        
+      </ul>
+    
+  </nav>
+</header>
+
+    
+    <div class="relative flex grow flex-col">
+      <main id="main-content" class="grow">
+        
+  <article>
+    <header class="max-w-prose">
+      
+      <h1 class="mb-8 mt-0 text-4xl font-extrabold text-neutral-900 dark:text-neutral">
+        Data processing platforms architectures with SMACK: Spark, Mesos, Akka, Cassandra and Kafka
+      </h1>
+      
+        <div class="mb-10 text-base text-neutral-500 dark:text-neutral-400 print:hidden">
+          
+
+
+
+
+
+  
+  
+
+
+
+  
+
+  
+  
+    
+  
+
+  
+
+  
+
+  
+    
+  
+
+  
+
+
+  <div class="flex flex-row flex-wrap items-center">
+    
+    
+      <time datetime="2015-09-16 00:00:00 &#43;0000 UTC">16 September 2015</time><span class="px-2 text-primary-500">&middot;</span><span title="Reading time">12 mins</span>
+    
+
+    
+    
+  </div>
+
+  
+  
+    <div class="my-1 flex flex-wrap text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
+      
+        
+      
+        
+          
+            <a
+              href="https://datastrophic.io/tags/spark/"
+              class="mx-1 my-1 rounded-md border border-neutral-200 px-1 py-[1px] hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:hover:border-primary-600 dark:hover:text-primary-400"
+              >Spark</a
+            >
+          
+            <a
+              href="https://datastrophic.io/tags/mesos/"
+              class="mx-1 my-1 rounded-md border border-neutral-200 px-1 py-[1px] hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:hover:border-primary-600 dark:hover:text-primary-400"
+              >Mesos</a
+            >
+          
+            <a
+              href="https://datastrophic.io/tags/akka/"
+              class="mx-1 my-1 rounded-md border border-neutral-200 px-1 py-[1px] hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:hover:border-primary-600 dark:hover:text-primary-400"
+              >Akka</a
+            >
+          
+            <a
+              href="https://datastrophic.io/tags/cassandra/"
+              class="mx-1 my-1 rounded-md border border-neutral-200 px-1 py-[1px] hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:hover:border-primary-600 dark:hover:text-primary-400"
+              >Cassandra</a
+            >
+          
+            <a
+              href="https://datastrophic.io/tags/kafka/"
+              class="mx-1 my-1 rounded-md border border-neutral-200 px-1 py-[1px] hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:hover:border-primary-600 dark:hover:text-primary-400"
+              >Kafka</a
+            >
+          
+            <a
+              href="https://datastrophic.io/tags/smack/"
+              class="mx-1 my-1 rounded-md border border-neutral-200 px-1 py-[1px] hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:hover:border-primary-600 dark:hover:text-primary-400"
+              >SMACK</a
+            >
+          
+        
+      
+    </div>
+  
+
+
+        </div>
+      
+      
+    </header>
+    <section class="prose mt-0 flex max-w-full flex-col dark:prose-invert lg:flex-row">
+      
+      <div class="min-h-0 min-w-0 max-w-prose grow">
+        <p>This post is a follow-up of the <a href="http://www.slideshare.net/akirillov/data-processing-platforms-architectures-with-spark-mesos-akka-cassandra-and-kafka" target="_blank" rel="noreferrer">talk given at Big Data AW meetup</a> in Stockholm and focused on different use cases and design approaches for building scalable data processing platforms with SMACK(Spark, Mesos, Akka, Cassandra, Kafka) stack. While stack is really concise and consists of only several components it is possible to implement different system designs which list not only purely batch or stream processing, but more complex Lambda and Kappa architectures as well. So let&rsquo;s start with a really short overview to be on the same page and continue with designs and examples coming from production projects experience.</p>
+<h2 id="recap" class="relative group">Recap <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#recap" aria-label="Anchor">#</a></span></h2><p>
+
+
+
+
+
+
+  
+  
+<figure><img src="./logos.jpeg" alt="" class="mx-auto my-0 rounded-md" />
+</figure>
+</p>
+<ul>
+<li>
+<p><a href="http://spark.apache.org/" target="_blank" rel="noreferrer">Spark</a> - fast and general engine for distributed, large-scale data processing</p>
+</li>
+<li>
+<p><a href="http://mesos.apache.org/" target="_blank" rel="noreferrer">Mesos</a> - cluster resource management system that provides efficient resource isolation and sharing across distributed applications</p>
+</li>
+<li>
+<p><a href="http://akka.io/" target="_blank" rel="noreferrer">Akka</a> - a toolkit and runtime for building highly concurrent, distributed, and resilient message-driven applications on the JVM</p>
+</li>
+<li>
+<p><a href="http://cassandra.apache.org/" target="_blank" rel="noreferrer">Cassandra</a> - distributed, a highly available database designed to handle large amounts of data across multiple datacenters</p>
+</li>
+<li>
+<p><a href="http://kafka.apache.org/" target="_blank" rel="noreferrer">Kafka</a> - a high-throughput, low-latency distributed messaging system/commit log designed for handling real-time data feeds</p>
+</li>
+</ul>
+<h2 id="storage-layer-cassandra" class="relative group">Storage layer: Cassandra <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#storage-layer-cassandra" aria-label="Anchor">#</a></span></h2><p>
+
+
+
+
+
+
+  
+  
+<figure><img src="./cassadnra-xdcr.png" alt="" class="mx-auto my-0 rounded-md" />
+</figure>
+
+Cassandra is well-known for its high availability and high-throughput characteristics and is able to handle enormous write loads and survive cluster nodes failures. In terms of the CAP theorem, Cassandra provides tunable consistency/availability for operations.</p>
+<p>What is more interesting when it comes to data processing is that Cassandra is linearly scalable(increased loads could be addressed by just adding more nodes to a cluster) and it provides cross-datacenter replication(XDCR) capabilities. Actually, XDCR provides not only replication but a set of really interesting use cases to be used for:</p>
+<ul>
+<li>geo-distributed datacenters handling data specific for the region or located closer to customers</li>
+<li>data migration across datacenters: recovery after failures or moving data to a new DC</li>
+<li>separate operational and analytics workloads</li>
+</ul>
+<p>But all these features come for their own price and with Cassandra, this price is its data model, which could be thought of just as a nested sorted map that is distributed across cluster nodes by partition key, and entries are sorted/grouped by clustering columns. Here&rsquo;s a small example:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">campaign</span><span class="p">(</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="n">id</span><span class="w"> </span><span class="n">uuid</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="k">year</span><span class="w"> </span><span class="nb">int</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="k">month</span><span class="w"> </span><span class="nb">int</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="k">day</span><span class="w"> </span><span class="nb">int</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="n">views</span><span class="w"> </span><span class="nb">bigint</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="n">clicks</span><span class="w"> </span><span class="nb">bigint</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="w"> </span><span class="p">(</span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="k">year</span><span class="p">,</span><span class="w"> </span><span class="k">month</span><span class="p">,</span><span class="w"> </span><span class="k">day</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">campaign</span><span class="p">(</span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="k">year</span><span class="p">,</span><span class="w"> </span><span class="k">month</span><span class="p">,</span><span class="w"> </span><span class="k">day</span><span class="p">,</span><span class="w"> </span><span class="n">views</span><span class="p">,</span><span class="w"> </span><span class="n">clicks</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="k">VALUES</span><span class="p">(</span><span class="mi">40</span><span class="n">b08953</span><span class="o">-</span><span class="n">a</span><span class="err">…</span><span class="p">,</span><span class="mi">2015</span><span class="p">,</span><span class="w"> </span><span class="mi">9</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="mi">1000</span><span class="p">,</span><span class="w"> </span><span class="mi">42</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="k">SELECT</span><span class="w"> </span><span class="n">views</span><span class="p">,</span><span class="w"> </span><span class="n">clicks</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">campaign</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="k">WHERE</span><span class="w"> </span><span class="n">id</span><span class="o">=</span><span class="mi">40</span><span class="n">b08953</span><span class="o">-</span><span class="n">a</span><span class="err">…</span><span class="w"> </span><span class="k">and</span><span class="w"> </span><span class="k">year</span><span class="o">=</span><span class="mi">2015</span><span class="w"> </span><span class="k">and</span><span class="w"> </span><span class="k">month</span><span class="o">&gt;</span><span class="mi">8</span><span class="p">;</span><span class="w">
+</span></span></span></code></pre></div><p>To get specific data in some range the full key must be specified and no range clauses are allowed except for the last column in the list. This constraint is introduced to limit multiple scans for different ranges which will produce random access to disks and lower down the performance. This means that the data model should be carefully designed against the read queries to limit the number of reads/scans which leads to lesser flexibility when it comes to supporting new queries. <a href="http://slides.com/antonkirillov/cassandra-data-modelling-101#/" target="_blank" rel="noreferrer">Here are C* data modeling 101</a> slides that provide several examples of how CQL tables are represented internally.</p>
+<p>But what if one has some tables that need to be joined somehow with other tables? Let&rsquo;s consider the next case: calculate total views per campaign for a given month for all campaigns.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">event</span><span class="p">(</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="n">id</span><span class="w"> </span><span class="n">uuid</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="n">ad_id</span><span class="w"> </span><span class="n">uuid</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="n">campaign</span><span class="w"> </span><span class="n">uuid</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="n">ts</span><span class="w"> </span><span class="nb">bigint</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="k">type</span><span class="w"> </span><span class="nb">text</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">(</span><span class="n">id</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="p">);</span><span class="w">
+</span></span></span></code></pre></div><p>With the given model, the only way to achieve this goal is to read all campaigns, read all events, sum the proper ones (with matched campaign id) and assign them to the campaign. And it looks really challenging to implement such a sort of application because the amount of data stored in Cassandra could be really huge and won&rsquo;t fit the memory. So the processing of such sort of data should be done in a distributed manner and Spark perfectly fits this use case.</p>
+<h2 id="processing-layer-spark" class="relative group">Processing layer: Spark <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#processing-layer-spark" aria-label="Anchor">#</a></span></h2><p>
+
+
+
+
+
+
+  
+  
+<figure><img src="./spark-basics-scheduler.png" alt="" class="mx-auto my-0 rounded-md" />
+</figure>
+
+The main abstraction Spark operates with is RDD(Resilient Distributed Dataset, a distributed collection of elements) and the workflow consists of four main phases:</p>
+<ul>
+<li>RDD operations(transformations and actions) form DAG (Direct Acyclic Graph)</li>
+<li>DAG is split into stages of tasks which are then submitted to the cluster manager</li>
+<li>stages combine tasks that don’t require shuffling/repartitioning</li>
+<li>tasks run on workers and results then return to the client</li>
+</ul>
+<p>Here&rsquo;s how one can solve the above problem with Spark and Cassandra:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-scala" data-lang="scala"><span class="line"><span class="cl"><span class="k">val</span> <span class="n">sc</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">SparkContext</span><span class="o">(</span><span class="n">conf</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">case</span> <span class="k">class</span> <span class="nc">Event</span><span class="o">(</span><span class="n">id</span><span class="k">:</span> <span class="kt">UUID</span><span class="o">,</span> <span class="n">ad_id</span><span class="k">:</span> <span class="kt">UUID</span><span class="o">,</span> <span class="n">campaign</span><span class="k">:</span> <span class="kt">UUID</span><span class="o">,</span> <span class="n">ts</span><span class="k">:</span> <span class="kt">Long</span><span class="o">,</span> <span class="n">`type`</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">sc</span><span class="o">.</span><span class="n">cassandraTable</span><span class="o">[</span><span class="kt">Event</span><span class="o">](</span><span class="s">&#34;keyspace&#34;</span><span class="o">,</span> <span class="s">&#34;event&#34;</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">  <span class="o">.</span><span class="n">filter</span><span class="o">(</span><span class="n">e</span> <span class="k">=&gt;</span> <span class="n">e</span><span class="o">.</span><span class="n">`type`</span> <span class="o">==</span> <span class="s">&#34;view&#34;</span> <span class="o">&amp;&amp;</span> <span class="n">checkMonth</span><span class="o">(</span><span class="n">e</span><span class="o">.</span><span class="n">ts</span><span class="o">))</span>
+</span></span><span class="line"><span class="cl">  <span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="n">e</span> <span class="k">=&gt;</span> <span class="o">(</span><span class="n">e</span><span class="o">.</span><span class="n">campaign</span><span class="o">,</span> <span class="mi">1</span><span class="o">))</span>
+</span></span><span class="line"><span class="cl">  <span class="o">.</span><span class="n">reduceByKey</span><span class="o">(</span><span class="k">_</span> <span class="o">+</span> <span class="k">_</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">  <span class="o">.</span><span class="n">collect</span><span class="o">()</span>
+</span></span></code></pre></div><p>Interaction with Cassandra is performed via <a href="https://github.com/datastax/spark-cassandra-connector" target="_blank" rel="noreferrer">spark-cassandra-connector</a> which makes it really easy and straightforward. There&rsquo;s one more interesting option to work with NoSQL stores - SparkSQL, which translates SQL statements into a series of RDD operations.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-scala" data-lang="scala"><span class="line"><span class="cl"><span class="k">case</span> <span class="k">class</span> <span class="nc">CampaignReport</span><span class="o">(</span><span class="n">id</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">views</span><span class="k">:</span> <span class="kt">Long</span><span class="o">,</span> <span class="n">clicks</span><span class="k">:</span> <span class="kt">Long</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">sql</span><span class="o">(</span><span class="s">&#34;&#34;&#34;SELECT campaign.id as id, campaign.views as views, 
+</span></span></span><span class="line"><span class="cl"><span class="s">   campaign.clicks as clicks, event.type as type
+</span></span></span><span class="line"><span class="cl"><span class="s">        FROM campaign
+</span></span></span><span class="line"><span class="cl"><span class="s">        JOIN event ON campaign.id = event.campaign
+</span></span></span><span class="line"><span class="cl"><span class="s">    &#34;&#34;&#34;</span><span class="o">).</span><span class="n">rdd</span>
+</span></span><span class="line"><span class="cl"><span class="o">.</span><span class="n">groupBy</span><span class="o">(</span><span class="n">row</span> <span class="k">=&gt;</span> <span class="n">row</span><span class="o">.</span><span class="n">getAs</span><span class="o">[</span><span class="kt">String</span><span class="o">](</span><span class="s">&#34;id&#34;</span><span class="o">))</span>
+</span></span><span class="line"><span class="cl"><span class="o">.</span><span class="n">map</span><span class="o">{</span> <span class="k">case</span> <span class="o">(</span><span class="n">id</span><span class="o">,</span> <span class="n">rows</span><span class="o">)</span> <span class="k">=&gt;</span>
+</span></span><span class="line"><span class="cl">   <span class="k">val</span> <span class="n">views</span> <span class="k">=</span> <span class="n">rows</span><span class="o">.</span><span class="n">head</span><span class="o">.</span><span class="n">getAs</span><span class="o">[</span><span class="kt">Long</span><span class="o">](</span><span class="s">&#34;views&#34;</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">   <span class="k">val</span> <span class="n">clicks</span> <span class="k">=</span> <span class="n">rows</span><span class="o">.</span><span class="n">head</span><span class="o">.</span><span class="n">getAs</span><span class="o">[</span><span class="kt">Long</span><span class="o">](</span><span class="s">&#34;clicks&#34;</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">   <span class="k">val</span> <span class="n">res</span> <span class="k">=</span> <span class="n">rows</span><span class="o">.</span><span class="n">groupBy</span><span class="o">(</span><span class="n">row</span> <span class="k">=&gt;</span> <span class="n">row</span><span class="o">.</span><span class="n">getAs</span><span class="o">[</span><span class="kt">String</span><span class="o">](</span><span class="s">&#34;type&#34;</span><span class="o">)).</span><span class="n">mapValues</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">size</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">   <span class="nc">CampaignReport</span><span class="o">(</span><span class="n">id</span><span class="o">,</span> <span class="n">views</span> <span class="k">=</span> <span class="n">views</span> <span class="o">+</span> <span class="n">res</span><span class="o">(</span><span class="s">&#34;view&#34;</span><span class="o">),</span> <span class="n">clicks</span> <span class="k">=</span> <span class="n">clicks</span> <span class="o">+</span> <span class="n">res</span><span class="o">(</span><span class="s">&#34;click&#34;</span><span class="o">))</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">}.</span><span class="n">saveToCassandra</span><span class="o">(</span><span class="err">“</span><span class="n">keyspace</span><span class="err">”</span><span class="o">,</span> <span class="err">“</span><span class="n">campaign_report</span><span class="err">”</span><span class="o">)</span>
+</span></span></code></pre></div><p>With several lines of code, it&rsquo;s possible to implement naive Lamba design which of course could be much more sophisticated, but this example shows just how easy this can be achieved.</p>
+<h2 id="almost-mapreduce-bringing-processing-closer-to-data" class="relative group">Almost MapReduce: bringing processing closer to data <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#almost-mapreduce-bringing-processing-closer-to-data" aria-label="Anchor">#</a></span></h2><p>Spark-Cassandra connector is data locality aware and reads the data from the closest node in a cluster thus minimizing the amount of data transferred around the network. To fully facilitate Spark-C* connector data locality awareness, Spark workers should be collocated with Cassandra nodes.</p>
+<p>
+
+
+
+
+
+
+  
+  
+<figure><img src="./cassandra-spark.png" alt="" class="mx-auto my-0 rounded-md" />
+</figure>
+
+Alongside Spark collocation with Cassandra, it makes sense to separate your operational (or write-heavy) cluster from one for analytics:</p>
+<ul>
+<li>clusters can be scaled independently</li>
+<li>data is replicated by Cassandra, no extra work is needed</li>
+<li>analytics cluster has different Read/Write load patterns</li>
+<li>analytics cluster could contain additional data (e.g. dictionaries) and processing results</li>
+<li>Spark resource impact is limited to only one cluster</li>
+</ul>
+<p>Let&rsquo;s look at Spark applications deployment options one more time:
+
+
+
+
+
+
+
+  
+  
+<figure><img src="./spark-cluster-managers.png" alt="" class="mx-auto my-0 rounded-md" />
+</figure>
+
+There are three main options available for cluster resource managers:</p>
+<ul>
+<li>Spark Standalone - Spark master and Workers are installed and executed as standalone applications (which obviously introduces some ops overhead and support only static resource allocation per worker)</li>
+<li>YARN is really nice if you already have a Hadoop ecosystem</li>
+<li>Mesos which from the beginning was designed for dynamic allocation of cluster resources and not only for running Hadoop applications but for handling heterogeneous workloads</li>
+</ul>
+<h2 id="mesos-architecture" class="relative group">Mesos architecture <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#mesos-architecture" aria-label="Anchor">#</a></span></h2><p>
+
+
+
+
+
+
+  
+  
+<figure><img src="./mesos-architecture.png" alt="" class="mx-auto my-0 rounded-md" />
+</figure>
+
+Mesos cluster consists of Master nodes that are responsible for resource offers and scheduling and Slave nodes which do the actual heavy lifting of tasks execution. In HA mode with multiple Masters ZooKeeper is used for leader election and service discovery. Applications executed on Mesos are called Frameworks and utilize API to handle resource offers and submit tasks to Mesos. Generally, the process of task execution consists of these steps:</p>
+<ul>
+<li>Slaves publish available resources to Master</li>
+<li>Master sends resource offers to Frameworks</li>
+<li>Scheduler replies with tasks and resources needed per task</li>
+<li>Master sends tasks to slaves</li>
+</ul>
+<h2 id="bringing-spark-mesos-and-cassandra-together" class="relative group">Bringing Spark, Mesos, and Cassandra together <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#bringing-spark-mesos-and-cassandra-together" aria-label="Anchor">#</a></span></h2><p>As said before Spark workers should be collocated with Cassandra nodes to enforce data locality awareness thus lowering the amount of network traffic and Cassandra cluster load. Here&rsquo;s one of the possible deployment scenarios on how to achieve this with Mesos.
+
+
+
+
+
+
+
+  
+  
+<figure><img src="./spark-mesos-cassandra.png" alt="" class="mx-auto my-0 rounded-md" />
+</figure>
+</p>
+<ul>
+<li>Mesos Masters and ZooKeepers collocated</li>
+<li>Mesos Slaves and Cassandra nodes collocated to enforce better data locality for Spark</li>
+<li>Spark binaries deployed to all worker nodes and <code>spark-env.sh</code> is configured with proper master endpoints and executor jar location</li>
+<li>Spark Executor JAR uploaded to S3/HDFS</li>
+</ul>
+<p>With provided setup Spark job can be submitted to the cluster with simple <code>spark-submit</code> invocation from any worker nodes having Spark binaries installed and assembly jar containing actual job logic uploaded</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">spark-submit --class io.datastrophic.SparkJob /etc/jobs/spark-jobs.jar
+</span></span></code></pre></div><p>There exist options to run Dockerized Spark so that there&rsquo;s no need to distribute binaries across every single cluster node.</p>
+<h3 id="scheduled-long-running-tasks" class="relative group">Scheduled long-running tasks <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#scheduled-long-running-tasks" aria-label="Anchor">#</a></span></h3><p>Every data processing system sooner or later faces the necessity of running two types of jobs: scheduled/periodic jobs like periodic batch aggregations and long-running ones which are the case for stream processing. The main requirement for both of these types is fault tolerance -  jobs must continue running even in case of cluster nodes failures. Mesos ecosystem comes with two great frameworks supporting each of these types of jobs.</p>
+<p><strong>Marathon</strong> is a framework for fault-tolerant execution of long-running tasks supporting HA mode with ZooKeeper, able to run Docker, and having a nice REST API. Here&rsquo;s an example of a simple job configuration running <code>spark-submit</code> as a shell command:
+
+
+
+
+
+
+
+  
+  
+<figure><img src="./marathon.jpeg" alt="" class="mx-auto my-0 rounded-md" />
+</figure>
+</p>
+<p><strong>Chronos</strong> has the same characteristics as Marathon but is designed for running scheduled jobs and in general, it is distributed HA cron supporting graphs of jobs. Here&rsquo;s an example of an S3 compaction job configuration which is implemented as a simple bash script:
+
+
+
+
+
+
+
+  
+  
+<figure><img src="./chronos.jpeg" alt="" class="mx-auto my-0 rounded-md" />
+</figure>
+</p>
+<p>There are plenty of frameworks already available or under active development which targeted to integrate widely used systems with Mesos resource management capabilities. Just to name some of them:</p>
+<ul>
+<li>Hadoop</li>
+<li>Cassandra</li>
+<li>Kafka</li>
+<li>Myriad: YARN on Mesos</li>
+<li>Storm</li>
+<li>Samza</li>
+</ul>
+<h2 id="ingesting-the-data" class="relative group">Ingesting the data <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#ingesting-the-data" aria-label="Anchor">#</a></span></h2><p>So far so good: the storage layer is designed, resource management is set up and jobs are configured. The only thing which is not there yet is the data to process.
+
+
+
+
+
+
+
+  
+  
+<figure><img src="./architecture-ingestion.png" alt="" class="mx-auto my-0 rounded-md" />
+</figure>
+
+Assuming that incoming data will arrive at high rates the endpoints which will receive it should meet next requirements:</p>
+<ul>
+<li>provide high throughput/low latency</li>
+<li>being resilient</li>
+<li>allow easy scalability</li>
+<li>support back pressure</li>
+</ul>
+<p>Backpressure is not a must, but it would be nice to have this as an option to handle load spikes.</p>
+<p>Akka perfectly fits the requirements and basically, it was designed to provide this feature set. So what&rsquo;s is Akka:</p>
+<ul>
+<li>actor model implementation for JVM</li>
+<li>message-based and asynchronous</li>
+<li>enforces no shared mutable state</li>
+<li>easy scalable from one process to a cluster of machines</li>
+<li>actors form hierarchies with parental supervision</li>
+<li>not only concurrency framework: <code>akka-http</code>, <code>akka-streams</code>, and <code>akka-persistence</code></li>
+</ul>
+<p>Here&rsquo;s a simplified example of three actors which handle JSON HttpRequest, parse it into domain model case class and save it to Cassandra:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-scala" data-lang="scala"><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">HttpActor</span> <span class="k">extends</span> <span class="nc">Actor</span> <span class="o">{</span>
+</span></span><span class="line"><span class="cl">  <span class="k">def</span> <span class="n">receive</span> <span class="k">=</span> <span class="o">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">case</span> <span class="n">req</span><span class="k">:</span> <span class="kt">HttpRequest</span> <span class="o">=&gt;</span> 
+</span></span><span class="line"><span class="cl">      <span class="n">system</span><span class="o">.</span><span class="n">actorOf</span><span class="o">(</span><span class="nc">Props</span><span class="o">[</span><span class="kt">JsonParserActor</span><span class="o">])</span> <span class="o">!</span> <span class="n">req</span><span class="o">.</span><span class="n">body</span>
+</span></span><span class="line"><span class="cl">    <span class="k">case</span> <span class="n">e</span><span class="k">:</span> <span class="kt">Event</span> <span class="o">=&gt;</span>
+</span></span><span class="line"><span class="cl">      <span class="n">system</span><span class="o">.</span><span class="n">actorOf</span><span class="o">(</span><span class="nc">Props</span><span class="o">[</span><span class="kt">CassandraWriterActor</span><span class="o">])</span> <span class="o">!</span> <span class="n">e</span>
+</span></span><span class="line"><span class="cl">  <span class="o">}</span>
+</span></span><span class="line"><span class="cl"><span class="o">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">JsonParserActor</span> <span class="k">extends</span> <span class="nc">Actor</span> <span class="o">{</span>
+</span></span><span class="line"><span class="cl">  <span class="k">def</span> <span class="n">receive</span> <span class="k">=</span> <span class="o">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">case</span> <span class="n">s</span><span class="k">:</span> <span class="kt">String</span> <span class="o">=&gt;</span> <span class="nc">Try</span><span class="o">(</span><span class="nc">Json</span><span class="o">.</span><span class="n">parse</span><span class="o">(</span><span class="n">s</span><span class="o">).</span><span class="n">as</span><span class="o">[</span><span class="kt">Event</span><span class="o">])</span> <span class="k">match</span> <span class="o">{</span>
+</span></span><span class="line"><span class="cl">      <span class="k">case</span> <span class="nc">Failure</span><span class="o">(</span><span class="n">ex</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="c1">//error handling code
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>      <span class="k">case</span> <span class="nc">Success</span><span class="o">(</span><span class="n">event</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">sender</span> <span class="o">!</span> <span class="n">event</span>
+</span></span><span class="line"><span class="cl">    <span class="o">}</span>
+</span></span><span class="line"><span class="cl">  <span class="o">}</span>
+</span></span><span class="line"><span class="cl"><span class="o">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">CassandraWriterActor</span> <span class="k">extends</span> <span class="nc">Actor</span> <span class="k">with</span> <span class="nc">ActorLogging</span> <span class="o">{</span>
+</span></span><span class="line"><span class="cl">  <span class="c1">//for demo purposes, session initialized here
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="k">val</span> <span class="n">session</span> <span class="k">=</span> <span class="nc">Cluster</span><span class="o">.</span><span class="n">builder</span><span class="o">()</span>
+</span></span><span class="line"><span class="cl">    <span class="o">.</span><span class="n">addContactPoint</span><span class="o">(</span><span class="s">&#34;cassandra.host&#34;</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">    <span class="o">.</span><span class="n">build</span><span class="o">()</span>
+</span></span><span class="line"><span class="cl">    <span class="o">.</span><span class="n">connect</span><span class="o">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">  <span class="k">override</span> <span class="k">def</span> <span class="n">receive</span><span class="k">:</span> <span class="kt">Receive</span> <span class="o">=</span> <span class="o">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">case</span> <span class="n">event</span><span class="k">:</span> <span class="kt">Event</span> <span class="o">=&gt;</span>
+</span></span><span class="line"><span class="cl">      <span class="k">val</span> <span class="n">statement</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">SimpleStatement</span><span class="o">(</span><span class="n">event</span><span class="o">.</span><span class="n">createQuery</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">        <span class="o">.</span><span class="n">setConsistencyLevel</span><span class="o">(</span><span class="nc">ConsistencyLevel</span><span class="o">.</span><span class="nc">QUORUM</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">      <span class="nc">Try</span><span class="o">(</span><span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="o">(</span><span class="n">statement</span><span class="o">))</span> <span class="k">match</span> <span class="o">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">case</span> <span class="nc">Failure</span><span class="o">(</span><span class="n">ex</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="c1">//error handling code
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="k">case</span> <span class="nc">Success</span> <span class="k">=&gt;</span> <span class="n">sender</span> <span class="o">!</span> <span class="nc">WriteSuccessfull</span>
+</span></span><span class="line"><span class="cl">      <span class="o">}</span>
+</span></span><span class="line"><span class="cl">  <span class="o">}</span>
+</span></span><span class="line"><span class="cl"><span class="o">}</span>
+</span></span></code></pre></div><p>It looks like only several lines of code are needed to make everything work, but while writing raw data (events) to Cassandra with Akka is easy there is a number of gotchas:</p>
+<ul>
+<li>Cassandra is still designed for fast serving but not batch processing, so pre-aggregation of incoming data is needed</li>
+<li>computation time of aggregations/rollups will grow with the amount of data</li>
+<li>actors are not suitable for performing aggregation due to the stateless design model</li>
+<li>micro-batches could partially solve the problem</li>
+<li>some sort of reliable buffer for raw data is still needed</li>
+</ul>
+<h2 id="kafka-as-a-buffer-for-incoming-data" class="relative group">Kafka as a buffer for incoming data <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#kafka-as-a-buffer-for-incoming-data" aria-label="Anchor">#</a></span></h2><p>
+
+
+
+
+
+
+  
+  
+<figure><img src="./architecture-ingestion-kafka.png" alt="" class="mx-auto my-0 rounded-md" />
+</figure>
+
+For keeping incoming data with some retention and its further pre-aggregation/processing some sort of distributed commit log could be used. In this case, consumers will read data in batches, process it, and store it into Cassandra in form of pre-aggregates. Here&rsquo;s an example of publishing JSON data coming over HTTP to Kafka with <code>akka-http</code>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-scala" data-lang="scala"><span class="line"><span class="cl"><span class="k">val</span> <span class="n">config</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">ProducerConfig</span><span class="o">(</span><span class="nc">KafkaConfig</span><span class="o">())</span>
+</span></span><span class="line"><span class="cl"><span class="k">lazy</span> <span class="k">val</span> <span class="n">producer</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">KafkaProducer</span><span class="o">[</span><span class="kt">A</span>, <span class="kt">A</span><span class="o">](</span><span class="n">config</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl"><span class="k">val</span> <span class="n">topic</span> <span class="k">=</span> <span class="err">“</span><span class="n">raw_events</span><span class="err">”</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">val</span> <span class="n">routes</span><span class="k">:</span> <span class="kt">Route</span> <span class="o">=</span> <span class="o">{</span>
+</span></span><span class="line"><span class="cl">  <span class="n">post</span><span class="o">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">decodeRequest</span><span class="o">{</span>
+</span></span><span class="line"><span class="cl">      <span class="n">entity</span><span class="o">(</span><span class="n">as</span><span class="o">[</span><span class="kt">String</span><span class="o">]){</span> <span class="n">str</span> <span class="k">=&gt;</span>
+</span></span><span class="line"><span class="cl">        <span class="nc">JsonParser</span><span class="o">.</span><span class="n">parse</span><span class="o">(</span><span class="n">str</span><span class="o">).</span><span class="n">validate</span><span class="o">[</span><span class="kt">Event</span><span class="o">]</span> <span class="k">match</span> <span class="o">{</span>
+</span></span><span class="line"><span class="cl">          <span class="k">case</span> <span class="n">s</span><span class="k">:</span> <span class="kt">JsSuccess</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=&gt;</span> <span class="n">producer</span><span class="o">.</span><span class="n">send</span><span class="o">(</span><span class="k">new</span> <span class="nc">KeyedMessage</span><span class="o">(</span><span class="n">topic</span><span class="o">,</span> <span class="n">str</span><span class="o">))</span>
+</span></span><span class="line"><span class="cl">          <span class="k">case</span> <span class="n">e</span><span class="k">:</span> <span class="kt">JsError</span> <span class="o">=&gt;</span> <span class="nc">BadRequest</span> <span class="o">-&gt;</span> <span class="nc">JsError</span><span class="o">.</span><span class="n">toFlatJson</span><span class="o">(</span><span class="n">e</span><span class="o">).</span><span class="n">toString</span><span class="o">()</span>
+</span></span><span class="line"><span class="cl">        <span class="o">}</span>
+</span></span><span class="line"><span class="cl">      <span class="o">}</span>
+</span></span><span class="line"><span class="cl">    <span class="o">}</span>
+</span></span><span class="line"><span class="cl">  <span class="o">}</span>    
+</span></span><span class="line"><span class="cl"><span class="o">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">object</span> <span class="nc">AkkaHttpMicroservice</span> <span class="k">extends</span> <span class="nc">App</span> <span class="k">with</span> <span class="nc">Service</span> <span class="o">{</span>
+</span></span><span class="line"><span class="cl">  <span class="nc">Http</span><span class="o">().</span><span class="n">bindAndHandle</span><span class="o">(</span><span class="n">routes</span><span class="o">,</span> <span class="n">config</span><span class="o">.</span><span class="n">getString</span><span class="o">(</span><span class="s">&#34;http.interface&#34;</span><span class="o">),</span> <span class="n">config</span><span class="o">.</span><span class="n">getInt</span><span class="o">(</span><span class="s">&#34;http.port&#34;</span><span class="o">))</span>
+</span></span><span class="line"><span class="cl"><span class="o">}</span>
+</span></span></code></pre></div><h2 id="consuming-the-data-spark-streaming" class="relative group">Consuming the data: Spark Streaming <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#consuming-the-data-spark-streaming" aria-label="Anchor">#</a></span></h2><p>While Akka is still could be used for consuming stream data from Kafka, having Spark in your ecosystem brings Spark Streaming as an option to solve the problem:</p>
+<ul>
+<li>it supports a variety of data sources</li>
+<li>provides at-least-once semantics</li>
+<li>exactly-once semantics available with Kafka Direct and idempotent storage
+
+
+
+
+
+
+
+  
+  
+<figure><img src="./spark-streaming.png" alt="" class="mx-auto my-0 rounded-md" />
+</figure>
+</li>
+</ul>
+<p>Consuming event stream from Kinesis with Spark Streaming example:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-scala" data-lang="scala"><span class="line"><span class="cl"><span class="k">val</span> <span class="n">ssc</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">StreamingContext</span><span class="o">(</span><span class="n">conf</span><span class="o">,</span> <span class="nc">Seconds</span><span class="o">(</span><span class="mi">10</span><span class="o">))</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">val</span> <span class="n">kinesisStream</span> <span class="k">=</span> <span class="nc">KinesisUtils</span><span class="o">.</span><span class="n">createStream</span><span class="o">(</span><span class="n">ssc</span><span class="o">,</span><span class="n">appName</span><span class="o">,</span><span class="n">streamName</span><span class="o">,</span>
+</span></span><span class="line"><span class="cl">   <span class="n">endpointURL</span><span class="o">,</span><span class="n">regionName</span><span class="o">,</span> <span class="nc">InitialPositionInStream</span><span class="o">.</span><span class="nc">LATEST</span><span class="o">,</span>     
+</span></span><span class="line"><span class="cl">   <span class="nc">Duration</span><span class="o">(</span><span class="n">checkpointInterval</span><span class="o">),</span> <span class="nc">StorageLevel</span><span class="o">.</span><span class="nc">MEMORY_ONLY</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl"><span class="o">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">//transforming given stream to Event and saving to C*
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">kinesisStream</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="nc">JsonUtils</span><span class="o">.</span><span class="n">byteArrayToEvent</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl"><span class="o">.</span><span class="n">saveToCassandra</span><span class="o">(</span><span class="n">keyspace</span><span class="o">,</span> <span class="n">table</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">ssc</span><span class="o">.</span><span class="n">start</span><span class="o">()</span>
+</span></span><span class="line"><span class="cl"><span class="n">ssc</span><span class="o">.</span><span class="n">awaitTermination</span><span class="o">()</span>
+</span></span></code></pre></div><h2 id="designing-for-failure-backups-and-patching" class="relative group">Designing for Failure: Backups and Patching <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#designing-for-failure-backups-and-patching" aria-label="Anchor">#</a></span></h2><p>Usually, this is the most boring part of any system but it&rsquo;s really important when there exists any possibility that the data which came into the system could be invalid or when all the analytics data center crushes.
+
+
+
+
+
+
+
+  
+  
+<figure><img src="./architecture-ingestion-kafka-spark.png" alt="" class="mx-auto my-0 rounded-md" />
+</figure>
+</p>
+<p>So why not store the data in Kafka/Kinesis? For the moment of writing Kinesis has only one day of retention and without backups, in case of a failure, all processing results could be lost. While Kafka supports much larger retention periods, the cost of hardware ownership should be considered because for example, S3 storage is way cheaper than multiple instances running Kafka as well as S3 SLA are really good.</p>
+<p>Apart from having backups the restoring/patching strategies should be designed upfront and tested so that any problems with data could be quickly fixed. Programmer&rsquo;s mistake in aggregation job or duplicate data could break the accuracy of the computation results so fixing the error shouldn&rsquo;t be a big problem. One thing to make all these operations easier is to enforce idempotency in the data model so that multiple repetitions of the same operations produce the same results(e.g. an SQL update is an idempotent operation while the counter increment is not).</p>
+<p>Here is an example of a Spark job which reads S3 backup and loads it into Cassandra:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-scala" data-lang="scala"><span class="line"><span class="cl"><span class="k">val</span> <span class="n">sc</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">SparkContext</span><span class="o">(</span><span class="n">conf</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">sc</span><span class="o">.</span><span class="n">textFile</span><span class="o">(</span><span class="s">s&#34;s3n://bucket/2015/*/*.gz&#34;</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">  <span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="n">s</span> <span class="k">=&gt;</span> <span class="nc">Try</span><span class="o">(</span><span class="nc">JsonUtils</span><span class="o">.</span><span class="n">stringToEvent</span><span class="o">(</span><span class="n">s</span><span class="o">)))</span>
+</span></span><span class="line"><span class="cl">  <span class="o">.</span><span class="n">filter</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">isSuccess</span><span class="o">).</span><span class="n">map</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">get</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">  <span class="o">.</span><span class="n">saveToCassandra</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="n">keyspace</span><span class="o">,</span> <span class="n">config</span><span class="o">.</span><span class="n">table</span><span class="o">)</span>
+</span></span></code></pre></div><h2 id="the-big-picture" class="relative group">The Big picture <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#the-big-picture" aria-label="Anchor">#</a></span></h2><p>The high-level design of data platform built with SMACK
+
+
+
+
+
+
+
+  
+  
+<figure><img src="./architecture-big-picture.png" alt="" class="mx-auto my-0 rounded-md" />
+</figure>
+</p>
+<p>So what does the SMACK stack provide:</p>
+<ul>
+<li>a concise toolbox for a wide variety of data processing scenarios</li>
+<li>battle-tested and widely used software with large communities</li>
+<li>easy scalability and replication of data while preserving low latencies</li>
+<li>unified cluster management for heterogeneous loads</li>
+<li>single platform for any kind of applications</li>
+<li>implementation platform for different architecture designs (batch, streaming, Lambda, Kappa)</li>
+<li>fast time-to-market (e.g. for MVP verification)</li>
+</ul>
+
+      </div>
+    </section>
+    <footer class="max-w-prose pt-8 print:hidden">
+      
+  <div class="flex">
+    
+    
+    
+      
+      
+        
+        
+
+
+
+
+
+
+
+
+  
+    <picture
+      class="!mb-0 !mt-0 me-4 w-24 h-auto rounded-full"
+      
+    >
+      
+      
+      
+      
+      <img
+        width="400"
+        height="400"
+        class="!mb-0 !mt-0 me-4 w-24 h-auto rounded-full"
+        alt="Anton Kirillov"
+        loading="lazy" decoding="async"
+        
+          src="https://datastrophic.io/img/author.jpg"
+        
+      />
+    </picture>
+  
+
+
+      
+    
+    <div class="place-self-center">
+      
+        <div class="text-[0.6rem] uppercase leading-3 text-neutral-500 dark:text-neutral-400">
+          Author
+        </div>
+        <div class="font-semibold leading-6 text-neutral-800 dark:text-neutral-300">
+          Anton Kirillov
+        </div>
+      
+      
+        <div class="text-sm text-neutral-700 dark:text-neutral-400">Technical Leader. Compute and AI Infrastructure</div>
+      
+      <div class="text-2xl sm:text-lg">
+  <div class="flex flex-wrap text-neutral-400 dark:text-neutral-500">
+    
+      
+        <a
+          class="px-1 transition-transform hover:scale-125 hover:text-primary-700 dark:hover:text-primary-400"
+          style="will-change:transform;"
+          href="https://www.linkedin.com/in/datastrophic/"
+          target="_blank"
+          aria-label="Linkedin"
+          rel="me noopener noreferrer"
+          ><span class="icon relative inline-block px-1 align-text-bottom"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentColor" d="M416 32H31.9C14.3 32 0 46.5 0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6 0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3zM135.4 416H69V202.2h66.5V416zm-33.2-243c-21.3 0-38.5-17.3-38.5-38.5S80.9 96 102.2 96c21.2 0 38.5 17.3 38.5 38.5 0 21.3-17.2 38.5-38.5 38.5zm282.1 243h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6 0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2 0 79.7 44.3 79.7 101.9V416z"/></svg>
+</span></a
+        >
+      
+    
+      
+        <a
+          class="px-1 transition-transform hover:scale-125 hover:text-primary-700 dark:hover:text-primary-400"
+          style="will-change:transform;"
+          href="https://github.com/datastrophic"
+          target="_blank"
+          aria-label="Github"
+          rel="me noopener noreferrer"
+          ><span class="icon relative inline-block px-1 align-text-bottom"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path fill="currentColor" d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+</span></a
+        >
+      
+    
+  </div>
+
+</div>
+    </div>
+  </div>
+
+
+      
+
+      
+  
+    
+    
+    
+    <div class="pt-8">
+      <hr class="border-dotted border-neutral-300 dark:border-neutral-600" />
+      <div class="flex justify-between pt-3">
+        <span>
+          
+            <a class="group flex" href="https://datastrophic.io/evaluating-cassandra-2-1-counters-consistency/">
+              <span
+                class="me-2 text-neutral-700 transition-transform group-hover:-translate-x-[2px] group-hover:text-primary-600 dark:text-neutral dark:group-hover:text-primary-400"
+                ><span class="ltr:inline rtl:hidden">&larr;</span
+                ><span class="ltr:hidden rtl:inline">&rarr;</span></span
+              >
+              <span class="flex flex-col">
+                <span
+                  class="mt-[0.1rem] leading-6 group-hover:underline group-hover:decoration-primary-500"
+                  >Cassandra 2.1 Counters: Testing Consistency During Node Failures</span
+                >
+                <span class="mt-[0.1rem] text-xs text-neutral-500 dark:text-neutral-400">
+                  
+                    <time datetime="2015-09-03 00:00:00 &#43;0000 UTC">3 September 2015</time>
+                  
+                </span>
+              </span>
+            </a>
+          
+        </span>
+        <span>
+          
+            <a class="group flex text-right" href="https://datastrophic.io/core-concepts-architecture-and-internals-of-apache-spark/">
+              <span class="flex flex-col">
+                <span
+                  class="mt-[0.1rem] leading-6 group-hover:underline group-hover:decoration-primary-500"
+                  >Apache Spark: core concepts, architecture and internals</span
+                >
+                <span class="mt-[0.1rem] text-xs text-neutral-500 dark:text-neutral-400">
+                  
+                    <time datetime="2016-03-03 00:00:00 &#43;0000 UTC">3 March 2016</time>
+                  
+                </span>
+              </span>
+              <span
+                class="ms-2 text-neutral-700 transition-transform group-hover:-translate-x-[-2px] group-hover:text-primary-600 dark:text-neutral dark:group-hover:text-primary-400"
+                ><span class="ltr:inline rtl:hidden">&rarr;</span
+                ><span class="ltr:hidden rtl:inline">&larr;</span></span
+              >
+            </a>
+          
+        </span>
+      </div>
+    </div>
+  
+
+
+      
+    </footer>
+  </article>
+
+      </main>
+      
+        <div
+          class="pointer-events-none absolute bottom-0 end-0 top-[100vh] w-12"
+          id="to-top"
+          hidden="true"
+        >
+          <a
+            href="#the-top"
+            class="pointer-events-auto sticky top-[calc(100vh-5.5rem)] flex h-12 w-12 items-center justify-center rounded-full bg-neutral/50 text-xl text-neutral-700 backdrop-blur hover:text-primary-600 dark:bg-neutral-800/50 dark:text-neutral dark:hover:text-primary-400"
+            aria-label="Scroll to top"
+            title="Scroll to top"
+          >
+            &uarr;
+          </a>
+        </div>
+      <footer class="py-10 print:hidden">
+  
+  
+  <div class="flex items-center justify-between">
+    <div>
+      
+      
+        <p class="text-sm text-neutral-500 dark:text-neutral-400">
+            © 2025 datastrophic
+        </p>
+      
+      
+      
+    </div>
+    <div class="flex flex-row items-center">
+      
+      
+      
+      
+        <div
+          class="me-14 cursor-pointer text-sm text-neutral-700 hover:text-primary-600 dark:text-neutral dark:hover:text-primary-400"
+        >
+          <button id="appearance-switcher-0" type="button" aria-label="appearance switcher">
+            <div
+              class="flex h-12 w-12 items-center justify-center dark:hidden"
+              title="Switch to dark appearance"
+            >
+              <span class="icon relative inline-block px-1 align-text-bottom"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M32 256c0-123.8 100.3-224 223.8-224c11.36 0 29.7 1.668 40.9 3.746c9.616 1.777 11.75 14.63 3.279 19.44C245 86.5 211.2 144.6 211.2 207.8c0 109.7 99.71 193 208.3 172.3c9.561-1.805 16.28 9.324 10.11 16.95C387.9 448.6 324.8 480 255.8 480C132.1 480 32 379.6 32 256z"/></svg>
+</span>
+            </div>
+            <div
+              class="hidden h-12 w-12 items-center justify-center dark:flex"
+              title="Switch to light appearance"
+            >
+              <span class="icon relative inline-block px-1 align-text-bottom"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M256 159.1c-53.02 0-95.1 42.98-95.1 95.1S202.1 351.1 256 351.1s95.1-42.98 95.1-95.1S309 159.1 256 159.1zM509.3 347L446.1 255.1l63.15-91.01c6.332-9.125 1.104-21.74-9.826-23.72l-109-19.7l-19.7-109c-1.975-10.93-14.59-16.16-23.72-9.824L256 65.89L164.1 2.736c-9.125-6.332-21.74-1.107-23.72 9.824L121.6 121.6L12.56 141.3C1.633 143.2-3.596 155.9 2.736 164.1L65.89 256l-63.15 91.01c-6.332 9.125-1.105 21.74 9.824 23.72l109 19.7l19.7 109c1.975 10.93 14.59 16.16 23.72 9.824L256 446.1l91.01 63.15c9.127 6.334 21.75 1.107 23.72-9.822l19.7-109l109-19.7C510.4 368.8 515.6 356.1 509.3 347zM256 383.1c-70.69 0-127.1-57.31-127.1-127.1c0-70.69 57.31-127.1 127.1-127.1s127.1 57.3 127.1 127.1C383.1 326.7 326.7 383.1 256 383.1z"/></svg>
+</span>
+            </div>
+          </button>
+        </div>
+      
+    </div>
+  </div>
+  
+  
+</footer>
+
+    </div>
+  </body>
+</html>

@@ -1,36 +1,888 @@
-<!doctype html><html lang=en dir=ltr class=scroll-smooth data-default-appearance=light data-auto-appearance=true><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=theme-color content="#FFFFFF"><title>Spark JobServer: from Spark Standalone to Mesos, Marathon and Docker &#183; datastrophic</title><meta name=title content="Spark JobServer: from Spark Standalone to Mesos, Marathon and Docker &#183; datastrophic"><script type=text/javascript src=https://datastrophic.io/js/appearance.min.8a082f81b27f3cb2ee528df0b0bdc39787034cf2cc34d4669fbc9977c929023c.js integrity="sha256-iggvgbJ/PLLuUo3wsL3Dl4cDTPLMNNRmn7yZd8kpAjw="></script><link type=text/css rel=stylesheet href=https://datastrophic.io/css/main.bundle.min.8ddd6ca5d23ba630c6633e1e51f0ac292850c4d2af977565a9c52e2a3179e5c9.css integrity="sha256-jd1spdI7pjDGYz4eUfCsKShQxNKvl3VlqcUuKjF55ck="><script defer type=text/javascript id=script-bundle src=https://datastrophic.io/js/main.bundle.min.d4b727caf411cb5c3b421d0d427ed1e3daeafe0d04840327efad4978430edb8c.js integrity="sha256-1LcnyvQRy1w7Qh0NQn7R49rq/g0EhAMn761JeEMO24w=" data-copy=Copy data-copied=Copied></script><meta name=description content="
+
+
+
+
+
+
+
+<!doctype html>
+<html
+  lang="en"
+  dir="ltr"
+  class="scroll-smooth"
+  data-default-appearance="light"
+  data-auto-appearance="true"
+><head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#FFFFFF" />
+  
+  <title>Spark JobServer: from Spark Standalone to Mesos, Marathon and Docker &middot; datastrophic</title>
+    <meta name="title" content="Spark JobServer: from Spark Standalone to Mesos, Marathon and Docker &middot; datastrophic" />
+  
+  
+  
+  
+  
+  <script
+    type="text/javascript"
+    src="https://datastrophic.io/js/appearance.min.8a082f81b27f3cb2ee528df0b0bdc39787034cf2cc34d4669fbc9977c929023c.js"
+    integrity="sha256-iggvgbJ/PLLuUo3wsL3Dl4cDTPLMNNRmn7yZd8kpAjw="
+  ></script>
+  
+  
+  
+  
+  
+  
+  
+    
+  
+  
+  <link
+    type="text/css"
+    rel="stylesheet"
+    href="https://datastrophic.io/css/main.bundle.min.8ddd6ca5d23ba630c6633e1e51f0ac292850c4d2af977565a9c52e2a3179e5c9.css"
+    integrity="sha256-jd1spdI7pjDGYz4eUfCsKShQxNKvl3VlqcUuKjF55ck="
+  />
+  
+  
+  
+  
+    
+    
+  
+  
+  
+    
+    <script
+      defer
+      type="text/javascript"
+      id="script-bundle"
+      src="https://datastrophic.io/js/main.bundle.min.d4b727caf411cb5c3b421d0d427ed1e3daeafe0d04840327efad4978430edb8c.js"
+      integrity="sha256-1LcnyvQRy1w7Qh0NQn7R49rq/g0EhAMn761JeEMO24w="
+      data-copy="Copy"
+      data-copied="Copied"
+    ></script>
+  
+  
+  <meta
+    name="description"
+    content="
       
         After several years of running Spark JobServer workloads, the need for better availability and multi-tenancy emerged across several projects author was involved in. This blog post covers design decisions made to provide higher availability and fault tolerance of JobServer installations, multi-tenancy for Spark workloads, scalability and failure recovery automation, and software choices made in order to reach these goals. Spark JobServer Spark JobServer is widely used across a variety of reporting and aggregating systems.
       
-    "><link rel=canonical href=https://datastrophic.io/spark-jobserver-from-spark-standalone-to-mesos-marathon-and-docker-part-i/><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/site.webmanifest><meta property="og:url" content="https://datastrophic.io/spark-jobserver-from-spark-standalone-to-mesos-marathon-and-docker-part-i/"><meta property="og:site_name" content="datastrophic"><meta property="og:title" content="Spark JobServer: from Spark Standalone to Mesos, Marathon and Docker"><meta property="og:description" content="After several years of running Spark JobServer workloads, the need for better availability and multi-tenancy emerged across several projects author was involved in. This blog post covers design decisions made to provide higher availability and fault tolerance of JobServer installations, multi-tenancy for Spark workloads, scalability and failure recovery automation, and software choices made in order to reach these goals. Spark JobServer Spark JobServer is widely used across a variety of reporting and aggregating systems."><meta property="og:locale" content="en"><meta property="og:type" content="article"><meta property="article:section" content="posts"><meta property="article:published_time" content="2017-10-12T00:00:00+00:00"><meta property="article:modified_time" content="2017-10-12T00:00:00+00:00"><meta property="article:tag" content="Spark"><meta property="article:tag" content="Mesos"><meta property="article:tag" content="Marathon"><meta property="article:tag" content="Docker"><meta name=twitter:card content="summary"><meta name=twitter:title content="Spark JobServer: from Spark Standalone to Mesos, Marathon and Docker"><meta name=twitter:description content="After several years of running Spark JobServer workloads, the need for better availability and multi-tenancy emerged across several projects author was involved in. This blog post covers design decisions made to provide higher availability and fault tolerance of JobServer installations, multi-tenancy for Spark workloads, scalability and failure recovery automation, and software choices made in order to reach these goals. Spark JobServer Spark JobServer is widely used across a variety of reporting and aggregating systems."><script type=application/ld+json>{"@context":"https://schema.org","@type":"Article","articleSection":"","name":"Spark JobServer: from Spark Standalone to Mesos, Marathon and Docker","headline":"Spark JobServer: from Spark Standalone to Mesos, Marathon and Docker","abstract":"After several years of running Spark JobServer workloads, the need for better availability and multi-tenancy emerged across several projects author was involved in. This blog post covers design decisions made to provide higher availability and fault tolerance of JobServer installations, multi-tenancy for Spark workloads, scalability and failure recovery automation, and software choices made in order to reach these goals. Spark JobServer Spark JobServer is widely used across a variety of reporting and aggregating systems.","inLanguage":"en","url":"https:\/\/datastrophic.io\/spark-jobserver-from-spark-standalone-to-mesos-marathon-and-docker-part-i\/","author":{"@type":"Person","name":"Anton Kirillov"},"copyrightYear":"2017","dateCreated":"2017-10-12T00:00:00\u002b00:00","datePublished":"2017-10-12T00:00:00\u002b00:00","dateModified":"2017-10-12T00:00:00\u002b00:00","keywords":["spark","mesos","marathon","docker"],"mainEntityOfPage":"true","wordCount":"1786"}</script><script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","item":"https://datastrophic.io/","name":"","position":1},{"@type":"ListItem","item":"https://datastrophic.io/posts/","name":"","position":2},{"@type":"ListItem","name":"Spark Job Server From Spark Standalone to Mesos, Marathon and Docker","position":3}]}</script><meta name=author content="Anton Kirillov"><link href=https://www.linkedin.com/in/datastrophic/ rel=me><link href=https://github.com/datastrophic rel=me><script async src="https://www.googletagmanager.com/gtag/js?id=G-Z9WG27GT0G"></script><script>var dnt,doNotTrack=!1;if(!1&&(dnt=navigator.doNotTrack||window.doNotTrack||navigator.msDoNotTrack,doNotTrack=dnt=="1"||dnt=="yes"),!doNotTrack){window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-Z9WG27GT0G")}</script></head><body class="m-auto flex h-screen max-w-7xl flex-col bg-neutral px-6 text-lg leading-7 text-neutral-900 dark:bg-neutral-800 dark:text-neutral sm:px-14 md:px-24 lg:px-32"><div id=the-top class="absolute flex self-center"><a class="-translate-y-8 rounded-b-lg bg-primary-200 px-3 py-1 text-sm focus:translate-y-0 dark:bg-neutral-600" href=#main-content><span class="pe-2 font-bold text-primary-600 dark:text-primary-400">&darr;</span>Skip to main content</a></div><header class="py-6 font-semibold text-neutral-900 dark:text-neutral sm:py-10 print:hidden"><nav class="flex items-start justify-between sm:items-center"><div class="z-40 flex flex-row items-center"><a class="decoration-primary-500 hover:underline hover:decoration-2 hover:underline-offset-2" rel=me href=/>datastrophic</a></div><label id=menu-button for=menu-controller class="block sm:hidden"><input type=checkbox id=menu-controller class=hidden><div class="cursor-pointer hover:text-primary-600 dark:hover:text-primary-400"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 448 512"><path fill="currentColor" d="M0 96C0 78.33 14.33 64 32 64H416c17.7.0 32 14.33 32 32 0 17.7-14.3 32-32 32H32C14.33 128 0 113.7.0 96zM0 256c0-17.7 14.33-32 32-32H416c17.7.0 32 14.3 32 32s-14.3 32-32 32H32c-17.67.0-32-14.3-32-32zM416 448H32c-17.67.0-32-14.3-32-32s14.33-32 32-32H416c17.7.0 32 14.3 32 32s-14.3 32-32 32z"/></svg></span></div><div id=menu-wrapper class="invisible fixed inset-0 z-30 m-auto h-full w-full cursor-default overflow-auto bg-neutral-100/50 opacity-0 backdrop-blur-sm transition-opacity dark:bg-neutral-900/50"><ul class="mx-auto flex w-full max-w-7xl list-none flex-col overflow-visible px-6 py-6 text-end sm:px-14 sm:py-10 sm:pt-10 md:px-24 lg:px-32"><li class=mb-1><span class="cursor-pointer hover:text-primary-600 dark:hover:text-primary-400"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 320 512"><path fill="currentColor" d="M310.6 361.4c12.5 12.5 12.5 32.75.0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3 54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75.0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75.0-45.25s32.75-12.5 45.25.0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25.0s12.5 32.75.0 45.25l-105.4 105.4L310.6 361.4z"/></svg></span></span></li><li class="group mb-1"><a href=/posts/ title onclick=close_menu()><span class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2">archive</span></a></li><li class="group mb-1"><a href=/about/ title onclick=close_menu()><span class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2">about</span></a></li></ul></div></label><ul class="hidden list-none flex-row text-end sm:flex"><li class="group mb-1 sm:mb-0 sm:me-7 sm:last:me-0"><a href=/posts/ title><span class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2">archive</span></a></li><li class="group mb-1 sm:mb-0 sm:me-7 sm:last:me-0"><a href=/about/ title><span class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2">about</span></a></li></ul></nav></header><div class="relative flex grow flex-col"><main id=main-content class=grow><article><header class=max-w-prose><h1 class="mb-8 mt-0 text-4xl font-extrabold text-neutral-900 dark:text-neutral">Spark JobServer: from Spark Standalone to Mesos, Marathon and Docker</h1><div class="mb-10 text-base text-neutral-500 dark:text-neutral-400 print:hidden"><div class="flex flex-row flex-wrap items-center"><time datetime="2017-10-12 00:00:00 +0000 UTC">12 October 2017</time><span class="px-2 text-primary-500">&#183;</span><span title="Reading time">9 mins</span></div><div class="my-1 flex flex-wrap text-xs leading-relaxed text-neutral-500 dark:text-neutral-400"><a href=https://datastrophic.io/tags/spark/ class="mx-1 my-1 rounded-md border border-neutral-200 px-1 py-[1px] hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:hover:border-primary-600 dark:hover:text-primary-400">Spark</a>
-<a href=https://datastrophic.io/tags/mesos/ class="mx-1 my-1 rounded-md border border-neutral-200 px-1 py-[1px] hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:hover:border-primary-600 dark:hover:text-primary-400">Mesos</a>
-<a href=https://datastrophic.io/tags/marathon/ class="mx-1 my-1 rounded-md border border-neutral-200 px-1 py-[1px] hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:hover:border-primary-600 dark:hover:text-primary-400">Marathon</a>
-<a href=https://datastrophic.io/tags/docker/ class="mx-1 my-1 rounded-md border border-neutral-200 px-1 py-[1px] hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:hover:border-primary-600 dark:hover:text-primary-400">Docker</a></div></div></header><section class="prose mt-0 flex max-w-full flex-col dark:prose-invert lg:flex-row"><div class="min-h-0 min-w-0 max-w-prose grow"><p>After several years of running Spark JobServer workloads, the need for better availability and multi-tenancy
+    "
+  />
+  
+  
+  
+  
+    <link rel="canonical" href="https://datastrophic.io/spark-jobserver-from-spark-standalone-to-mesos-marathon-and-docker-part-i/" />
+  
+  
+  
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+  
+  
+  
+  
+  
+  
+  
+  
+  <meta property="og:url" content="https://datastrophic.io/spark-jobserver-from-spark-standalone-to-mesos-marathon-and-docker-part-i/">
+  <meta property="og:site_name" content="datastrophic">
+  <meta property="og:title" content="Spark JobServer: from Spark Standalone to Mesos, Marathon and Docker">
+  <meta property="og:description" content="After several years of running Spark JobServer workloads, the need for better availability and multi-tenancy emerged across several projects author was involved in. This blog post covers design decisions made to provide higher availability and fault tolerance of JobServer installations, multi-tenancy for Spark workloads, scalability and failure recovery automation, and software choices made in order to reach these goals. Spark JobServer Spark JobServer is widely used across a variety of reporting and aggregating systems.">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2017-10-12T00:00:00+00:00">
+    <meta property="article:modified_time" content="2017-10-12T00:00:00+00:00">
+    <meta property="article:tag" content="Spark">
+    <meta property="article:tag" content="Mesos">
+    <meta property="article:tag" content="Marathon">
+    <meta property="article:tag" content="Docker">
+
+  
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Spark JobServer: from Spark Standalone to Mesos, Marathon and Docker">
+  <meta name="twitter:description" content="After several years of running Spark JobServer workloads, the need for better availability and multi-tenancy emerged across several projects author was involved in. This blog post covers design decisions made to provide higher availability and fault tolerance of JobServer installations, multi-tenancy for Spark workloads, scalability and failure recovery automation, and software choices made in order to reach these goals. Spark JobServer Spark JobServer is widely used across a variety of reporting and aggregating systems.">
+
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "articleSection": "",
+    "name": "Spark JobServer: from Spark Standalone to Mesos, Marathon and Docker",
+    "headline": "Spark JobServer: from Spark Standalone to Mesos, Marathon and Docker",
+    
+    "abstract": "After several years of running Spark JobServer workloads, the need for better availability and multi-tenancy emerged across several projects author was involved in. This blog post covers design decisions made to provide higher availability and fault tolerance of JobServer installations, multi-tenancy for Spark workloads, scalability and failure recovery automation, and software choices made in order to reach these goals. Spark JobServer Spark JobServer is widely used across a variety of reporting and aggregating systems.",
+    "inLanguage": "en",
+    "url" : "https:\/\/datastrophic.io\/spark-jobserver-from-spark-standalone-to-mesos-marathon-and-docker-part-i\/",
+    "author" : {
+      "@type": "Person",
+      "name": "Anton Kirillov"
+    },
+    "copyrightYear": "2017",
+    "dateCreated": "2017-10-12T00:00:00\u002b00:00",
+    "datePublished": "2017-10-12T00:00:00\u002b00:00",
+    
+    "dateModified": "2017-10-12T00:00:00\u002b00:00",
+    
+    "keywords": ["spark","mesos","marathon","docker"],
+    
+    "mainEntityOfPage": "true",
+    "wordCount": "1786"
+  }
+  </script>
+    
+    <script type="application/ld+json">
+    {
+   "@context": "https://schema.org",
+   "@type": "BreadcrumbList",
+   "itemListElement": [
+     {
+       "@type": "ListItem",
+       "item": "https://datastrophic.io/",
+       "name": "",
+       "position": 1
+     },
+     {
+       "@type": "ListItem",
+       "item": "https://datastrophic.io/posts/",
+       "name": "",
+       "position": 2
+     },
+     {
+       "@type": "ListItem",
+       "name": "Spark Job Server From Spark Standalone to Mesos, Marathon and Docker",
+       "position": 3
+     }
+   ]
+ }
+  </script>
+
+  
+  
+    <meta name="author" content="Anton Kirillov" />
+  
+  
+    
+      <link href="https://www.linkedin.com/in/datastrophic/" rel="me" />
+    
+      <link href="https://github.com/datastrophic" rel="me" />
+    
+  
+  
+  
+
+
+
+
+
+
+
+  
+  
+  
+  
+  
+  
+      <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z9WG27GT0G"></script>
+      <script>
+        var doNotTrack = false;
+        if ( false ) {
+          var dnt = (navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack);
+          var doNotTrack = (dnt == "1" || dnt == "yes");
+        }
+        if (!doNotTrack) {
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-Z9WG27GT0G');
+        }
+      </script>
+
+
+  
+  
+</head>
+<body
+    class="m-auto flex h-screen max-w-7xl flex-col bg-neutral px-6 text-lg leading-7 text-neutral-900 dark:bg-neutral-800 dark:text-neutral sm:px-14 md:px-24 lg:px-32"
+  >
+    <div id="the-top" class="absolute flex self-center">
+      <a
+        class="-translate-y-8 rounded-b-lg bg-primary-200 px-3 py-1 text-sm focus:translate-y-0 dark:bg-neutral-600"
+        href="#main-content"
+        ><span class="pe-2 font-bold text-primary-600 dark:text-primary-400">&darr;</span
+        >Skip to main content</a
+      >
+    </div>
+    
+    
+      <header class="py-6 font-semibold text-neutral-900 dark:text-neutral sm:py-10 print:hidden">
+  <nav class="flex items-start justify-between sm:items-center">
+    
+    <div class="z-40 flex flex-row items-center">
+      
+  <a
+    class="decoration-primary-500 hover:underline hover:decoration-2 hover:underline-offset-2"
+    rel="me"
+    href="/"
+    >datastrophic</a
+  >
+
+    </div>
+    
+      
+      <label id="menu-button" for="menu-controller" class="block sm:hidden">
+        <input type="checkbox" id="menu-controller" class="hidden" />
+        <div class="cursor-pointer hover:text-primary-600 dark:hover:text-primary-400">
+          <span class="icon relative inline-block px-1 align-text-bottom"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentColor" d="M0 96C0 78.33 14.33 64 32 64H416C433.7 64 448 78.33 448 96C448 113.7 433.7 128 416 128H32C14.33 128 0 113.7 0 96zM0 256C0 238.3 14.33 224 32 224H416C433.7 224 448 238.3 448 256C448 273.7 433.7 288 416 288H32C14.33 288 0 273.7 0 256zM416 448H32C14.33 448 0 433.7 0 416C0 398.3 14.33 384 32 384H416C433.7 384 448 398.3 448 416C448 433.7 433.7 448 416 448z"/></svg>
+</span>
+        </div>
+        <div
+          id="menu-wrapper"
+          class="invisible fixed inset-0 z-30 m-auto h-full w-full cursor-default overflow-auto bg-neutral-100/50 opacity-0 backdrop-blur-sm transition-opacity dark:bg-neutral-900/50"
+        >
+          <ul
+            class="mx-auto flex w-full max-w-7xl list-none flex-col overflow-visible px-6 py-6 text-end sm:px-14 sm:py-10 sm:pt-10 md:px-24 lg:px-32"
+          >
+            <li class="mb-1">
+              <span class="cursor-pointer hover:text-primary-600 dark:hover:text-primary-400"
+                ><span class="icon relative inline-block px-1 align-text-bottom"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path fill="currentColor" d="M310.6 361.4c12.5 12.5 12.5 32.75 0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3L54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75 0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25l-105.4 105.4L310.6 361.4z"/></svg>
+</span></span
+              >
+            </li>
+            
+              
+                
+                <li class="group mb-1">
+                  
+                    <a
+                      href="/posts/"
+                      title=""
+                      onclick="close_menu()"
+                      
+                      ><span
+                          class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2"
+                          >archive</span
+                        >
+                      </a
+                    >
+                  
+                </li>
+              
+                
+                <li class="group mb-1">
+                  
+                    <a
+                      href="/about/"
+                      title=""
+                      onclick="close_menu()"
+                      
+                      ><span
+                          class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2"
+                          >about</span
+                        >
+                      </a
+                    >
+                  
+                </li>
+              
+              
+            
+          </ul>
+        </div>
+      </label>
+      
+      <ul class="hidden list-none flex-row text-end sm:flex">
+        
+          
+            
+            <li class="group mb-1 sm:mb-0 sm:me-7 sm:last:me-0">
+              
+                <a
+                  href="/posts/"
+                  title=""
+                  
+                  ><span
+                      class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2"
+                      >archive</span
+                    >
+                  </a
+                >
+              
+            </li>
+          
+            
+            <li class="group mb-1 sm:mb-0 sm:me-7 sm:last:me-0">
+              
+                <a
+                  href="/about/"
+                  title=""
+                  
+                  ><span
+                      class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2"
+                      >about</span
+                    >
+                  </a
+                >
+              
+            </li>
+          
+          
+
+        
+      </ul>
+    
+  </nav>
+</header>
+
+    
+    <div class="relative flex grow flex-col">
+      <main id="main-content" class="grow">
+        
+  <article>
+    <header class="max-w-prose">
+      
+      <h1 class="mb-8 mt-0 text-4xl font-extrabold text-neutral-900 dark:text-neutral">
+        Spark JobServer: from Spark Standalone to Mesos, Marathon and Docker
+      </h1>
+      
+        <div class="mb-10 text-base text-neutral-500 dark:text-neutral-400 print:hidden">
+          
+
+
+
+
+
+  
+  
+
+
+
+  
+
+  
+  
+    
+  
+
+  
+
+  
+
+  
+    
+  
+
+  
+
+
+  <div class="flex flex-row flex-wrap items-center">
+    
+    
+      <time datetime="2017-10-12 00:00:00 &#43;0000 UTC">12 October 2017</time><span class="px-2 text-primary-500">&middot;</span><span title="Reading time">9 mins</span>
+    
+
+    
+    
+  </div>
+
+  
+  
+    <div class="my-1 flex flex-wrap text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
+      
+        
+      
+        
+          
+            <a
+              href="https://datastrophic.io/tags/spark/"
+              class="mx-1 my-1 rounded-md border border-neutral-200 px-1 py-[1px] hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:hover:border-primary-600 dark:hover:text-primary-400"
+              >Spark</a
+            >
+          
+            <a
+              href="https://datastrophic.io/tags/mesos/"
+              class="mx-1 my-1 rounded-md border border-neutral-200 px-1 py-[1px] hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:hover:border-primary-600 dark:hover:text-primary-400"
+              >Mesos</a
+            >
+          
+            <a
+              href="https://datastrophic.io/tags/marathon/"
+              class="mx-1 my-1 rounded-md border border-neutral-200 px-1 py-[1px] hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:hover:border-primary-600 dark:hover:text-primary-400"
+              >Marathon</a
+            >
+          
+            <a
+              href="https://datastrophic.io/tags/docker/"
+              class="mx-1 my-1 rounded-md border border-neutral-200 px-1 py-[1px] hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:hover:border-primary-600 dark:hover:text-primary-400"
+              >Docker</a
+            >
+          
+        
+      
+    </div>
+  
+
+
+        </div>
+      
+      
+    </header>
+    <section class="prose mt-0 flex max-w-full flex-col dark:prose-invert lg:flex-row">
+      
+      <div class="min-h-0 min-w-0 max-w-prose grow">
+        <p>After several years of running Spark JobServer workloads, the need for better availability and multi-tenancy
 emerged across several projects author was involved in. This blog post covers design decisions made to provide
 higher availability and fault tolerance of JobServer installations, multi-tenancy for Spark workloads,
-scalability and failure recovery automation, and software choices made in order to reach these goals.</p><h2 id=spark-jobserver class="relative group">Spark JobServer <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#spark-jobserver aria-label=Anchor>#</a></span></h2><p><a href=https://github.com/spark-jobserver/spark-jobserver target=_blank rel=noreferrer>Spark JobServer</a> is widely used across a variety of
+scalability and failure recovery automation, and software choices made in order to reach these goals.</p>
+<h2 id="spark-jobserver" class="relative group">Spark JobServer <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#spark-jobserver" aria-label="Anchor">#</a></span></h2><p><a href="https://github.com/spark-jobserver/spark-jobserver" target="_blank" rel="noreferrer">Spark JobServer</a> is widely used across a variety of
 reporting and aggregating systems. One of the valuable features among others is unified
 REST API to interact with Spark Contexts, execute jobs and retrieve results asynchronously from a cache.
 Unified API allows standardizing any Spark application and abstracts away the need for application developers
-to initialize and configure Spark Context every time a new application is developed.</p><p>In most of the cases, Spark applications are developed to be used with <code>spark-submit</code> which in turn will
+to initialize and configure Spark Context every time a new application is developed.</p>
+<p>In most of the cases, Spark applications are developed to be used with <code>spark-submit</code> which in turn will
 create a context at the moment of execution. Context creation is a costly operation and takes time depending
 on cluster utilization and resources requested. JobServer addresses this issue by maintaining long-running
 contexts so any loaded application doesn’t have to wait for a context to be initialized which in turn results
-in faster response and execution times and allows to use Spark applications as backends for querying data.</p><p>Originally, the JobServer was developed to run on Spark Standalone clusters and some of its design features address
+in faster response and execution times and allows to use Spark applications as backends for querying data.</p>
+<p>Originally, the JobServer was developed to run on Spark Standalone clusters and some of its design features address
 same problems as e.g. Application Master in YARN. This blog post is focused on design decisions targeted at
 increasing stability of the JobServer by utilizing Mesos as Spark cluster manager and Marathon as an orchestration
-system for providing high availability.</p><p>Spark uses a Cluster Manager for scheduling tasks to run in distributed mode (<em>Figure 1</em>).
+system for providing high availability.</p>
+<p>Spark uses a Cluster Manager for scheduling tasks to run in distributed mode (<em>Figure 1</em>).
 Supported cluster managers are Spark Standalone, Mesos and YARN. Spark applications run as independent
 sets of processes on a cluster, coordinated by the SparkContext object in your main program
-(called the driver program)<a href=https://spark.apache.org/docs/latest/cluster-overview.html target=_blank rel=noreferrer>[source]</a>.</p><p><figure><img src=./spark-overview.png alt class="mx-auto my-0 rounded-md"></figure><strong>Figure 1. Spark application execution flow</strong></p><p>JobServer runs Spark Applications either being Spark Driver itself or spawning a separate JVM per
-context thus being out-of-the-box compatible with supported Cluster Managers (<em>Figure 2</em>).<figure><img src=./spark-jobserver.png alt class="mx-auto my-0 rounded-md"></figure><strong>Figure 2. JobServer top-level Architecture. Single JVM (left) and JVM per context (right)</strong></p><h3 id=limitations class="relative group">Limitations <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#limitations aria-label=Anchor>#</a></span></h3><p>Spark Standalone as a cluster manager has several significant limitations making maintenance and operations
-harder for engineers:</p><ul><li>Spark master is a single point of failure when single instance is used. In situations when workers fail and/or restart they register back to Spark Master and a cluster continues its operations. However, when the master fails and/or restarts workers are unable to register automatically and whole cluster restart is needed. This problem can be solved by running Spark Master in HA mode and performing leader election and service discovery with ZooKeeper.</li><li>Different Spark versions across applications. With growing number of Spark applications dependencies versions start to diverge and at some point, it’s hard to perform a big-bang upgrade and the need for different environments emerges. That is, applications using latter Spark major releases will need another cluster with the corresponding version when standalone mode is used and this situation is suboptimal: number of clusters, amount of hardware and engineering time needed for support will grow significantly.</li><li>Heterogeneous environments and dependencies. Although multiple Spark versions could be considered as a special case of this problem it’s different and can arise even if same Spark version is used. Applications not only can depend on different third-party libraries (e.g. hadoop and/or file format families) but also be compiled with different Java versions (in case JVM languages are used). Managing classpaths and runtime class version conflicts (also known as ‘jar hell’) is a time-consuming task which is better to avoid by means of stronger isolation.</li></ul><p>So let’s look at the requirements expected to be met by a cluster manager (<a href=https://research.google.com/pubs/pub41684.html target=_blank rel=noreferrer>Omega paper by Google</a> can be used as a reference):</p><ul><li>Efficiency<ul><li>efficient sharing of resources across applications</li><li>utilization of cluster resources in the most optimal manner</li></ul></li><li>Flexibility<ul><li>support of wide array of current and future frameworks</li><li>dealing with hardware heterogeneity</li><li>orchestration framework for applications providing high availability guarantees</li><li>support of resource requests of different types (RAM, CPU, ports)</li></ul></li><li>Scalability<ul><li>scaling to clusters of hundreds of nodes</li><li>scheduling system response times must remain acceptable while increasing number of machines and applications</li></ul></li><li>Robustness<ul><li>fault tolerance guarantees for the system and applications</li><li>high availability of central scheduler component</li></ul></li></ul><p>While part of these requirements is met by <a href=https://hadoop.apache.org/docs/current/hadoop-yarn/hadoop-yarn-site/YARN.html target=_blank rel=noreferrer>YARN</a> it won’t provide high availability guarantees for JobServer itself. Service failures can be addressed by means of <code>systemd</code> or <code>upstart</code> but a hardware failure will need a manual maintenance in most of the cases involving provisioning of a new machine if there’s no reserved one available and deployment of JobServer to it. Given that all these steps are automated with tools like Ansible or Chef the downtime for customer-facing applications is still unacceptable.</p><p>Another solution available in the open-source world is Apache Mesos. While it can be used as Spark cluster manager out of the box, it’s also possible to execute standalone applications as long-running cluster tasks by means of Marathon - a container orchestration platform for Mesos.</p><h2 id=mesos-overview class="relative group">Mesos overview <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#mesos-overview aria-label=Anchor>#</a></span></h2><p>Mesos is a cluster resource manager which provides linear scalability, high availability and container support
-with a unique approach of two-level scheduling. Official <a href=http://mesos.apache.org/documentation/latest/architecture/ target=_blank rel=noreferrer>documentation</a>
-provides a detailed overview of Mesos architecture and its components, and here’s a really quick recap to be on the same page (<em>Figure 3</em>).</p><p><figure><img src=./mesos-overview.png alt class="mx-auto my-0 rounded-md"></figure><strong>Figure 3. Mesos architecture overview</strong></p><ul><li>Master<ul><li>a mediator between slave resources and frameworks</li><li>enables fine-grained sharing of resources by making resource offers</li><li>serves as master for Spark (not a single point of failure)</li></ul></li><li>Slave (Agent)<ul><li>manages resources on physical node and runs executors</li></ul></li><li>Framework<ul><li>application that solves a specific use case (e.g. Spark)</li><li><em>Scheduler</em> negotiates with master and handles resource offers</li><li><em>Executors</em> consume resources and run tasks on slaves</li></ul></li></ul><p>In Mesos terminology, Spark is a framework that acquires cluster resources to execute its jobs. Depending on job resource demands (RAM, CPU) Spark accepts or declines resource offers made by Mesos Master allocation module. Allocation module uses Dominant Resource Fairness algorithm which in simple words orders sending of offers to frameworks based on their cluster usage i.e. frameworks using fewer resources than the others will receive offers first. More details are available in <a href=http://datastrophic.io/resource-allocation-in-mesos-dominant-resource-fairness-explained/ target=_blank rel=noreferrer>Dominant Resource Fairness explained blog post</a>.</p><h2 id=spark-on-mesos class="relative group">Spark on Mesos <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#spark-on-mesos aria-label=Anchor>#</a></span></h2><p>Spark supports two modes of running on Mesos: fine-grained(deprecated) and coarse-grained. To understand the difference let’s have a quick look into Mesos scheduling algorithm (<em>Figure 4</em>).</p><p><figure><img src=./mesos-two-level-scheduling.png alt class="mx-auto my-0 rounded-md"></figure><strong>Figure 4. Mesos scheduling overview</strong></p><ul><li>Agent nodes continuously report to Master amount and type of available resources: RAM, CPU, disk, ports</li><li>Allocation module starts offering resources to frameworks
-Framework receives offers<ul><li>if resources do not satisfy its needs - rejects the offer</li><li>if resources satisfy its demands - creates list of tasks and sends to master</li></ul></li><li>Master verifies tasks and forwards to executor (and launches the executor if it’s not running)</li></ul><p>A task in Mesos terminology is a single unit of work executed by a framework. In fine-grained mode Spark wraps its every task in Mesos task thus relying on Mesos scheduling, while in coarse-grained mode Spark only runs its executors (Spark workers) and executes tasks relying on its own scheduler and RPC mechanism (Akka or Netty, depending on Spark version) for submitting tasks to executors (<em>Figure 5</em>)</p><p><figure><img src=./spark-coarse-grained-mode.png alt class="mx-auto my-0 rounded-md"></figure><strong>Figure 5. Spark coarse-grained mode</strong></p><h3 id=heterogeneity-and-multi-tenancy class="relative group">Heterogeneity and multi-tenancy <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#heterogeneity-and-multi-tenancy aria-label=Anchor>#</a></span></h3><p>Moving from Spark Standalone to Mesos addresses yet another problem of shrinking down a number of clusters being used and providing a better cluster utilization. While it’s a valid point that it’s possible to run multiple contexts on the same cluster even with Spark Standalone, it becomes impossible to manage incompatible Spark versions within the same installation not to mention Java versions. With proper packaging and environment setup, it’s easy to achieve these goals with Mesos which makes it possible to not only run heterogeneous Spark contexts on the same cluster but share it with other applications as well (<em>Figure 6</em>).</p><p><figure><img src=./mesos-multi-tenancy.png alt class="mx-auto my-0 rounded-md"></figure><strong>Figure 6. Mesos multi-tenancy</strong></p><p>Let’s have a look at an example of running 4 Spark JobServer applications (<code>jobserver-bob</code> and <code>jobserver-alice</code> 2 instances each) on the same cluster. Each of JobServers creates Spark Context managed by driver program: <code>spark-driver-bob</code> with 14 CPU and <code>spark-driver-alice</code> with 21 CPU in total. Also, one can observe Marathon framework using 15% of cluster resources (<em>Figure 7</em>). Marathon is used to run JobServer instances which in turn use Mesos for running Spark Contexts. Details of running JobServer in Marathon will be covered in the next part of the blog post series.</p><p><figure><img src=./spark-multi-tenancy.png alt class="mx-auto my-0 rounded-md"></figure><figure><img src=./mesos-tasks-screenshot.png alt class="mx-auto my-0 rounded-md"></figure><strong>Figure 7. Spark on Mesos multi-tenancy</strong></p><p>A naive way for supporting multiple Spark (and Java) versions would be installing all the necessary binaries on every machine in a cluster. While this allows to ramp up really quickly, usually after not so long time environments start to diverge and maintenance becomes tricky.</p><p>The good news is that Spark-Mesos integration supports Docker: <code>spark.mesos.executor.docker.image</code> configuration parameter allows specifying a custom Docker image to use as an executor. Although it doesn’t look like the most important thing it provides a great flexibility when a number of environments and software versions being used grows.</p><p>Yet another important feature worth mentioning is <a href=https://spark.apache.org/docs/latest/job-scheduling.html#dynamic-resource-allocation target=_blank rel=noreferrer>Dynamic Resource Allocation</a> which allows Spark to return unused resources to a cluster manager and acquire more resource when application demands grow. This provides a better resource utilization in case of multi-tenant workloads but it should be used with caution in case of latency-critical applications because resource acquisition takes some time and in worst case, some other framework can use requested resources. Dynamic allocation is supported for any Spark cluster manager using coarse-grained mode and in Mesos it’s a responsibility of an engineer to run Spark External Shuffle service in order to make it work.</p><h2 id=conclusion class="relative group">Conclusion <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#conclusion aria-label=Anchor>#</a></span></h2><p>With a minor tweaking of existing Spark jobs and Spark JobServer, it’s become possible to achieve better utilization of a single cluster instead of running multiple idling Standalone clusters (<em>Figure 8</em>). Given that a problem with incompatible versions is solved by means of isolation, it’s possible to migrate all of the existing Spark projects to Mesos without upgrading all of them and keep running different versions of Spark and Java which are currently in use.</p><p><figure><img src=./mesos-cluster-utilization.png alt class="mx-auto my-0 rounded-md"></figure><strong>Figure 8. Mesos cluster utilization</strong></p><p>It’s worth mentioning that JobServer is running on the same cluster with the same fault tolerance and high availability guarantees provided by Mesos and Marathon. Another important aspect of installations running on any kind of orchestration platform is physical node characteristics and cluster layout which takes those aspects into account. This topic will be covered in the next part of the series together with migration of JobServer to Marathon and using Docker as a main tool for packaging and distribution of the applications running on Mesos.</p></div></section><footer class="max-w-prose pt-8 print:hidden"><div class=flex><picture class="!mb-0 !mt-0 me-4 w-24 h-auto rounded-full"><img width=400 height=400 class="!mb-0 !mt-0 me-4 w-24 h-auto rounded-full" alt="Anton Kirillov" loading=lazy decoding=async src=https://datastrophic.io/img/author.jpg></picture><div class=place-self-center><div class="text-[0.6rem] uppercase leading-3 text-neutral-500 dark:text-neutral-400">Author</div><div class="font-semibold leading-6 text-neutral-800 dark:text-neutral-300">Anton Kirillov</div><div class="text-sm text-neutral-700 dark:text-neutral-400">Technical Leader. Compute and AI Infrastructure</div><div class="text-2xl sm:text-lg"><div class="flex flex-wrap text-neutral-400 dark:text-neutral-500"><a class="px-1 transition-transform hover:scale-125 hover:text-primary-700 dark:hover:text-primary-400" style=will-change:transform href=https://www.linkedin.com/in/datastrophic/ target=_blank aria-label=Linkedin rel="me noopener noreferrer"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 448 512"><path fill="currentColor" d="M416 32H31.9C14.3 32 0 46.5.0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6.0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3zM135.4 416H69V202.2h66.5V416zm-33.2-243c-21.3.0-38.5-17.3-38.5-38.5S80.9 96 102.2 96c21.2.0 38.5 17.3 38.5 38.5.0 21.3-17.2 38.5-38.5 38.5zm282.1 243h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6.0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2.0 79.7 44.3 79.7 101.9V416z"/></svg>
-</span></a><a class="px-1 transition-transform hover:scale-125 hover:text-primary-700 dark:hover:text-primary-400" style=will-change:transform href=https://github.com/datastrophic target=_blank aria-label=Github rel="me noopener noreferrer"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 496 512"><path fill="currentColor" d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6.0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6.0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3.0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1.0-6.2-.3-40.4-.3-61.4.0.0-70 15-84.7-29.8.0.0-11.4-29.1-27.8-36.6.0.0-22.9-15.7 1.6-15.4.0.0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5.0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9.0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4.0 33.7-.3 75.4-.3 83.6.0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6.0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9.0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span></a></div></div></div></div><div class=pt-8><hr class="border-dotted border-neutral-300 dark:border-neutral-600"><div class="flex justify-between pt-3"><span><a class="group flex" href=https://datastrophic.io/resource-allocation-in-mesos-dominant-resource-fairness-explained/><span class="me-2 text-neutral-700 transition-transform group-hover:-translate-x-[2px] group-hover:text-primary-600 dark:text-neutral dark:group-hover:text-primary-400"><span class="ltr:inline rtl:hidden">&larr;</span><span class="ltr:hidden rtl:inline">&rarr;</span></span>
-<span class="flex flex-col"><span class="mt-[0.1rem] leading-6 group-hover:underline group-hover:decoration-primary-500">Resource Allocation in Mesos: Dominant Resource Fairness</span>
-<span class="mt-[0.1rem] text-xs text-neutral-500 dark:text-neutral-400"><time datetime="2016-03-27 00:00:00 +0000 UTC">27 March 2016</time>
-</span></span></a></span><span><a class="group flex text-right" href=https://datastrophic.io/kubeflow-training-operators-and-istio-solving-the-proxy-sidecar-lifecycle-problem-for-aiml-workloads/><span class="flex flex-col"><span class="mt-[0.1rem] leading-6 group-hover:underline group-hover:decoration-primary-500">Kubeflow Training Operators and Istio: solving the proxy sidecar lifecycle problem for AI/ML workloads</span>
-<span class="mt-[0.1rem] text-xs text-neutral-500 dark:text-neutral-400"><time datetime="2021-10-04 00:00:00 +0000 UTC">4 October 2021</time>
-</span></span><span class="ms-2 text-neutral-700 transition-transform group-hover:-translate-x-[-2px] group-hover:text-primary-600 dark:text-neutral dark:group-hover:text-primary-400"><span class="ltr:inline rtl:hidden">&rarr;</span><span class="ltr:hidden rtl:inline">&larr;</span></span></a></span></div></div></footer></article></main><div class="pointer-events-none absolute bottom-0 end-0 top-[100vh] w-12" id=to-top hidden=true><a href=#the-top class="pointer-events-auto sticky top-[calc(100vh-5.5rem)] flex h-12 w-12 items-center justify-center rounded-full bg-neutral/50 text-xl text-neutral-700 backdrop-blur hover:text-primary-600 dark:bg-neutral-800/50 dark:text-neutral dark:hover:text-primary-400" aria-label="Scroll to top" title="Scroll to top">&uarr;</a></div><footer class="py-10 print:hidden"><div class="flex items-center justify-between"><div><p class="text-sm text-neutral-500 dark:text-neutral-400">© 2025 datastrophic</p></div><div class="flex flex-row items-center"><div class="me-14 cursor-pointer text-sm text-neutral-700 hover:text-primary-600 dark:text-neutral dark:hover:text-primary-400"><button id=appearance-switcher-0 type=button aria-label="appearance switcher"><div class="flex h-12 w-12 items-center justify-center dark:hidden" title="Switch to dark appearance"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 512 512"><path fill="currentColor" d="M32 256C32 132.2 132.3 32 255.8 32c11.36.0 29.7 1.668 40.9 3.746 9.616 1.777 11.75 14.63 3.279 19.44C245 86.5 211.2 144.6 211.2 207.8c0 109.7 99.71 193 208.3 172.3 9.561-1.805 16.28 9.324 10.11 16.95C387.9 448.6 324.8 480 255.8 480 132.1 480 32 379.6 32 256z"/></svg></span></div><div class="hidden h-12 w-12 items-center justify-center dark:flex" title="Switch to light appearance"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 512 512"><path fill="currentColor" d="M256 159.1c-53.02.0-95.1 42.98-95.1 95.1s41.2 96.9 95.1 96.9 95.1-42.98 95.1-95.1S309 159.1 256 159.1zM509.3 347l-63.2-91.9 63.15-91.01c6.332-9.125 1.104-21.74-9.826-23.72l-109-19.7-19.7-109c-1.975-10.93-14.59-16.16-23.72-9.824L256 65.89 164.1 2.736c-9.125-6.332-21.74-1.107-23.72 9.824L121.6 121.6 12.56 141.3C1.633 143.2-3.596 155.9 2.736 164.1L65.89 256 2.74 347.01c-6.332 9.125-1.105 21.74 9.824 23.72l109 19.7 19.7 109c1.975 10.93 14.59 16.16 23.72 9.824L256 446.1l91.01 63.15c9.127 6.334 21.75 1.107 23.72-9.822l19.7-109 109-19.7C510.4 368.8 515.6 356.1 509.3 347zM256 383.1c-70.69.0-127.1-57.31-127.1-127.1.0-70.69 57.31-127.1 127.1-127.1S383.1 186.2 383.1 256c0 70.7-56.4 127.1-127.1 127.1z"/></svg></span></div></button></div></div></div></footer></div></body></html>
+(called the driver program)<a href="https://spark.apache.org/docs/latest/cluster-overview.html" target="_blank" rel="noreferrer">[source]</a>.</p>
+<p>
+
+
+
+
+
+
+  
+  
+<figure><img src="./spark-overview.png" alt="" class="mx-auto my-0 rounded-md" />
+</figure>
+
+<strong>Figure 1. Spark application execution flow</strong></p>
+<p>JobServer runs Spark Applications either being Spark Driver itself or spawning a separate JVM per
+context thus being out-of-the-box compatible with supported Cluster Managers (<em>Figure 2</em>).
+
+
+
+
+
+
+
+  
+  
+<figure><img src="./spark-jobserver.png" alt="" class="mx-auto my-0 rounded-md" />
+</figure>
+
+<strong>Figure 2. JobServer top-level Architecture. Single JVM (left) and JVM per context (right)</strong></p>
+<h3 id="limitations" class="relative group">Limitations <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#limitations" aria-label="Anchor">#</a></span></h3><p>Spark Standalone as a cluster manager has several significant limitations making maintenance and operations
+harder for engineers:</p>
+<ul>
+<li>Spark master is a single point of failure when single instance is used. In situations when workers fail and/or restart they register back to Spark Master and a cluster continues its operations. However, when the master fails and/or restarts workers are unable to register automatically and whole cluster restart is needed. This problem can be solved by running Spark Master in HA mode and performing leader election and service discovery with ZooKeeper.</li>
+<li>Different Spark versions across applications. With growing number of Spark applications dependencies versions start to diverge and at some point, it’s hard to perform a big-bang upgrade and the need for different environments emerges. That is, applications using latter Spark major releases will need another cluster with the corresponding version when standalone mode is used and this situation is suboptimal: number of clusters, amount of hardware and engineering time needed for support will grow significantly.</li>
+<li>Heterogeneous environments and dependencies. Although multiple Spark versions could be considered as a special case of this problem it’s different and can arise even if same Spark version is used. Applications not only can depend on different third-party libraries (e.g. hadoop and/or file format families) but also be compiled with different Java versions (in case JVM languages are used). Managing classpaths and runtime class version conflicts (also known as ‘jar hell’) is a time-consuming task which is better to avoid by means of stronger isolation.</li>
+</ul>
+<p>So let’s look at the requirements expected to be met by a cluster manager (<a href="https://research.google.com/pubs/pub41684.html" target="_blank" rel="noreferrer">Omega paper by Google</a> can be used as a reference):</p>
+<ul>
+<li>Efficiency
+<ul>
+<li>efficient sharing of resources across applications</li>
+<li>utilization of cluster resources in the most optimal manner</li>
+</ul>
+</li>
+<li>Flexibility
+<ul>
+<li>support of wide array of current and future frameworks</li>
+<li>dealing with hardware heterogeneity</li>
+<li>orchestration framework for applications providing high availability guarantees</li>
+<li>support of resource requests of different types (RAM, CPU, ports)</li>
+</ul>
+</li>
+<li>Scalability
+<ul>
+<li>scaling to clusters of hundreds of nodes</li>
+<li>scheduling system response times must remain acceptable while increasing number of machines and applications</li>
+</ul>
+</li>
+<li>Robustness
+<ul>
+<li>fault tolerance guarantees for the system and applications</li>
+<li>high availability of central scheduler component</li>
+</ul>
+</li>
+</ul>
+<p>While part of these requirements is met by <a href="https://hadoop.apache.org/docs/current/hadoop-yarn/hadoop-yarn-site/YARN.html" target="_blank" rel="noreferrer">YARN</a> it won’t provide high availability guarantees for JobServer itself. Service failures can be addressed by means of <code>systemd</code> or <code>upstart</code> but a hardware failure will need a manual maintenance in most of the cases involving provisioning of a new machine if there’s no reserved one available and deployment of JobServer to it. Given that all these steps are automated with tools like Ansible or Chef the downtime for customer-facing applications is still unacceptable.</p>
+<p>Another solution available in the open-source world is Apache Mesos. While it can be used as Spark cluster manager out of the box, it’s also possible to execute standalone applications as long-running cluster tasks by means of Marathon - a container orchestration platform for Mesos.</p>
+<h2 id="mesos-overview" class="relative group">Mesos overview <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#mesos-overview" aria-label="Anchor">#</a></span></h2><p>Mesos is a cluster resource manager which provides linear scalability, high availability and container support
+with a unique approach of two-level scheduling. Official <a href="http://mesos.apache.org/documentation/latest/architecture/" target="_blank" rel="noreferrer">documentation</a>
+provides a detailed overview of Mesos architecture and its components, and here’s a really quick recap to be on the same page (<em>Figure 3</em>).</p>
+<p>
+
+
+
+
+
+
+  
+  
+<figure><img src="./mesos-overview.png" alt="" class="mx-auto my-0 rounded-md" />
+</figure>
+
+<strong>Figure 3. Mesos architecture overview</strong></p>
+<ul>
+<li>Master
+<ul>
+<li>a mediator between slave resources and frameworks</li>
+<li>enables fine-grained sharing of resources by making resource offers</li>
+<li>serves as master for Spark (not a single point of failure)</li>
+</ul>
+</li>
+<li>Slave (Agent)
+<ul>
+<li>manages resources on physical node and runs executors</li>
+</ul>
+</li>
+<li>Framework
+<ul>
+<li>application that solves a specific use case (e.g. Spark)</li>
+<li><em>Scheduler</em> negotiates with master and handles resource offers</li>
+<li><em>Executors</em> consume resources and run tasks on slaves</li>
+</ul>
+</li>
+</ul>
+<p>In Mesos terminology, Spark is a framework that acquires cluster resources to execute its jobs. Depending on job resource demands (RAM, CPU) Spark accepts or declines resource offers made by Mesos Master allocation module. Allocation module uses Dominant Resource Fairness algorithm which in simple words orders sending of offers to frameworks based on their cluster usage i.e. frameworks using fewer resources than the others will receive offers first. More details are available in <a href="http://datastrophic.io/resource-allocation-in-mesos-dominant-resource-fairness-explained/" target="_blank" rel="noreferrer">Dominant Resource Fairness explained blog post</a>.</p>
+<h2 id="spark-on-mesos" class="relative group">Spark on Mesos <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#spark-on-mesos" aria-label="Anchor">#</a></span></h2><p>Spark supports two modes of running on Mesos: fine-grained(deprecated) and coarse-grained. To understand the difference let’s have a quick look into Mesos scheduling algorithm (<em>Figure 4</em>).</p>
+<p>
+
+
+
+
+
+
+  
+  
+<figure><img src="./mesos-two-level-scheduling.png" alt="" class="mx-auto my-0 rounded-md" />
+</figure>
+
+<strong>Figure 4. Mesos scheduling overview</strong></p>
+<ul>
+<li>Agent nodes continuously report to Master amount and type of available resources: RAM, CPU, disk, ports</li>
+<li>Allocation module starts offering resources to frameworks
+Framework receives offers
+<ul>
+<li>if resources do not satisfy its needs - rejects the offer</li>
+<li>if resources satisfy its demands - creates list of tasks and sends to master</li>
+</ul>
+</li>
+<li>Master verifies tasks and forwards to executor (and launches the executor if it’s not running)</li>
+</ul>
+<p>A task in Mesos terminology is a single unit of work executed by a framework. In fine-grained mode Spark wraps its every task in Mesos task thus relying on Mesos scheduling, while in coarse-grained mode Spark only runs its executors (Spark workers) and executes tasks relying on its own scheduler and  RPC mechanism (Akka or Netty, depending on Spark version) for submitting tasks to executors (<em>Figure 5</em>)</p>
+<p>
+
+
+
+
+
+
+  
+  
+<figure><img src="./spark-coarse-grained-mode.png" alt="" class="mx-auto my-0 rounded-md" />
+</figure>
+
+<strong>Figure 5. Spark coarse-grained mode</strong></p>
+<h3 id="heterogeneity-and-multi-tenancy" class="relative group">Heterogeneity and multi-tenancy <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#heterogeneity-and-multi-tenancy" aria-label="Anchor">#</a></span></h3><p>Moving from Spark Standalone to Mesos addresses yet another problem of shrinking down a number of clusters being used and providing a better cluster utilization. While it’s a valid point that it’s possible to run multiple contexts on the same cluster even with Spark Standalone, it becomes impossible to manage incompatible Spark versions within the same installation not to mention Java versions. With proper packaging and environment setup, it’s easy to achieve these goals with Mesos which makes it possible to not only run heterogeneous Spark contexts on the same cluster but share it with other applications as well (<em>Figure 6</em>).</p>
+<p>
+
+
+
+
+
+
+  
+  
+<figure><img src="./mesos-multi-tenancy.png" alt="" class="mx-auto my-0 rounded-md" />
+</figure>
+
+<strong>Figure 6. Mesos multi-tenancy</strong></p>
+<p>Let’s have a look at an example of running 4 Spark JobServer applications (<code>jobserver-bob</code> and <code>jobserver-alice</code> 2 instances each) on the same cluster. Each of JobServers creates Spark Context managed by driver program: <code>spark-driver-bob</code> with 14 CPU and <code>spark-driver-alice</code> with 21 CPU in total. Also, one can observe Marathon framework using 15% of cluster resources (<em>Figure 7</em>). Marathon is used to run JobServer instances which in turn use Mesos for running Spark Contexts. Details of running JobServer in Marathon will be covered in the next part of the blog post series.</p>
+<p>
+
+
+
+
+
+
+  
+  
+<figure><img src="./spark-multi-tenancy.png" alt="" class="mx-auto my-0 rounded-md" />
+</figure>
+
+
+
+
+
+
+
+
+  
+  
+<figure><img src="./mesos-tasks-screenshot.png" alt="" class="mx-auto my-0 rounded-md" />
+</figure>
+
+<strong>Figure 7. Spark on Mesos multi-tenancy</strong></p>
+<p>A naive way for supporting multiple Spark (and Java) versions would be installing all the necessary binaries on every machine in a cluster. While this allows to ramp up really quickly, usually after not so long time environments start to diverge and maintenance becomes tricky.</p>
+<p>The good news is that Spark-Mesos integration supports Docker: <code>spark.mesos.executor.docker.image</code> configuration parameter allows specifying a custom Docker image to use as an executor. Although it doesn’t look like the most important thing it provides a great flexibility when a number of environments and software versions being used grows.</p>
+<p>Yet another important feature worth mentioning is <a href="https://spark.apache.org/docs/latest/job-scheduling.html#dynamic-resource-allocation" target="_blank" rel="noreferrer">Dynamic Resource Allocation</a> which allows Spark to return unused resources to a cluster manager and acquire more resource when application demands grow. This provides a better resource utilization in case of multi-tenant workloads but it should be used with caution in case of latency-critical applications because resource acquisition takes some time and in worst case, some other framework can use requested resources. Dynamic allocation is supported for any Spark cluster manager using coarse-grained mode and in Mesos it’s a responsibility of an engineer to run Spark External Shuffle service in order to make it work.</p>
+<h2 id="conclusion" class="relative group">Conclusion <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#conclusion" aria-label="Anchor">#</a></span></h2><p>With a minor tweaking of existing Spark jobs and Spark JobServer, it’s become possible to achieve better utilization of a single cluster instead of running multiple idling Standalone clusters (<em>Figure 8</em>). Given that a problem with incompatible versions is solved by means of isolation, it’s possible to migrate all of the existing Spark projects to Mesos without upgrading all of them and keep running different versions of Spark and Java which are currently in use.</p>
+<p>
+
+
+
+
+
+
+  
+  
+<figure><img src="./mesos-cluster-utilization.png" alt="" class="mx-auto my-0 rounded-md" />
+</figure>
+
+<strong>Figure 8. Mesos cluster utilization</strong></p>
+<p>It’s worth mentioning that JobServer is running on the same cluster with the same fault tolerance and high availability guarantees provided by Mesos and Marathon. Another important aspect of installations running on any kind of orchestration platform is physical node characteristics and cluster layout which takes those aspects into account. This topic will be covered in the next part of the series together with migration of JobServer to Marathon and using Docker as a main tool for packaging and distribution of the applications running on Mesos.</p>
+
+      </div>
+    </section>
+    <footer class="max-w-prose pt-8 print:hidden">
+      
+  <div class="flex">
+    
+    
+    
+      
+      
+        
+        
+
+
+
+
+
+
+
+
+  
+    <picture
+      class="!mb-0 !mt-0 me-4 w-24 h-auto rounded-full"
+      
+    >
+      
+      
+      
+      
+      <img
+        width="400"
+        height="400"
+        class="!mb-0 !mt-0 me-4 w-24 h-auto rounded-full"
+        alt="Anton Kirillov"
+        loading="lazy" decoding="async"
+        
+          src="https://datastrophic.io/img/author.jpg"
+        
+      />
+    </picture>
+  
+
+
+      
+    
+    <div class="place-self-center">
+      
+        <div class="text-[0.6rem] uppercase leading-3 text-neutral-500 dark:text-neutral-400">
+          Author
+        </div>
+        <div class="font-semibold leading-6 text-neutral-800 dark:text-neutral-300">
+          Anton Kirillov
+        </div>
+      
+      
+        <div class="text-sm text-neutral-700 dark:text-neutral-400">Technical Leader. Compute and AI Infrastructure</div>
+      
+      <div class="text-2xl sm:text-lg">
+  <div class="flex flex-wrap text-neutral-400 dark:text-neutral-500">
+    
+      
+        <a
+          class="px-1 transition-transform hover:scale-125 hover:text-primary-700 dark:hover:text-primary-400"
+          style="will-change:transform;"
+          href="https://www.linkedin.com/in/datastrophic/"
+          target="_blank"
+          aria-label="Linkedin"
+          rel="me noopener noreferrer"
+          ><span class="icon relative inline-block px-1 align-text-bottom"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentColor" d="M416 32H31.9C14.3 32 0 46.5 0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6 0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3zM135.4 416H69V202.2h66.5V416zm-33.2-243c-21.3 0-38.5-17.3-38.5-38.5S80.9 96 102.2 96c21.2 0 38.5 17.3 38.5 38.5 0 21.3-17.2 38.5-38.5 38.5zm282.1 243h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6 0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2 0 79.7 44.3 79.7 101.9V416z"/></svg>
+</span></a
+        >
+      
+    
+      
+        <a
+          class="px-1 transition-transform hover:scale-125 hover:text-primary-700 dark:hover:text-primary-400"
+          style="will-change:transform;"
+          href="https://github.com/datastrophic"
+          target="_blank"
+          aria-label="Github"
+          rel="me noopener noreferrer"
+          ><span class="icon relative inline-block px-1 align-text-bottom"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path fill="currentColor" d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+</span></a
+        >
+      
+    
+  </div>
+
+</div>
+    </div>
+  </div>
+
+
+      
+
+      
+  
+    
+    
+    
+    <div class="pt-8">
+      <hr class="border-dotted border-neutral-300 dark:border-neutral-600" />
+      <div class="flex justify-between pt-3">
+        <span>
+          
+            <a class="group flex" href="https://datastrophic.io/resource-allocation-in-mesos-dominant-resource-fairness-explained/">
+              <span
+                class="me-2 text-neutral-700 transition-transform group-hover:-translate-x-[2px] group-hover:text-primary-600 dark:text-neutral dark:group-hover:text-primary-400"
+                ><span class="ltr:inline rtl:hidden">&larr;</span
+                ><span class="ltr:hidden rtl:inline">&rarr;</span></span
+              >
+              <span class="flex flex-col">
+                <span
+                  class="mt-[0.1rem] leading-6 group-hover:underline group-hover:decoration-primary-500"
+                  >Resource Allocation in Mesos: Dominant Resource Fairness</span
+                >
+                <span class="mt-[0.1rem] text-xs text-neutral-500 dark:text-neutral-400">
+                  
+                    <time datetime="2016-03-27 00:00:00 &#43;0000 UTC">27 March 2016</time>
+                  
+                </span>
+              </span>
+            </a>
+          
+        </span>
+        <span>
+          
+            <a class="group flex text-right" href="https://datastrophic.io/kubeflow-training-operators-and-istio-solving-the-proxy-sidecar-lifecycle-problem-for-aiml-workloads/">
+              <span class="flex flex-col">
+                <span
+                  class="mt-[0.1rem] leading-6 group-hover:underline group-hover:decoration-primary-500"
+                  >Kubeflow Training Operators and Istio: solving the proxy sidecar lifecycle problem for AI/ML workloads</span
+                >
+                <span class="mt-[0.1rem] text-xs text-neutral-500 dark:text-neutral-400">
+                  
+                    <time datetime="2021-10-04 00:00:00 &#43;0000 UTC">4 October 2021</time>
+                  
+                </span>
+              </span>
+              <span
+                class="ms-2 text-neutral-700 transition-transform group-hover:-translate-x-[-2px] group-hover:text-primary-600 dark:text-neutral dark:group-hover:text-primary-400"
+                ><span class="ltr:inline rtl:hidden">&rarr;</span
+                ><span class="ltr:hidden rtl:inline">&larr;</span></span
+              >
+            </a>
+          
+        </span>
+      </div>
+    </div>
+  
+
+
+      
+    </footer>
+  </article>
+
+      </main>
+      
+        <div
+          class="pointer-events-none absolute bottom-0 end-0 top-[100vh] w-12"
+          id="to-top"
+          hidden="true"
+        >
+          <a
+            href="#the-top"
+            class="pointer-events-auto sticky top-[calc(100vh-5.5rem)] flex h-12 w-12 items-center justify-center rounded-full bg-neutral/50 text-xl text-neutral-700 backdrop-blur hover:text-primary-600 dark:bg-neutral-800/50 dark:text-neutral dark:hover:text-primary-400"
+            aria-label="Scroll to top"
+            title="Scroll to top"
+          >
+            &uarr;
+          </a>
+        </div>
+      <footer class="py-10 print:hidden">
+  
+  
+  <div class="flex items-center justify-between">
+    <div>
+      
+      
+        <p class="text-sm text-neutral-500 dark:text-neutral-400">
+            © 2025 datastrophic
+        </p>
+      
+      
+      
+    </div>
+    <div class="flex flex-row items-center">
+      
+      
+      
+      
+        <div
+          class="me-14 cursor-pointer text-sm text-neutral-700 hover:text-primary-600 dark:text-neutral dark:hover:text-primary-400"
+        >
+          <button id="appearance-switcher-0" type="button" aria-label="appearance switcher">
+            <div
+              class="flex h-12 w-12 items-center justify-center dark:hidden"
+              title="Switch to dark appearance"
+            >
+              <span class="icon relative inline-block px-1 align-text-bottom"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M32 256c0-123.8 100.3-224 223.8-224c11.36 0 29.7 1.668 40.9 3.746c9.616 1.777 11.75 14.63 3.279 19.44C245 86.5 211.2 144.6 211.2 207.8c0 109.7 99.71 193 208.3 172.3c9.561-1.805 16.28 9.324 10.11 16.95C387.9 448.6 324.8 480 255.8 480C132.1 480 32 379.6 32 256z"/></svg>
+</span>
+            </div>
+            <div
+              class="hidden h-12 w-12 items-center justify-center dark:flex"
+              title="Switch to light appearance"
+            >
+              <span class="icon relative inline-block px-1 align-text-bottom"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M256 159.1c-53.02 0-95.1 42.98-95.1 95.1S202.1 351.1 256 351.1s95.1-42.98 95.1-95.1S309 159.1 256 159.1zM509.3 347L446.1 255.1l63.15-91.01c6.332-9.125 1.104-21.74-9.826-23.72l-109-19.7l-19.7-109c-1.975-10.93-14.59-16.16-23.72-9.824L256 65.89L164.1 2.736c-9.125-6.332-21.74-1.107-23.72 9.824L121.6 121.6L12.56 141.3C1.633 143.2-3.596 155.9 2.736 164.1L65.89 256l-63.15 91.01c-6.332 9.125-1.105 21.74 9.824 23.72l109 19.7l19.7 109c1.975 10.93 14.59 16.16 23.72 9.824L256 446.1l91.01 63.15c9.127 6.334 21.75 1.107 23.72-9.822l19.7-109l109-19.7C510.4 368.8 515.6 356.1 509.3 347zM256 383.1c-70.69 0-127.1-57.31-127.1-127.1c0-70.69 57.31-127.1 127.1-127.1s127.1 57.3 127.1 127.1C383.1 326.7 326.7 383.1 256 383.1z"/></svg>
+</span>
+            </div>
+          </button>
+        </div>
+      
+    </div>
+  </div>
+  
+  
+</footer>
+
+    </div>
+  </body>
+</html>

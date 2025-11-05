@@ -1,1 +1,147 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml"><url><loc>https://datastrophic.io/</loc><lastmod>2021-12-16T00:00:00+00:00</lastmod></url><url><loc>https://datastrophic.io/posts/</loc><lastmod>2021-12-16T00:00:00+00:00</lastmod></url><url><loc>https://datastrophic.io/secure-kubeflow-ingress-and-authentication/</loc><lastmod>2021-12-16T00:00:00+00:00</lastmod></url><url><loc>https://datastrophic.io/kubernetes-homelab-with-proxmox-kubeadm-calico-openebs-and-metallb/</loc><lastmod>2021-12-01T00:00:00+00:00</lastmod></url><url><loc>https://datastrophic.io/kubeflow-training-operators-and-istio-solving-the-proxy-sidecar-lifecycle-problem-for-aiml-workloads/</loc><lastmod>2021-10-04T00:00:00+00:00</lastmod></url><url><loc>https://datastrophic.io/spark-jobserver-from-spark-standalone-to-mesos-marathon-and-docker-part-i/</loc><lastmod>2017-10-12T00:00:00+00:00</lastmod></url><url><loc>https://datastrophic.io/resource-allocation-in-mesos-dominant-resource-fairness-explained/</loc><lastmod>2016-03-27T00:00:00+00:00</lastmod></url><url><loc>https://datastrophic.io/core-concepts-architecture-and-internals-of-apache-spark/</loc><lastmod>2016-03-03T00:00:00+00:00</lastmod></url><url><loc>https://datastrophic.io/data-processing-platforms-architectures-with-spark-mesos-akka-cassandra-and-kafka/</loc><lastmod>2015-09-16T00:00:00+00:00</lastmod></url><url><loc>https://datastrophic.io/evaluating-cassandra-2-1-counters-consistency/</loc><lastmod>2015-09-03T00:00:00+00:00</lastmod></url><url><loc>https://datastrophic.io/in-the-wake-of-scala-days-2015/</loc><lastmod>2015-07-01T00:00:00+00:00</lastmod></url><url><loc>https://datastrophic.io/about/</loc></url></urlset>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  
+    
+      <url>
+            <loc>https://datastrophic.io/</loc>
+            <lastmod>2025-11-04T00:00:00+00:00</lastmod>
+          </url>
+    
+  
+    
+      <url>
+            <loc>https://datastrophic.io/posts/</loc>
+            <lastmod>2025-11-04T00:00:00+00:00</lastmod>
+          </url>
+    
+  
+    
+  
+    
+  
+    
+      <url>
+            <loc>https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/</loc>
+            <lastmod>2025-11-04T00:00:00+00:00</lastmod>
+          </url>
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+      <url>
+            <loc>https://datastrophic.io/secure-kubeflow-ingress-and-authentication/</loc>
+            <lastmod>2021-12-16T00:00:00+00:00</lastmod>
+          </url>
+    
+  
+    
+  
+    
+      <url>
+            <loc>https://datastrophic.io/kubernetes-homelab-with-proxmox-kubeadm-calico-openebs-and-metallb/</loc>
+            <lastmod>2021-12-01T00:00:00+00:00</lastmod>
+          </url>
+    
+  
+    
+      <url>
+            <loc>https://datastrophic.io/kubeflow-training-operators-and-istio-solving-the-proxy-sidecar-lifecycle-problem-for-aiml-workloads/</loc>
+            <lastmod>2021-10-04T00:00:00+00:00</lastmod>
+          </url>
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+      <url>
+            <loc>https://datastrophic.io/spark-jobserver-from-spark-standalone-to-mesos-marathon-and-docker-part-i/</loc>
+            <lastmod>2017-10-12T00:00:00+00:00</lastmod>
+          </url>
+    
+  
+    
+  
+    
+      <url>
+            <loc>https://datastrophic.io/resource-allocation-in-mesos-dominant-resource-fairness-explained/</loc>
+            <lastmod>2016-03-27T00:00:00+00:00</lastmod>
+          </url>
+    
+  
+    
+  
+    
+      <url>
+            <loc>https://datastrophic.io/core-concepts-architecture-and-internals-of-apache-spark/</loc>
+            <lastmod>2016-03-03T00:00:00+00:00</lastmod>
+          </url>
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+      <url>
+            <loc>https://datastrophic.io/data-processing-platforms-architectures-with-spark-mesos-akka-cassandra-and-kafka/</loc>
+            <lastmod>2015-09-16T00:00:00+00:00</lastmod>
+          </url>
+    
+  
+    
+  
+    
+  
+    
+      <url>
+            <loc>https://datastrophic.io/evaluating-cassandra-2-1-counters-consistency/</loc>
+            <lastmod>2015-09-03T00:00:00+00:00</lastmod>
+          </url>
+    
+  
+    
+      <url>
+            <loc>https://datastrophic.io/in-the-wake-of-scala-days-2015/</loc>
+            <lastmod>2015-07-01T00:00:00+00:00</lastmod>
+          </url>
+    
+  
+    
+  
+    
+      <url>
+            <loc>https://datastrophic.io/about/</loc>
+          </url>
+    
+  
+    
+  
+</urlset>

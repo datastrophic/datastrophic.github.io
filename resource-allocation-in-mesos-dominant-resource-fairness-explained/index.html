@@ -1,44 +1,504 @@
-<!doctype html><html lang=en dir=ltr class=scroll-smooth data-default-appearance=light data-auto-appearance=true><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=theme-color content="#FFFFFF"><title>Resource Allocation in Mesos: Dominant Resource Fairness &#183; datastrophic</title><meta name=title content="Resource Allocation in Mesos: Dominant Resource Fairness &#183; datastrophic"><script type=text/javascript src=https://datastrophic.io/js/appearance.min.8a082f81b27f3cb2ee528df0b0bdc39787034cf2cc34d4669fbc9977c929023c.js integrity="sha256-iggvgbJ/PLLuUo3wsL3Dl4cDTPLMNNRmn7yZd8kpAjw="></script><link type=text/css rel=stylesheet href=https://datastrophic.io/css/main.bundle.min.8ddd6ca5d23ba630c6633e1e51f0ac292850c4d2af977565a9c52e2a3179e5c9.css integrity="sha256-jd1spdI7pjDGYz4eUfCsKShQxNKvl3VlqcUuKjF55ck="><script defer type=text/javascript id=script-bundle src=https://datastrophic.io/js/main.bundle.min.d4b727caf411cb5c3b421d0d427ed1e3daeafe0d04840327efad4978430edb8c.js integrity="sha256-1LcnyvQRy1w7Qh0NQn7R49rq/g0EhAMn761JeEMO24w=" data-copy=Copy data-copied=Copied></script><meta name=description content="
+
+
+
+
+
+
+
+<!doctype html>
+<html
+  lang="en"
+  dir="ltr"
+  class="scroll-smooth"
+  data-default-appearance="light"
+  data-auto-appearance="true"
+><head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#FFFFFF" />
+  
+  <title>Resource Allocation in Mesos: Dominant Resource Fairness &middot; datastrophic</title>
+    <meta name="title" content="Resource Allocation in Mesos: Dominant Resource Fairness &middot; datastrophic" />
+  
+  
+  
+  
+  
+  <script
+    type="text/javascript"
+    src="https://datastrophic.io/js/appearance.min.8a082f81b27f3cb2ee528df0b0bdc39787034cf2cc34d4669fbc9977c929023c.js"
+    integrity="sha256-iggvgbJ/PLLuUo3wsL3Dl4cDTPLMNNRmn7yZd8kpAjw="
+  ></script>
+  
+  
+  
+  
+  
+  
+  
+    
+  
+  
+  <link
+    type="text/css"
+    rel="stylesheet"
+    href="https://datastrophic.io/css/main.bundle.min.8ddd6ca5d23ba630c6633e1e51f0ac292850c4d2af977565a9c52e2a3179e5c9.css"
+    integrity="sha256-jd1spdI7pjDGYz4eUfCsKShQxNKvl3VlqcUuKjF55ck="
+  />
+  
+  
+  
+  
+    
+    
+  
+  
+  
+    
+    <script
+      defer
+      type="text/javascript"
+      id="script-bundle"
+      src="https://datastrophic.io/js/main.bundle.min.d4b727caf411cb5c3b421d0d427ed1e3daeafe0d04840327efad4978430edb8c.js"
+      integrity="sha256-1LcnyvQRy1w7Qh0NQn7R49rq/g0EhAMn761JeEMO24w="
+      data-copy="Copy"
+      data-copied="Copied"
+    ></script>
+  
+  
+  <meta
+    name="description"
+    content="
       
         Apache Mesos provides a unique approach to cluster resource management called two-level scheduling: instead of storing information about available cluster resources in a centralized manner it operates with a notion of resource offers which slave nodes advertise to running frameworks via Mesos master, thus keeping the whole system architecture concise and scalable. Master’s allocation module is responsible for making the decisions about which application should receive the next resource offer and it relies on Dominant Resource Fairness(DRF) algorithm for making these decisions.
       
-    "><link rel=canonical href=https://datastrophic.io/resource-allocation-in-mesos-dominant-resource-fairness-explained/><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/site.webmanifest><meta property="og:url" content="https://datastrophic.io/resource-allocation-in-mesos-dominant-resource-fairness-explained/"><meta property="og:site_name" content="datastrophic"><meta property="og:title" content="Resource Allocation in Mesos: Dominant Resource Fairness"><meta property="og:description" content="Apache Mesos provides a unique approach to cluster resource management called two-level scheduling: instead of storing information about available cluster resources in a centralized manner it operates with a notion of resource offers which slave nodes advertise to running frameworks via Mesos master, thus keeping the whole system architecture concise and scalable. Master’s allocation module is responsible for making the decisions about which application should receive the next resource offer and it relies on Dominant Resource Fairness(DRF) algorithm for making these decisions."><meta property="og:locale" content="en"><meta property="og:type" content="article"><meta property="article:section" content="posts"><meta property="article:published_time" content="2016-03-27T00:00:00+00:00"><meta property="article:modified_time" content="2016-03-27T00:00:00+00:00"><meta property="article:tag" content="Mesos"><meta property="article:tag" content="Sheduling"><meta property="article:tag" content="DRF"><meta name=twitter:card content="summary"><meta name=twitter:title content="Resource Allocation in Mesos: Dominant Resource Fairness"><meta name=twitter:description content="Apache Mesos provides a unique approach to cluster resource management called two-level scheduling: instead of storing information about available cluster resources in a centralized manner it operates with a notion of resource offers which slave nodes advertise to running frameworks via Mesos master, thus keeping the whole system architecture concise and scalable. Master’s allocation module is responsible for making the decisions about which application should receive the next resource offer and it relies on Dominant Resource Fairness(DRF) algorithm for making these decisions."><script type=application/ld+json>{"@context":"https://schema.org","@type":"Article","articleSection":"","name":"Resource Allocation in Mesos: Dominant Resource Fairness","headline":"Resource Allocation in Mesos: Dominant Resource Fairness","abstract":"Apache Mesos provides a unique approach to cluster resource management called two-level scheduling: instead of storing information about available cluster resources in a centralized manner it operates with a notion of resource offers which slave nodes advertise to running frameworks via Mesos master, thus keeping the whole system architecture concise and scalable. Master’s allocation module is responsible for making the decisions about which application should receive the next resource offer and it relies on Dominant Resource Fairness(DRF) algorithm for making these decisions.","inLanguage":"en","url":"https:\/\/datastrophic.io\/resource-allocation-in-mesos-dominant-resource-fairness-explained\/","author":{"@type":"Person","name":"Anton Kirillov"},"copyrightYear":"2016","dateCreated":"2016-03-27T00:00:00\u002b00:00","datePublished":"2016-03-27T00:00:00\u002b00:00","dateModified":"2016-03-27T00:00:00\u002b00:00","keywords":["mesos","sheduling","DRF"],"mainEntityOfPage":"true","wordCount":"2653"}</script><script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","item":"https://datastrophic.io/","name":"","position":1},{"@type":"ListItem","item":"https://datastrophic.io/posts/","name":"","position":2},{"@type":"ListItem","name":"Resource Allocation in Mesos Dominant Resource Fairness","position":3}]}</script><meta name=author content="Anton Kirillov"><link href=https://www.linkedin.com/in/datastrophic/ rel=me><link href=https://github.com/datastrophic rel=me><script async src="https://www.googletagmanager.com/gtag/js?id=G-Z9WG27GT0G"></script><script>var dnt,doNotTrack=!1;if(!1&&(dnt=navigator.doNotTrack||window.doNotTrack||navigator.msDoNotTrack,doNotTrack=dnt=="1"||dnt=="yes"),!doNotTrack){window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-Z9WG27GT0G")}</script></head><body class="m-auto flex h-screen max-w-7xl flex-col bg-neutral px-6 text-lg leading-7 text-neutral-900 dark:bg-neutral-800 dark:text-neutral sm:px-14 md:px-24 lg:px-32"><div id=the-top class="absolute flex self-center"><a class="-translate-y-8 rounded-b-lg bg-primary-200 px-3 py-1 text-sm focus:translate-y-0 dark:bg-neutral-600" href=#main-content><span class="pe-2 font-bold text-primary-600 dark:text-primary-400">&darr;</span>Skip to main content</a></div><header class="py-6 font-semibold text-neutral-900 dark:text-neutral sm:py-10 print:hidden"><nav class="flex items-start justify-between sm:items-center"><div class="z-40 flex flex-row items-center"><a class="decoration-primary-500 hover:underline hover:decoration-2 hover:underline-offset-2" rel=me href=/>datastrophic</a></div><label id=menu-button for=menu-controller class="block sm:hidden"><input type=checkbox id=menu-controller class=hidden><div class="cursor-pointer hover:text-primary-600 dark:hover:text-primary-400"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 448 512"><path fill="currentColor" d="M0 96C0 78.33 14.33 64 32 64H416c17.7.0 32 14.33 32 32 0 17.7-14.3 32-32 32H32C14.33 128 0 113.7.0 96zM0 256c0-17.7 14.33-32 32-32H416c17.7.0 32 14.3 32 32s-14.3 32-32 32H32c-17.67.0-32-14.3-32-32zM416 448H32c-17.67.0-32-14.3-32-32s14.33-32 32-32H416c17.7.0 32 14.3 32 32s-14.3 32-32 32z"/></svg></span></div><div id=menu-wrapper class="invisible fixed inset-0 z-30 m-auto h-full w-full cursor-default overflow-auto bg-neutral-100/50 opacity-0 backdrop-blur-sm transition-opacity dark:bg-neutral-900/50"><ul class="mx-auto flex w-full max-w-7xl list-none flex-col overflow-visible px-6 py-6 text-end sm:px-14 sm:py-10 sm:pt-10 md:px-24 lg:px-32"><li class=mb-1><span class="cursor-pointer hover:text-primary-600 dark:hover:text-primary-400"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 320 512"><path fill="currentColor" d="M310.6 361.4c12.5 12.5 12.5 32.75.0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3 54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75.0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75.0-45.25s32.75-12.5 45.25.0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25.0s12.5 32.75.0 45.25l-105.4 105.4L310.6 361.4z"/></svg></span></span></li><li class="group mb-1"><a href=/posts/ title onclick=close_menu()><span class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2">archive</span></a></li><li class="group mb-1"><a href=/about/ title onclick=close_menu()><span class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2">about</span></a></li></ul></div></label><ul class="hidden list-none flex-row text-end sm:flex"><li class="group mb-1 sm:mb-0 sm:me-7 sm:last:me-0"><a href=/posts/ title><span class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2">archive</span></a></li><li class="group mb-1 sm:mb-0 sm:me-7 sm:last:me-0"><a href=/about/ title><span class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2">about</span></a></li></ul></nav></header><div class="relative flex grow flex-col"><main id=main-content class=grow><article><header class=max-w-prose><h1 class="mb-8 mt-0 text-4xl font-extrabold text-neutral-900 dark:text-neutral">Resource Allocation in Mesos: Dominant Resource Fairness</h1><div class="mb-10 text-base text-neutral-500 dark:text-neutral-400 print:hidden"><div class="flex flex-row flex-wrap items-center"><time datetime="2016-03-27 00:00:00 +0000 UTC">27 March 2016</time><span class="px-2 text-primary-500">&#183;</span><span title="Reading time">13 mins</span></div><div class="my-1 flex flex-wrap text-xs leading-relaxed text-neutral-500 dark:text-neutral-400"><a href=https://datastrophic.io/tags/mesos/ class="mx-1 my-1 rounded-md border border-neutral-200 px-1 py-[1px] hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:hover:border-primary-600 dark:hover:text-primary-400">Mesos</a>
-<a href=https://datastrophic.io/tags/sheduling/ class="mx-1 my-1 rounded-md border border-neutral-200 px-1 py-[1px] hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:hover:border-primary-600 dark:hover:text-primary-400">Sheduling</a>
-<a href=https://datastrophic.io/tags/drf/ class="mx-1 my-1 rounded-md border border-neutral-200 px-1 py-[1px] hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:hover:border-primary-600 dark:hover:text-primary-400">DRF</a></div></div></header><section class="prose mt-0 flex max-w-full flex-col dark:prose-invert lg:flex-row"><div class="min-h-0 min-w-0 max-w-prose grow"><p>Apache Mesos provides a unique approach to cluster resource management called <strong>two-level scheduling</strong>: instead of storing information about available cluster resources in a centralized manner it operates with a notion of <strong>resource offers</strong> which slave nodes advertise to running <strong>frameworks</strong> via Mesos master, thus keeping the whole system architecture concise and scalable. Master&rsquo;s allocation module is responsible for making the decisions about which application should receive the next resource offer and it relies on Dominant Resource Fairness(DRF) algorithm for making these decisions. This post presents a set of experiments for different use cases using simple Mesos framework implementation to observe and analyze DRF behavior.</p><h2 id=architecture-recap class="relative group">Architecture Recap <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#architecture-recap aria-label=Anchor>#</a></span></h2><p>Mesos <a href=http://mesos.apache.org/documentation/latest/architecture/ target=_blank rel=noreferrer>official documentation</a> provides a great overview of the architecture, so let&rsquo;s briefly recap the framework and resource offers part of it.</p><h3 id=frameworks class="relative group">Frameworks <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#frameworks aria-label=Anchor>#</a></span></h3><p>Mesos frameworks consist of two main components: <em>Scheduler</em> and <em>Executor</em>.</p><p>The Scheduler is a single instance/process which negotiates with the Master and is responsible for handling resource offers, task submissions, tasks status updates, framework messages, and exceptional situations such as slave losses, disconnections, and various errors. Sometimes high availability is a requirement for schedulers, so some sort of leader election or specific logic is needed to avoid conflicts in task submissions.</p><p>The Executor is a process executed on Slave nodes that receive tasks from Scheduler and run them. Executor lifecycle is bound to Scheduler so when Scheduler finished its job it also shutdowns the executors (actually Mesos master performs this routine when framework terminates). If the Executor is a JVM process it usually has a thread pool for executing received tasks.</p><p>Tasks are serialized in <em>protobuf</em> and contain all the information about resources needed, executor to run on, some binary serialized payload (e.g. Spark tasks are serialized and transferred as a payload in Mesos tasks). Here&rsquo;s an example of how Task is created:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-scala data-lang=scala><span class=line><span class=cl><span class=k>def</span> <span class=n>buildTask</span><span class=o>(</span><span class=n>offer</span><span class=k>:</span> <span class=kt>Offer</span><span class=o>,</span> <span class=n>cpus</span><span class=k>:</span> <span class=kt>Double</span><span class=o>,</span> <span class=n>memory</span><span class=k>:</span> <span class=kt>Int</span><span class=o>,</span> <span class=n>executorInfo</span><span class=k>:</span> <span class=kt>ExecutorInfo</span><span class=o>)</span> <span class=k>=</span> <span class=o>{</span>
-</span></span><span class=line><span class=cl>  <span class=k>val</span> <span class=n>cpuResource</span> <span class=k>=</span> <span class=nc>Resource</span><span class=o>.</span><span class=n>newBuilder</span>
-</span></span><span class=line><span class=cl>                      <span class=o>.</span><span class=n>setType</span><span class=o>(</span><span class=nc>SCALAR</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>                      <span class=o>.</span><span class=n>setName</span><span class=o>(</span><span class=s>&#34;cpus&#34;</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>                      <span class=o>.</span><span class=n>setScalar</span><span class=o>(</span><span class=nc>Scalar</span><span class=o>.</span><span class=n>newBuilder</span><span class=o>.</span><span class=n>setValue</span><span class=o>(</span><span class=n>cpus</span><span class=o>))</span>
-</span></span><span class=line><span class=cl>                      <span class=o>.</span><span class=n>setRole</span><span class=o>(</span><span class=s>&#34;*&#34;</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>                      <span class=o>.</span><span class=n>build</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>  <span class=k>val</span> <span class=n>memResource</span> <span class=k>=</span> <span class=nc>Resource</span><span class=o>.</span><span class=n>newBuilder</span>
-</span></span><span class=line><span class=cl>                      <span class=o>.</span><span class=n>setType</span><span class=o>(</span><span class=nc>SCALAR</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>                      <span class=o>.</span><span class=n>setName</span><span class=o>(</span><span class=s>&#34;mem&#34;</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>                      <span class=o>.</span><span class=n>setScalar</span><span class=o>(</span><span class=nc>Scalar</span><span class=o>.</span><span class=n>newBuilder</span><span class=o>.</span><span class=n>setValue</span><span class=o>(</span><span class=n>memory</span><span class=o>))</span>
-</span></span><span class=line><span class=cl>                      <span class=o>.</span><span class=n>setRole</span><span class=o>(</span><span class=s>&#34;*&#34;</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>                      <span class=o>.</span><span class=n>build</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>  <span class=nc>TaskInfo</span><span class=o>.</span><span class=n>newBuilder</span><span class=o>()</span>
-</span></span><span class=line><span class=cl>  <span class=o>.</span><span class=n>setSlaveId</span><span class=o>(</span><span class=nc>SlaveID</span><span class=o>.</span><span class=n>newBuilder</span><span class=o>().</span><span class=n>setValue</span><span class=o>(</span><span class=n>offer</span><span class=o>.</span><span class=n>getSlaveId</span><span class=o>.</span><span class=n>getValue</span><span class=o>).</span><span class=n>build</span><span class=o>())</span>
-</span></span><span class=line><span class=cl>  <span class=o>.</span><span class=n>setTaskId</span><span class=o>(</span><span class=nc>TaskID</span><span class=o>.</span><span class=n>newBuilder</span><span class=o>().</span><span class=n>setValue</span><span class=o>(</span><span class=s>s&#34;</span><span class=si>$uuid</span><span class=s>&#34;</span><span class=o>))</span>
-</span></span><span class=line><span class=cl>  <span class=o>.</span><span class=n>setExecutor</span><span class=o>(</span><span class=n>executorInfo</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>  <span class=o>.</span><span class=n>setName</span><span class=o>(</span><span class=nc>UUID</span><span class=o>.</span><span class=n>randomUUID</span><span class=o>().</span><span class=n>toString</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>  <span class=o>.</span><span class=n>addResources</span><span class=o>(</span><span class=n>cpuResource</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>  <span class=o>.</span><span class=n>addResources</span><span class=o>(</span><span class=n>memResource</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>  <span class=o>.</span><span class=n>build</span><span class=o>()</span>
-</span></span><span class=line><span class=cl><span class=o>}</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=k>def</span> <span class=n>buildExecutorInfo</span><span class=o>(</span><span class=n>d</span><span class=k>:</span> <span class=kt>SchedulerDriver</span><span class=o>,</span> <span class=n>prefix</span><span class=k>:</span> <span class=kt>String</span><span class=o>)</span><span class=k>:</span> <span class=kt>ExecutorInfo</span> <span class=o>=</span> <span class=o>{</span>
-</span></span><span class=line><span class=cl>  <span class=k>val</span> <span class=n>scriptPath</span> <span class=k>=</span> <span class=nc>System</span><span class=o>.</span><span class=n>getProperty</span><span class=o>(</span><span class=s>&#34;executor.path&#34;</span><span class=o>,</span><span class=s>&#34;/throttle/throttle-executor.sh&#34;</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>  <span class=nc>ExecutorInfo</span><span class=o>.</span><span class=n>newBuilder</span><span class=o>()</span>
-</span></span><span class=line><span class=cl>  <span class=o>.</span><span class=n>setCommand</span><span class=o>(</span><span class=nc>CommandInfo</span><span class=o>.</span><span class=n>newBuilder</span><span class=o>().</span><span class=n>setValue</span><span class=o>(</span><span class=s>&#34;/bin/sh &#34;</span><span class=o>+</span><span class=n>scriptPath</span><span class=o>))</span>
-</span></span><span class=line><span class=cl>  <span class=o>.</span><span class=n>setExecutorId</span><span class=o>(</span><span class=nc>ExecutorID</span><span class=o>.</span><span class=n>newBuilder</span><span class=o>().</span><span class=n>setValue</span><span class=o>(</span><span class=s>s&#34;</span><span class=si>${</span><span class=n>prefix</span><span class=si>}</span><span class=s>_</span><span class=si>$uuid</span><span class=s>&#34;</span><span class=o>))</span>
-</span></span><span class=line><span class=cl>  <span class=o>.</span><span class=n>build</span><span class=o>()</span>
-</span></span><span class=line><span class=cl><span class=o>}</span>
-</span></span></code></pre></div><p>Sources are available at the <a href=https://github.com/datastrophic/mesos-workshop/tree/master/src/main/scala/io/datastrophic/mesos target=_blank rel=noreferrer>accompanying github repo</a>.</p><h3 id=resource-offers class="relative group">Resource Offers <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#resource-offers aria-label=Anchor>#</a></span></h3><p><figure><img src=./mesos-resource-offers.jpeg alt class="mx-auto my-0 rounded-md"></figure></p><ol><li>Slave nodes periodically report to the Master free resources they can provide. This also happens when executor tasks complete minimizing delay</li><li><em>Allocation module</em> starts offering the resources to frameworks. A dominant resource fairness algorithm is used to define the order in which frameworks are offered the resource. The framework can either accept or decline the offer depending on its demand. In case of decline (e.g. insufficient resources of some type) the resources are offered to the next framework according to DRF.</li><li>If resources in the offer satisfy the framework&rsquo;s demand then it creates a list of <em>Tasks</em> and sends it back to Master. Master could respond with an error if tasks resources exceed the amount provided in the offer.</li><li>Master sends set of tasks to the <em>Executor</em> on the Slave (and launches the executor if it&rsquo;s not running)</li></ol><h3 id=dominant-resource-fairness-drf class="relative group">Dominant Resource Fairness (DRF) <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#dominant-resource-fairness-drf aria-label=Anchor>#</a></span></h3><p>The main problem that DRF solves is sharing of the resources of multiple types (but not only CPU) which hasn&rsquo;t been addressed before and caused insufficient resource distribution among applications with heterogeneous resource demands. To address this problem the notions of <em>dominant share</em> and <em>dominant resource</em> have been introduced.</p><p><em>Dominant resource</em> - a resource of a specific type (cpu, memory, disk, ports) which is most demanded by the given framework among other resources it needs. This resource is identified as a share of the total cluster resources of the same type.</p><p><em>Example 1</em>: given a cluster with the total amount of <em>10 CPUs</em> and <em>20GB RAM</em>, resource demands are: Framework A <em>&lt; 4 CPU, 5 GB ></em>, Framework B <em>&lt; 2 CPU, 8 GB ></em>.
-The same expressed as a share of total cluster resources: Framework A <em>&lt; 40% CPU, 25% RAM ></em>, Framework B <em>&lt; 20% CPU, 40% RAM ></em>. So for Framework A CPU is a dominant resource, while for Framework B RAM is.</p><p>DRF computes the share of dominant resource allocated to a framework (<em>dominant share</em>) and tries to maximize the smallest dominant share in the system. During the next round of resource offers allocation module applies DRF to identify the dominant shares of the frameworks and offers the resources first to the one with the smallest dominant share, then to the second smallest one, and so on.</p><p><em>Example 2</em>: consider the cluster with total amount of <em>10 CPUs</em> and <em>20GB RAM</em>, resource demands are: Framework A <em>&lt; 3 CPU, 2 GB ></em>, Framework B <em>&lt; 1 CPU, 5 GB ></em>. Same in percents: A_&lt; 33% CPU, 10% RAM ><em>, B</em>&lt; 10% CPU, 25% RAM >_. Steps:</p><pre tabindex=0><code>1. (10cpu, 20gb) to A: A(3cpu, 2gb, 33%), B (0cpu, 0gb, 0%)
+    "
+  />
+  
+  
+  
+  
+    <link rel="canonical" href="https://datastrophic.io/resource-allocation-in-mesos-dominant-resource-fairness-explained/" />
+  
+  
+  
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+  
+  
+  
+  
+  
+  
+  
+  
+  <meta property="og:url" content="https://datastrophic.io/resource-allocation-in-mesos-dominant-resource-fairness-explained/">
+  <meta property="og:site_name" content="datastrophic">
+  <meta property="og:title" content="Resource Allocation in Mesos: Dominant Resource Fairness">
+  <meta property="og:description" content="Apache Mesos provides a unique approach to cluster resource management called two-level scheduling: instead of storing information about available cluster resources in a centralized manner it operates with a notion of resource offers which slave nodes advertise to running frameworks via Mesos master, thus keeping the whole system architecture concise and scalable. Master’s allocation module is responsible for making the decisions about which application should receive the next resource offer and it relies on Dominant Resource Fairness(DRF) algorithm for making these decisions.">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2016-03-27T00:00:00+00:00">
+    <meta property="article:modified_time" content="2016-03-27T00:00:00+00:00">
+    <meta property="article:tag" content="Mesos">
+    <meta property="article:tag" content="Sheduling">
+    <meta property="article:tag" content="DRF">
+
+  
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Resource Allocation in Mesos: Dominant Resource Fairness">
+  <meta name="twitter:description" content="Apache Mesos provides a unique approach to cluster resource management called two-level scheduling: instead of storing information about available cluster resources in a centralized manner it operates with a notion of resource offers which slave nodes advertise to running frameworks via Mesos master, thus keeping the whole system architecture concise and scalable. Master’s allocation module is responsible for making the decisions about which application should receive the next resource offer and it relies on Dominant Resource Fairness(DRF) algorithm for making these decisions.">
+
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "articleSection": "",
+    "name": "Resource Allocation in Mesos: Dominant Resource Fairness",
+    "headline": "Resource Allocation in Mesos: Dominant Resource Fairness",
+    
+    "abstract": "Apache Mesos provides a unique approach to cluster resource management called two-level scheduling: instead of storing information about available cluster resources in a centralized manner it operates with a notion of resource offers which slave nodes advertise to running frameworks via Mesos master, thus keeping the whole system architecture concise and scalable. Master’s allocation module is responsible for making the decisions about which application should receive the next resource offer and it relies on Dominant Resource Fairness(DRF) algorithm for making these decisions.",
+    "inLanguage": "en",
+    "url" : "https:\/\/datastrophic.io\/resource-allocation-in-mesos-dominant-resource-fairness-explained\/",
+    "author" : {
+      "@type": "Person",
+      "name": "Anton Kirillov"
+    },
+    "copyrightYear": "2016",
+    "dateCreated": "2016-03-27T00:00:00\u002b00:00",
+    "datePublished": "2016-03-27T00:00:00\u002b00:00",
+    
+    "dateModified": "2016-03-27T00:00:00\u002b00:00",
+    
+    "keywords": ["mesos","sheduling","DRF"],
+    
+    "mainEntityOfPage": "true",
+    "wordCount": "2653"
+  }
+  </script>
+    
+    <script type="application/ld+json">
+    {
+   "@context": "https://schema.org",
+   "@type": "BreadcrumbList",
+   "itemListElement": [
+     {
+       "@type": "ListItem",
+       "item": "https://datastrophic.io/",
+       "name": "",
+       "position": 1
+     },
+     {
+       "@type": "ListItem",
+       "item": "https://datastrophic.io/posts/",
+       "name": "",
+       "position": 2
+     },
+     {
+       "@type": "ListItem",
+       "name": "Resource Allocation in Mesos Dominant Resource Fairness",
+       "position": 3
+     }
+   ]
+ }
+  </script>
+
+  
+  
+    <meta name="author" content="Anton Kirillov" />
+  
+  
+    
+      <link href="https://www.linkedin.com/in/datastrophic/" rel="me" />
+    
+      <link href="https://github.com/datastrophic" rel="me" />
+    
+  
+  
+  
+
+
+
+
+
+
+
+  
+  
+  
+  
+  
+  
+      <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z9WG27GT0G"></script>
+      <script>
+        var doNotTrack = false;
+        if ( false ) {
+          var dnt = (navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack);
+          var doNotTrack = (dnt == "1" || dnt == "yes");
+        }
+        if (!doNotTrack) {
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-Z9WG27GT0G');
+        }
+      </script>
+
+
+  
+  
+</head>
+<body
+    class="m-auto flex h-screen max-w-7xl flex-col bg-neutral px-6 text-lg leading-7 text-neutral-900 dark:bg-neutral-800 dark:text-neutral sm:px-14 md:px-24 lg:px-32"
+  >
+    <div id="the-top" class="absolute flex self-center">
+      <a
+        class="-translate-y-8 rounded-b-lg bg-primary-200 px-3 py-1 text-sm focus:translate-y-0 dark:bg-neutral-600"
+        href="#main-content"
+        ><span class="pe-2 font-bold text-primary-600 dark:text-primary-400">&darr;</span
+        >Skip to main content</a
+      >
+    </div>
+    
+    
+      <header class="py-6 font-semibold text-neutral-900 dark:text-neutral sm:py-10 print:hidden">
+  <nav class="flex items-start justify-between sm:items-center">
+    
+    <div class="z-40 flex flex-row items-center">
+      
+  <a
+    class="decoration-primary-500 hover:underline hover:decoration-2 hover:underline-offset-2"
+    rel="me"
+    href="/"
+    >datastrophic</a
+  >
+
+    </div>
+    
+      
+      <label id="menu-button" for="menu-controller" class="block sm:hidden">
+        <input type="checkbox" id="menu-controller" class="hidden" />
+        <div class="cursor-pointer hover:text-primary-600 dark:hover:text-primary-400">
+          <span class="icon relative inline-block px-1 align-text-bottom"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentColor" d="M0 96C0 78.33 14.33 64 32 64H416C433.7 64 448 78.33 448 96C448 113.7 433.7 128 416 128H32C14.33 128 0 113.7 0 96zM0 256C0 238.3 14.33 224 32 224H416C433.7 224 448 238.3 448 256C448 273.7 433.7 288 416 288H32C14.33 288 0 273.7 0 256zM416 448H32C14.33 448 0 433.7 0 416C0 398.3 14.33 384 32 384H416C433.7 384 448 398.3 448 416C448 433.7 433.7 448 416 448z"/></svg>
+</span>
+        </div>
+        <div
+          id="menu-wrapper"
+          class="invisible fixed inset-0 z-30 m-auto h-full w-full cursor-default overflow-auto bg-neutral-100/50 opacity-0 backdrop-blur-sm transition-opacity dark:bg-neutral-900/50"
+        >
+          <ul
+            class="mx-auto flex w-full max-w-7xl list-none flex-col overflow-visible px-6 py-6 text-end sm:px-14 sm:py-10 sm:pt-10 md:px-24 lg:px-32"
+          >
+            <li class="mb-1">
+              <span class="cursor-pointer hover:text-primary-600 dark:hover:text-primary-400"
+                ><span class="icon relative inline-block px-1 align-text-bottom"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path fill="currentColor" d="M310.6 361.4c12.5 12.5 12.5 32.75 0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3L54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75 0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25l-105.4 105.4L310.6 361.4z"/></svg>
+</span></span
+              >
+            </li>
+            
+              
+                
+                <li class="group mb-1">
+                  
+                    <a
+                      href="/posts/"
+                      title=""
+                      onclick="close_menu()"
+                      
+                      ><span
+                          class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2"
+                          >archive</span
+                        >
+                      </a
+                    >
+                  
+                </li>
+              
+                
+                <li class="group mb-1">
+                  
+                    <a
+                      href="/about/"
+                      title=""
+                      onclick="close_menu()"
+                      
+                      ><span
+                          class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2"
+                          >about</span
+                        >
+                      </a
+                    >
+                  
+                </li>
+              
+              
+            
+          </ul>
+        </div>
+      </label>
+      
+      <ul class="hidden list-none flex-row text-end sm:flex">
+        
+          
+            
+            <li class="group mb-1 sm:mb-0 sm:me-7 sm:last:me-0">
+              
+                <a
+                  href="/posts/"
+                  title=""
+                  
+                  ><span
+                      class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2"
+                      >archive</span
+                    >
+                  </a
+                >
+              
+            </li>
+          
+            
+            <li class="group mb-1 sm:mb-0 sm:me-7 sm:last:me-0">
+              
+                <a
+                  href="/about/"
+                  title=""
+                  
+                  ><span
+                      class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2"
+                      >about</span
+                    >
+                  </a
+                >
+              
+            </li>
+          
+          
+
+        
+      </ul>
+    
+  </nav>
+</header>
+
+    
+    <div class="relative flex grow flex-col">
+      <main id="main-content" class="grow">
+        
+  <article>
+    <header class="max-w-prose">
+      
+      <h1 class="mb-8 mt-0 text-4xl font-extrabold text-neutral-900 dark:text-neutral">
+        Resource Allocation in Mesos: Dominant Resource Fairness
+      </h1>
+      
+        <div class="mb-10 text-base text-neutral-500 dark:text-neutral-400 print:hidden">
+          
+
+
+
+
+
+  
+  
+
+
+
+  
+
+  
+  
+    
+  
+
+  
+
+  
+
+  
+    
+  
+
+  
+
+
+  <div class="flex flex-row flex-wrap items-center">
+    
+    
+      <time datetime="2016-03-27 00:00:00 &#43;0000 UTC">27 March 2016</time><span class="px-2 text-primary-500">&middot;</span><span title="Reading time">13 mins</span>
+    
+
+    
+    
+  </div>
+
+  
+  
+    <div class="my-1 flex flex-wrap text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
+      
+        
+      
+        
+          
+            <a
+              href="https://datastrophic.io/tags/mesos/"
+              class="mx-1 my-1 rounded-md border border-neutral-200 px-1 py-[1px] hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:hover:border-primary-600 dark:hover:text-primary-400"
+              >Mesos</a
+            >
+          
+            <a
+              href="https://datastrophic.io/tags/sheduling/"
+              class="mx-1 my-1 rounded-md border border-neutral-200 px-1 py-[1px] hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:hover:border-primary-600 dark:hover:text-primary-400"
+              >Sheduling</a
+            >
+          
+            <a
+              href="https://datastrophic.io/tags/drf/"
+              class="mx-1 my-1 rounded-md border border-neutral-200 px-1 py-[1px] hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:hover:border-primary-600 dark:hover:text-primary-400"
+              >DRF</a
+            >
+          
+        
+      
+    </div>
+  
+
+
+        </div>
+      
+      
+    </header>
+    <section class="prose mt-0 flex max-w-full flex-col dark:prose-invert lg:flex-row">
+      
+      <div class="min-h-0 min-w-0 max-w-prose grow">
+        <p>Apache Mesos provides a unique approach to cluster resource management called <strong>two-level scheduling</strong>: instead of storing information about available cluster resources in a centralized manner it operates with a notion of <strong>resource offers</strong> which slave nodes advertise to running <strong>frameworks</strong> via Mesos master, thus keeping the whole system architecture concise and scalable. Master&rsquo;s allocation module is responsible for making the decisions about which application should receive the next resource offer and it relies on Dominant Resource Fairness(DRF) algorithm for making these decisions. This post presents a set of experiments for different use cases using simple Mesos framework implementation to observe and analyze DRF behavior.</p>
+<h2 id="architecture-recap" class="relative group">Architecture Recap <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#architecture-recap" aria-label="Anchor">#</a></span></h2><p>Mesos <a href="http://mesos.apache.org/documentation/latest/architecture/" target="_blank" rel="noreferrer">official documentation</a> provides a great overview of the architecture, so let&rsquo;s briefly recap the framework and resource offers part of it.</p>
+<h3 id="frameworks" class="relative group">Frameworks <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#frameworks" aria-label="Anchor">#</a></span></h3><p>Mesos frameworks consist of two main components: <em>Scheduler</em> and <em>Executor</em>.</p>
+<p>The Scheduler is a single instance/process which negotiates with the Master and is responsible for handling resource offers, task submissions, tasks status updates, framework messages, and exceptional situations such as slave losses, disconnections, and various errors. Sometimes high availability is a requirement for schedulers, so some sort of leader election or specific logic is needed to avoid conflicts in task submissions.</p>
+<p>The Executor is a process executed on Slave nodes that receive tasks from Scheduler and run them. Executor lifecycle is bound to Scheduler so when Scheduler finished its job it also shutdowns the executors (actually Mesos master performs this routine when framework terminates). If the Executor is a JVM process it usually has a thread pool for executing received tasks.</p>
+<p>Tasks are serialized in <em>protobuf</em> and contain all the information about resources needed, executor to run on, some binary serialized payload (e.g. Spark tasks are serialized and transferred as a payload in Mesos tasks). Here&rsquo;s an example of how Task is created:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-scala" data-lang="scala"><span class="line"><span class="cl"><span class="k">def</span> <span class="n">buildTask</span><span class="o">(</span><span class="n">offer</span><span class="k">:</span> <span class="kt">Offer</span><span class="o">,</span> <span class="n">cpus</span><span class="k">:</span> <span class="kt">Double</span><span class="o">,</span> <span class="n">memory</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">executorInfo</span><span class="k">:</span> <span class="kt">ExecutorInfo</span><span class="o">)</span> <span class="k">=</span> <span class="o">{</span>
+</span></span><span class="line"><span class="cl">  <span class="k">val</span> <span class="n">cpuResource</span> <span class="k">=</span> <span class="nc">Resource</span><span class="o">.</span><span class="n">newBuilder</span>
+</span></span><span class="line"><span class="cl">                      <span class="o">.</span><span class="n">setType</span><span class="o">(</span><span class="nc">SCALAR</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">                      <span class="o">.</span><span class="n">setName</span><span class="o">(</span><span class="s">&#34;cpus&#34;</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">                      <span class="o">.</span><span class="n">setScalar</span><span class="o">(</span><span class="nc">Scalar</span><span class="o">.</span><span class="n">newBuilder</span><span class="o">.</span><span class="n">setValue</span><span class="o">(</span><span class="n">cpus</span><span class="o">))</span>
+</span></span><span class="line"><span class="cl">                      <span class="o">.</span><span class="n">setRole</span><span class="o">(</span><span class="s">&#34;*&#34;</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">                      <span class="o">.</span><span class="n">build</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">  <span class="k">val</span> <span class="n">memResource</span> <span class="k">=</span> <span class="nc">Resource</span><span class="o">.</span><span class="n">newBuilder</span>
+</span></span><span class="line"><span class="cl">                      <span class="o">.</span><span class="n">setType</span><span class="o">(</span><span class="nc">SCALAR</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">                      <span class="o">.</span><span class="n">setName</span><span class="o">(</span><span class="s">&#34;mem&#34;</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">                      <span class="o">.</span><span class="n">setScalar</span><span class="o">(</span><span class="nc">Scalar</span><span class="o">.</span><span class="n">newBuilder</span><span class="o">.</span><span class="n">setValue</span><span class="o">(</span><span class="n">memory</span><span class="o">))</span>
+</span></span><span class="line"><span class="cl">                      <span class="o">.</span><span class="n">setRole</span><span class="o">(</span><span class="s">&#34;*&#34;</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">                      <span class="o">.</span><span class="n">build</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">  <span class="nc">TaskInfo</span><span class="o">.</span><span class="n">newBuilder</span><span class="o">()</span>
+</span></span><span class="line"><span class="cl">  <span class="o">.</span><span class="n">setSlaveId</span><span class="o">(</span><span class="nc">SlaveID</span><span class="o">.</span><span class="n">newBuilder</span><span class="o">().</span><span class="n">setValue</span><span class="o">(</span><span class="n">offer</span><span class="o">.</span><span class="n">getSlaveId</span><span class="o">.</span><span class="n">getValue</span><span class="o">).</span><span class="n">build</span><span class="o">())</span>
+</span></span><span class="line"><span class="cl">  <span class="o">.</span><span class="n">setTaskId</span><span class="o">(</span><span class="nc">TaskID</span><span class="o">.</span><span class="n">newBuilder</span><span class="o">().</span><span class="n">setValue</span><span class="o">(</span><span class="s">s&#34;</span><span class="si">$uuid</span><span class="s">&#34;</span><span class="o">))</span>
+</span></span><span class="line"><span class="cl">  <span class="o">.</span><span class="n">setExecutor</span><span class="o">(</span><span class="n">executorInfo</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">  <span class="o">.</span><span class="n">setName</span><span class="o">(</span><span class="nc">UUID</span><span class="o">.</span><span class="n">randomUUID</span><span class="o">().</span><span class="n">toString</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">  <span class="o">.</span><span class="n">addResources</span><span class="o">(</span><span class="n">cpuResource</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">  <span class="o">.</span><span class="n">addResources</span><span class="o">(</span><span class="n">memResource</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">  <span class="o">.</span><span class="n">build</span><span class="o">()</span>
+</span></span><span class="line"><span class="cl"><span class="o">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="n">buildExecutorInfo</span><span class="o">(</span><span class="n">d</span><span class="k">:</span> <span class="kt">SchedulerDriver</span><span class="o">,</span> <span class="n">prefix</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span><span class="k">:</span> <span class="kt">ExecutorInfo</span> <span class="o">=</span> <span class="o">{</span>
+</span></span><span class="line"><span class="cl">  <span class="k">val</span> <span class="n">scriptPath</span> <span class="k">=</span> <span class="nc">System</span><span class="o">.</span><span class="n">getProperty</span><span class="o">(</span><span class="s">&#34;executor.path&#34;</span><span class="o">,</span><span class="s">&#34;/throttle/throttle-executor.sh&#34;</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">  <span class="nc">ExecutorInfo</span><span class="o">.</span><span class="n">newBuilder</span><span class="o">()</span>
+</span></span><span class="line"><span class="cl">  <span class="o">.</span><span class="n">setCommand</span><span class="o">(</span><span class="nc">CommandInfo</span><span class="o">.</span><span class="n">newBuilder</span><span class="o">().</span><span class="n">setValue</span><span class="o">(</span><span class="s">&#34;/bin/sh &#34;</span><span class="o">+</span><span class="n">scriptPath</span><span class="o">))</span>
+</span></span><span class="line"><span class="cl">  <span class="o">.</span><span class="n">setExecutorId</span><span class="o">(</span><span class="nc">ExecutorID</span><span class="o">.</span><span class="n">newBuilder</span><span class="o">().</span><span class="n">setValue</span><span class="o">(</span><span class="s">s&#34;</span><span class="si">${</span><span class="n">prefix</span><span class="si">}</span><span class="s">_</span><span class="si">$uuid</span><span class="s">&#34;</span><span class="o">))</span>
+</span></span><span class="line"><span class="cl">  <span class="o">.</span><span class="n">build</span><span class="o">()</span>
+</span></span><span class="line"><span class="cl"><span class="o">}</span>
+</span></span></code></pre></div><p>Sources are available at the <a href="https://github.com/datastrophic/mesos-workshop/tree/master/src/main/scala/io/datastrophic/mesos" target="_blank" rel="noreferrer">accompanying github repo</a>.</p>
+<h3 id="resource-offers" class="relative group">Resource Offers <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#resource-offers" aria-label="Anchor">#</a></span></h3><p>
+
+
+
+
+
+
+  
+  
+<figure><img src="./mesos-resource-offers.jpeg" alt="" class="mx-auto my-0 rounded-md" />
+</figure>
+</p>
+<ol>
+<li>Slave nodes periodically report to the Master free resources they can provide. This also happens when executor tasks complete minimizing delay</li>
+<li><em>Allocation module</em> starts offering the resources to frameworks. A dominant resource fairness algorithm is used to define the order in which frameworks are offered the resource. The framework can either accept or decline the offer depending on its demand. In case of decline (e.g. insufficient resources of some type) the resources are offered to the next framework according to DRF.</li>
+<li>If resources in the offer satisfy the framework&rsquo;s demand then it creates a list of <em>Tasks</em> and sends it back to Master. Master could respond with an error if tasks resources exceed the amount provided in the offer.</li>
+<li>Master sends set of tasks to the <em>Executor</em> on the Slave (and launches the executor if it&rsquo;s not running)</li>
+</ol>
+<h3 id="dominant-resource-fairness-drf" class="relative group">Dominant Resource Fairness (DRF) <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#dominant-resource-fairness-drf" aria-label="Anchor">#</a></span></h3><p>The main problem that DRF solves is sharing of the resources of multiple types (but not only CPU) which hasn&rsquo;t been addressed before and caused insufficient resource distribution among applications with heterogeneous resource demands. To address this problem the notions of <em>dominant share</em> and <em>dominant resource</em> have been introduced.</p>
+<p><em>Dominant resource</em> - a resource of a specific type (cpu, memory, disk, ports) which is most demanded by the given framework among other resources it needs. This resource is identified as a share of the total cluster resources of the same type.</p>
+<p><em>Example 1</em>: given a cluster with the total amount of <em>10 CPUs</em> and <em>20GB RAM</em>, resource demands are: Framework A  <em>&lt; 4 CPU, 5 GB &gt;</em>, Framework B <em>&lt; 2 CPU, 8 GB &gt;</em>.
+The same expressed as a share of total cluster resources: Framework A  <em>&lt; 40% CPU, 25% RAM &gt;</em>, Framework B <em>&lt; 20% CPU, 40% RAM &gt;</em>. So for Framework A CPU is a dominant resource, while for Framework B RAM is.</p>
+<p>DRF computes the share of dominant resource allocated to a framework (<em>dominant share</em>) and tries to maximize the smallest dominant share in the system. During the next round of resource offers allocation module applies DRF to identify the dominant shares of the frameworks and offers the resources first to the one with the smallest dominant share, then to the second smallest one, and so on.</p>
+<p><em>Example 2</em>: consider the cluster with total amount of <em>10 CPUs</em> and <em>20GB RAM</em>, resource demands are: Framework A  <em>&lt; 3 CPU, 2 GB &gt;</em>, Framework B <em>&lt; 1 CPU, 5 GB &gt;</em>. Same in percents: A_&lt; 33% CPU, 10% RAM &gt;<em>, B</em>&lt; 10% CPU, 25% RAM &gt;_. Steps:</p>
+<pre tabindex="0"><code>1. (10cpu, 20gb) to A: A(3cpu, 2gb, 33%), B (0cpu, 0gb, 0%)
 2. (&amp;nbsp;7cpu, 18gb) to B: A(4cpu, 5gb, 40%), B (1cpu, 5gb, 25%)
 3. (&amp;nbsp;6cpu, 13gb) to B: A(4cpu, 5gb, 40%), B (2cpu, 10gb, 50%)
 4. (&amp;nbsp;5cpu, &amp;nbsp;8gb) to A: A(6cpu, 4gb, 66%), B (2cpu, 10gb, 50%)
@@ -46,95 +506,453 @@ The same expressed as a share of total cluster resources: Framework A <em>&lt; 4
 6. (&amp;nbsp;1cpu, &amp;nbsp;1gb) to A: A(6cpu, 4gb, 66%), B (3cpu, 15gb, 75%)
 7. (&amp;nbsp;1cpu, &amp;nbsp;1gb) to B: A(6cpu, 4gb, 66%), B (3cpu, 15gb, 75%)
 ... and so on until the task of one of the frameworks is finished and resources are released.
-</code></pre><p>Let&rsquo;s walk through the steps. The first resource offer goes to <strong>A</strong> (let&rsquo;s say it was executed first, so it receives the offer first). <strong>A</strong> accepts the offer and its dominant share becomes 33%, so the next offer goes to the framework with the smallest dominant share which is <strong>B</strong> (step 2). After accepting the offer dominant share of <strong>B</strong> becomes 25% which is less than the share of <strong>A</strong>, so it receives the next offer (step 3) and now its share is 50%. <strong>A</strong> becomes the framework with the smallest share and receives the next offer (step 4) and so on.</p><p>In the end, there is only 1cpu and 1gb RAM available, so that cluster CPU is utilized for 90% and RAM for 95% which is pretty good saturation.</p><p>Hopefully, the description was not very complicated, because the algorithm itself is very simple and sound. Please refer to the original paper <a href=https://www.cs.berkeley.edu/~alig/papers/drf.pdf target=_blank rel=noreferrer>&ldquo;Dominant Resource Fairness: Fair Allocation of Multiple Resource Types&rdquo;</a> for more details.</p><p>There&rsquo;s not always that perfect cluster saturation in real life so the next part of the post will cover different use cases and how DRF addresses them. We&rsquo;re about to run several instances of simple Mesos Framework with different resource demands (configured at launch time) in parallel to observe DRF behavior and identify potential bottlenecks.</p><h2 id=example-framework class="relative group">Example Framework <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#example-framework aria-label=Anchor>#</a></span></h2><p>For the purpose of observation of DRF behavior a simple Mesos framework is going to be used. The scheduler will submit one task per resource offer round, and the executor will emulate the processing by putting the task thread on sleep for a random amount of time. The main requirement of the framework is configurable task resource demands to properly set up different conditions for parallel execution with heterogeneous resource demands.</p><p>Resource offers handling in the Scheduler code:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-scala data-lang=scala><span class=line><span class=cl><span class=k>override</span> <span class=k>def</span> <span class=n>resourceOffers</span><span class=o>(</span><span class=n>driver</span><span class=k>:</span> <span class=kt>SchedulerDriver</span><span class=o>,</span> <span class=n>offers</span><span class=k>:</span> <span class=kt>util.List</span><span class=o>[</span><span class=kt>Offer</span><span class=o>])</span><span class=k>:</span> <span class=kt>Unit</span> <span class=o>=</span> <span class=o>{</span>
-</span></span><span class=line><span class=cl>  <span class=k>for</span><span class=o>(</span><span class=n>offer</span> <span class=k>&lt;-</span> <span class=n>offers</span><span class=o>){</span>
-</span></span><span class=line><span class=cl>    <span class=n>stateLock</span><span class=o>.</span><span class=n>synchronized</span> <span class=o>{</span>
-</span></span><span class=line><span class=cl>       <span class=n>logger</span><span class=o>.</span><span class=n>info</span><span class=o>(</span><span class=s>s&#34;Received resource offer: cpus:</span><span class=si>${</span><span class=n>getCpus</span><span class=o>(</span><span class=n>offer</span><span class=o>)</span><span class=si>}</span><span class=s> mem: </span><span class=si>${</span><span class=n>getMemory</span><span class=o>(</span><span class=n>offer</span><span class=o>)</span><span class=si>}</span><span class=s>&#34;</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>       <span class=k>if</span><span class=o>(</span><span class=n>isOfferValid</span><span class=o>(</span><span class=n>offer</span><span class=o>)){</span>
-</span></span><span class=line><span class=cl>          <span class=k>val</span> <span class=n>executorInfo</span> <span class=k>=</span> <span class=n>executors</span><span class=o>.</span><span class=n>getOrElseUpdate</span><span class=o>(</span><span class=n>offer</span><span class=o>.</span><span class=n>getSlaveId</span><span class=o>.</span><span class=n>getValue</span><span class=o>,</span> <span class=n>buildExecutorInfo</span><span class=o>(</span><span class=n>driver</span><span class=o>,</span> <span class=s>&#34;DRFDemoExecutor&#34;</span><span class=o>))</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>          <span class=c1>//amount of tasks is calculated to fully use resources from the offer
-</span></span></span><span class=line><span class=cl><span class=c1></span>          <span class=k>val</span> <span class=n>tasks</span> <span class=k>=</span> <span class=n>buildTasks</span><span class=o>(</span><span class=n>offer</span><span class=o>,</span> <span class=n>config</span><span class=o>,</span> <span class=n>executorInfo</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>          <span class=n>logger</span><span class=o>.</span><span class=n>info</span><span class=o>(</span><span class=s>s&#34;Launching </span><span class=si>${</span><span class=n>tasks</span><span class=o>.</span><span class=n>size</span><span class=si>}</span><span class=s> tasks on slave </span><span class=si>${</span><span class=n>offer</span><span class=o>.</span><span class=n>getSlaveId</span><span class=o>.</span><span class=n>getValue</span><span class=si>}</span><span class=s>&#34;</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>          <span class=n>driver</span><span class=o>.</span><span class=n>launchTasks</span><span class=o>(</span><span class=nc>List</span><span class=o>(</span><span class=n>offer</span><span class=o>.</span><span class=n>getId</span><span class=o>),</span> <span class=n>tasks</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>       <span class=o>}</span> <span class=k>else</span> <span class=o>{</span>
-</span></span><span class=line><span class=cl>          <span class=n>logger</span><span class=o>.</span><span class=n>info</span><span class=o>(</span><span class=s>s&#34;Offer provides insufficient resources. Declining.&#34;</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>          <span class=n>driver</span><span class=o>.</span><span class=n>declineOffer</span><span class=o>(</span><span class=n>offer</span><span class=o>.</span><span class=n>getId</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>       <span class=o>}</span>
-</span></span><span class=line><span class=cl>    <span class=o>}</span>
-</span></span><span class=line><span class=cl>  <span class=o>}</span>
-</span></span><span class=line><span class=cl><span class=o>}</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=k>def</span> <span class=n>buildTasks</span><span class=o>(</span><span class=n>offer</span><span class=k>:</span> <span class=kt>Offer</span><span class=o>,</span> <span class=n>config</span><span class=k>:</span> <span class=kt>Config</span><span class=o>,</span> <span class=n>executorInfo</span><span class=k>:</span> <span class=kt>ExecutorInfo</span><span class=o>)</span><span class=k>:</span> <span class=kt>List</span><span class=o>[</span><span class=kt>TaskInfo</span><span class=o>]</span> <span class=k>=</span> <span class=o>{</span>
-</span></span><span class=line><span class=cl> <span class=k>val</span> <span class=n>amount</span> <span class=k>=</span> <span class=nc>Math</span><span class=o>.</span><span class=n>min</span><span class=o>(</span><span class=n>getCpus</span><span class=o>(</span><span class=n>offer</span><span class=o>)/</span><span class=n>config</span><span class=o>.</span><span class=n>cpus</span><span class=o>,</span> <span class=n>getMemory</span><span class=o>(</span><span class=n>offer</span><span class=o>)/</span><span class=n>config</span><span class=o>.</span><span class=n>mem</span><span class=o>).</span><span class=n>toInt</span>
-</span></span><span class=line><span class=cl> <span class=o>(</span><span class=mi>1</span> <span class=n>to</span> <span class=n>amount</span><span class=o>).</span><span class=n>map</span><span class=o>(</span><span class=k>_</span> <span class=k>=&gt;</span> 
-</span></span><span class=line><span class=cl>    <span class=n>buildTask</span><span class=o>(</span><span class=n>offer</span><span class=o>,</span> <span class=n>config</span><span class=o>.</span><span class=n>cpus</span><span class=o>,</span> <span class=n>config</span><span class=o>.</span><span class=n>mem</span><span class=o>,</span> <span class=n>executorInfo</span><span class=o>)</span>
-</span></span><span class=line><span class=cl> <span class=o>).</span><span class=n>toList</span>
-</span></span><span class=line><span class=cl><span class=o>}</span>
-</span></span></code></pre></div><p>An excerpt from the Executor task handling method:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-scala data-lang=scala><span class=line><span class=cl><span class=k>override</span> <span class=k>def</span> <span class=n>launchTask</span><span class=o>(</span><span class=n>driver</span><span class=k>:</span> <span class=kt>ExecutorDriver</span><span class=o>,</span> <span class=n>task</span><span class=k>:</span> <span class=kt>TaskInfo</span><span class=o>)</span><span class=k>:</span> <span class=kt>Unit</span> <span class=o>=</span> <span class=o>{</span>
-</span></span><span class=line><span class=cl>  <span class=n>threadPool</span><span class=o>.</span><span class=n>execute</span><span class=o>(</span><span class=k>new</span> <span class=nc>Runnable</span><span class=o>()</span> <span class=o>{</span>
-</span></span><span class=line><span class=cl>     <span class=k>override</span> <span class=k>def</span> <span class=n>run</span><span class=o>()</span><span class=k>:</span> <span class=kt>Unit</span> <span class=o>=</span> <span class=o>{</span>
-</span></span><span class=line><span class=cl>        <span class=k>val</span> <span class=n>taskStatus</span> <span class=k>=</span> <span class=nc>TaskStatus</span><span class=o>.</span><span class=n>newBuilder</span><span class=o>().</span><span class=n>setTaskId</span><span class=o>(</span><span class=n>task</span><span class=o>.</span><span class=n>getTaskId</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>        <span class=k>val</span> <span class=n>taskId</span> <span class=k>=</span> <span class=n>task</span><span class=o>.</span><span class=n>getTaskId</span><span class=o>.</span><span class=n>getValue</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>        <span class=n>logger</span><span class=o>.</span><span class=n>info</span><span class=o>(</span><span class=s>s&#34;Task </span><span class=si>$taskId</span><span class=s> received by executor: </span><span class=si>${</span><span class=n>task</span><span class=o>.</span><span class=n>getExecutor</span><span class=o>.</span><span class=n>getExecutorId</span><span class=o>.</span><span class=n>getValue</span><span class=si>}</span><span class=s>&#34;</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>        <span class=n>driver</span><span class=o>.</span><span class=n>sendStatusUpdate</span><span class=o>(</span>
-</span></span><span class=line><span class=cl>           <span class=n>taskStatus</span>
-</span></span><span class=line><span class=cl>           <span class=o>.</span><span class=n>setState</span><span class=o>(</span><span class=nc>TaskState</span><span class=o>.</span><span class=nc>TASK_RUNNING</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>           <span class=o>.</span><span class=n>build</span><span class=o>()</span>
-</span></span><span class=line><span class=cl>        <span class=o>)</span>
-</span></span><span class=line><span class=cl>        <span class=k>val</span> <span class=n>delay</span> <span class=k>=</span> <span class=mi>20000</span> <span class=o>+</span> <span class=nc>Random</span><span class=o>.</span><span class=n>nextInt</span><span class=o>(</span><span class=mi>20000</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>        <span class=n>logger</span><span class=o>.</span><span class=n>info</span><span class=o>(</span><span class=s>s&#34;Running task for </span><span class=si>${</span><span class=n>delay</span><span class=o>/</span><span class=mi>1000</span><span class=n>f</span><span class=si>}</span><span class=s> sec.&#34;</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>        <span class=nc>Thread</span><span class=o>.</span><span class=n>sleep</span><span class=o>(</span><span class=n>delay</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>        <span class=k>val</span> <span class=n>msg</span> <span class=k>=</span> <span class=s>s&#34;Task </span><span class=si>$taskId</span><span class=s> finished&#34;</span>
-</span></span><span class=line><span class=cl>        <span class=n>logger</span><span class=o>.</span><span class=n>info</span><span class=o>(</span><span class=n>msg</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>        <span class=n>driver</span><span class=o>.</span><span class=n>sendStatusUpdate</span><span class=o>(</span>
-</span></span><span class=line><span class=cl>           <span class=n>taskStatus</span>
-</span></span><span class=line><span class=cl>           <span class=o>.</span><span class=n>setState</span><span class=o>(</span><span class=nc>TaskState</span><span class=o>.</span><span class=nc>TASK_FINISHED</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>           <span class=o>.</span><span class=n>setData</span><span class=o>(</span><span class=nc>ByteString</span><span class=o>.</span><span class=n>copyFrom</span><span class=o>(</span><span class=n>serialize</span><span class=o>(</span><span class=n>msg</span><span class=o>)))</span>
-</span></span><span class=line><span class=cl>           <span class=o>.</span><span class=n>build</span><span class=o>()</span>
-</span></span><span class=line><span class=cl>        <span class=o>)</span>
-</span></span><span class=line><span class=cl>     <span class=o>}</span>
-</span></span><span class=line><span class=cl>  <span class=o>})</span>
-</span></span><span class=line><span class=cl><span class=o>}</span>
-</span></span></code></pre></div><p>And the framework&rsquo;s entrypoint looks like this:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-scala data-lang=scala><span class=line><span class=cl><span class=k>case</span> <span class=k>class</span> <span class=nc>Config</span><span class=o>(</span>
-</span></span><span class=line><span class=cl>      <span class=n>mesosURL</span><span class=k>:</span> <span class=kt>String</span> <span class=o>=</span> <span class=s>&#34;&#34;</span><span class=o>,</span>
-</span></span><span class=line><span class=cl>      <span class=n>name</span><span class=k>:</span> <span class=kt>String</span> <span class=o>=</span> <span class=s>&#34;&#34;</span><span class=o>,</span>
-</span></span><span class=line><span class=cl>      <span class=n>cpus</span><span class=k>:</span> <span class=kt>Double</span> <span class=o>=</span> <span class=mf>0.1</span><span class=o>,</span>
-</span></span><span class=line><span class=cl>      <span class=n>mem</span><span class=k>:</span> <span class=kt>Int</span> <span class=o>=</span> <span class=mi>512</span>
-</span></span><span class=line><span class=cl><span class=o>)</span>
-</span></span><span class=line><span class=cl>   
-</span></span><span class=line><span class=cl><span class=o>...</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl><span class=k>def</span> <span class=n>run</span><span class=o>(</span><span class=n>config</span><span class=k>:</span> <span class=kt>Config</span><span class=o>)</span><span class=k>:</span> <span class=kt>Unit</span> <span class=o>={</span>
-</span></span><span class=line><span class=cl>  <span class=k>val</span> <span class=n>framework</span> <span class=k>=</span> <span class=nc>FrameworkInfo</span><span class=o>.</span><span class=n>newBuilder</span>
-</span></span><span class=line><span class=cl>                     <span class=o>.</span><span class=n>setName</span><span class=o>(</span><span class=n>config</span><span class=o>.</span><span class=n>name</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>                     <span class=o>.</span><span class=n>setUser</span><span class=o>(</span><span class=s>&#34;&#34;</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>                     <span class=o>.</span><span class=n>setRole</span><span class=o>(</span><span class=s>&#34;*&#34;</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>                     <span class=o>.</span><span class=n>setCheckpoint</span><span class=o>(</span><span class=kc>false</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>                     <span class=o>.</span><span class=n>setFailoverTimeout</span><span class=o>(</span><span class=mf>0.0d</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>                     <span class=o>.</span><span class=n>build</span><span class=o>()</span>
-</span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>  <span class=k>val</span> <span class=n>driver</span> <span class=k>=</span> <span class=k>new</span> <span class=nc>MesosSchedulerDriver</span><span class=o>(</span><span class=k>new</span> <span class=nc>DRFDemoScheduler</span><span class=o>(</span><span class=n>config</span><span class=o>),</span> <span class=n>framework</span><span class=o>,</span> <span class=n>config</span><span class=o>.</span><span class=n>mesosURL</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>  <span class=n>driver</span><span class=o>.</span><span class=n>run</span><span class=o>()</span>
-</span></span><span class=line><span class=cl><span class=o>}</span>
-</span></span></code></pre></div><p>Full source code available on <a href=https://github.com/datastrophic/mesos-workshop/tree/master/src/main/scala/io/datastrophic/mesos/drf target=_blank rel=noreferrer>github</a>.</p><p>The config case class is created with <em>scopt</em> (scala options parser) and the framework invocation code looks as follows:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>java -cp /throttle/throttle-framework.jar <span class=se>\
-</span></span></span><span class=line><span class=cl><span class=se></span>-Dexecutor.path<span class=o>=</span>/throttle/drf-executor.sh <span class=se>\
-</span></span></span><span class=line><span class=cl><span class=se></span>io.datastrophic.mesos.drf.DRFDemoFramework <span class=se>\
-</span></span></span><span class=line><span class=cl><span class=se></span>--mesos-master zk://zookeeper:2181/mesos <span class=se>\
-</span></span></span><span class=line><span class=cl><span class=se></span>--framework-name <span class=s1>&#39;Framework A&#39;</span> <span class=se>\
-</span></span></span><span class=line><span class=cl><span class=se></span>--task-cpus <span class=m>2</span> <span class=se>\
-</span></span></span><span class=line><span class=cl><span class=se></span>--task-memory <span class=m>1000</span>
-</span></span></code></pre></div><p>This allows running the same framework code with different task resource demands to easily setup experimental use cases.</p><h2 id=experiments class="relative group">Experiments <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#experiments aria-label=Anchor>#</a></span></h2><p>A small virtual cluster will be used for the experiment with a total capacity of 6 CPUs and 6.6 GB RAM. We&rsquo;re going to use small-sized dummy tasks (which simply sleep to emulate processing) so the total capacity is not big deal here. A dockerized environment is also available on <a href=https://github.com/datastrophic/mesos-workshop target=_blank rel=noreferrer>github</a>.</p><h3 id=redistribution-of-resources-between-frameworks-with-same-demands class="relative group">Redistribution of resources between frameworks with same demands <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#redistribution-of-resources-between-frameworks-with-same-demands aria-label=Anchor>#</a></span></h3><p>Let&rsquo;s first look at how Mesos will redistribute resources when new frameworks with similar resource demands are added and removed from the cluster. We&rsquo;re going to use <em>&lt; 0.5 CPU, 512 RAM ></em> (or <em>&lt; 8% CPU, 7.5% RAM ></em>) as task resource demands and <code>20000 + Random.nextInt(20000) millis</code> as task duration to make tasks running for 20-40 seconds each because when tasks are too small the cluster will not be fully loaded (default resource offers round frequency is 5 seconds).</p><p>First <em>Framework A</em> will be launched as the only application running on the cluster. After a while we&rsquo;ll see this picture in Mesos UI:<figure><img src=./frameworks-1.jpeg alt class="mx-auto my-0 rounded-md"></figure></p><p>Let&rsquo;s now launch competing <em>Framework B</em>. In most cases the behavior is as expected - equal sharing of resources:<figure><img src=./frameworks-2.jpeg alt class="mx-auto my-0 rounded-md"></figure></p><p>But for short periods of time one can observe this picture (disregarding the framework):<figure><img src=./frameworks-3.jpeg alt class="mx-auto my-0 rounded-md"></figure></p><p>This is a result of the transitional situation when both frameworks have been having equal dominant share (50/50) and when two of <em>Framework A&rsquo;s</em> tasks have finished close to each other in time (resulting in 4 running tasks). After that the first offer goes to A, it accepts and launches one task (now it&rsquo;s 5 running tasks). The next offer goes to B and it accepts it (having no tasks finished up to the moment, the total amount of tasks is 7). The next offer will go to <em>Framework A</em>. It&rsquo;s actually not an extraordinary situation though because these distortions are normal taking into account specifics of the framework implementations and how they work with resource offers.</p><p>Now <em>Framework C</em> is launched in the cluster:<figure><img src=./frameworks-4.jpeg alt class="mx-auto my-0 rounded-md"></figure></p><p>For the reasons described above sometimes a different picture can be observed:<figure><img src=./frameworks-5.jpeg alt class="mx-auto my-0 rounded-md"></figure></p><p>From this, we can conclude that if more frameworks are running in parallel then these discrepancies would be observed more often, but none of the frameworks will occupy the majority of the resources forever. DRF defines the priorities in which frameworks are offered the resources, but within a single round, none of the frameworks are offered resources twice. There exists Weighted DRF implementation which changes this behavior.</p><h3 id=redistribution-of-resources-between-frameworks-with-heterogeneous-resource-demands class="relative group">Redistribution of resources between frameworks with heterogeneous resource demands <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#redistribution-of-resources-between-frameworks-with-heterogeneous-resource-demands aria-label=Anchor>#</a></span></h3><p>Now <em>Framework A&rsquo;s</em> tasks will consume <em>&lt; 2 CPU, 1000 RAM ></em> (or <em>&lt; 33% CPU, 15% RAM ></em>) and <em>Framework B&rsquo;s</em> tasks will consume <em>&lt; 1 CPU, 2000 RAM ></em> (or <em>&lt; 16% CPU, 30% RAM ></em>).</p><p>Let&rsquo;s see how it works:<figure><img src=./frameworks-6.jpeg alt class="mx-auto my-0 rounded-md"></figure></p><p>Looks awesome, but here&rsquo;s a trick in resource demands: frameworks together completely saturate the cluster and their dominant resources are not in the conflict. Two tasks of <em>Framework A</em> use ~60% of cluster CPU while two tasks of <em>Framework B</em> use ~67% of memory. But let&rsquo;s increase <em>Framework B&rsquo;s</em> memory demands up to 36% (2500MB), so to run two tasks it will need >72% of the max share and more resources in the offer. Most of the time we&rsquo;ll be observing this picture:<figure><img src=./frameworks-7.jpeg alt class="mx-auto my-0 rounded-md"></figure></p><p>The picture could change when both tasks of <em>Framework A</em> are finished in between resource offer rounds and all freed resources are offered to <em>Framework B</em> which will launch two of its tasks. After that there are enough resources for launching only one task of <em>Framework A</em> :<figure><img src=./frameworks-8.jpeg alt class="mx-auto my-0 rounded-md"></figure></p><p>The conclusion is that running multiple small tasks is better than launching large ones in terms of time spent waiting for enough resources to be freed by other frameworks.</p><h2 id=discussion class="relative group">Discussion <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#discussion aria-label=Anchor>#</a></span></h2><p>After a number of simulations with a different number of frameworks with different dominant resources the observations described above still hold. Corner cases still appear but within different time frames, and resource allocations converge to a fair distribution of resources.</p><p>One important thing to note is that one resource offer represents the amount of resources available on one slave node. This means that if someone wants to execute a task that needs N cpus and M memory there should exist a physical node in the cluster which has this capacity.</p><p>Mesos enforces incremental task execution to run the whole job (<em>fine-grained mode</em>), but if some sort of gang scheduling is needed then the framework could implement a <em>coarse-grained</em> approach (like Spark does) to run its executors with maximum available resources and schedule the job by means of the framework. Another important thing to mention is that frameworks don&rsquo;t have information about the total amount of cluster resources so it&rsquo;s hardly possible to allocate all the resources at once.</p><h2 id=drf-properties class="relative group">DRF Properties <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#drf-properties aria-label=Anchor>#</a></span></h2><p>The Dominant Resource Fairness algorithm satisfies several important properties which are worth mentioning to have a full picture. Cites are from the original paper <a href=https://www.cs.berkeley.edu/~alig/papers/drf.pdf target=_blank rel=noreferrer>&ldquo;Dominant Resource Fairness: Fair Allocation of Multiple Resource Types&rdquo;</a>:</p><ul><li><em>Sharing incentive</em>: Each user should be better off sharing the cluster, than exclusively using her own partition of the cluster. Consider a cluster with identical nodes and <em>n</em> users. Then a user should not be able to allocate more tasks in a cluster partition consisting of <em>1/n</em> of all resources.</li><li><em>Strategy-proofness</em>: Users should not be able to benefit by lying about their resource demands. This provides incentive compatibility, as a user cannot improve her allocation by lying.</li><li><em>Envy-freeness</em>: A user should not prefer the allocation of another user. This property embodies the notion of fairness.</li><li><em>Pareto efficiency</em>: It should not be possible to increase the allocation of a user without decreasing the allocation of at least another user. This property is important as it leads to maximizing system utilization subject to satisfying the other properties.</li><li><em>Single resource</em> fairness: For a single resource, the solution should reduce to max-min fairness.</li><li><em>Bottleneck fairness</em>: If there is one resource that is percent-wise demanded most of by every user, then the solution should reduce to max-min fairness for that resource.</li><li><em>Population monotonicity</em>: When a user leaves the system and relinquishes her resources, none of the allocations of the remaining users should decrease.</li><li><em>Resource monotonicity</em>: If more resources are added to the system, none of the allocations of the existing users should decrease.</li></ul><p>Rephrasing a <em>sharing incentive</em> point: users are offered to share the whole cluster resources instead of exclusively owning their own partition. While in both cases the user has guaranteed minimum allocation of <em>1/n</em> of cluster resources (given that there&rsquo;re <em>n</em> users) in case of partition allocation user will not be able to allocate more tasks than <em>1/n</em> while with DRF it&rsquo;s possible to allocate more tasks using resources released by other frameworks.</p><h2 id=where-to-go-from-here class="relative group">Where to go from here <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#where-to-go-from-here aria-label=Anchor>#</a></span></h2><ul><li>The original Mesos paper: <a href=https://www.cs.berkeley.edu/~alig/papers/drf.pdf target=_blank rel=noreferrer>&ldquo;Dominant Resource Fairness: Fair Allocation of Multiple Resource Types&rdquo;</a></li><li>Video of the DRF talk at <a href=https://www.usenix.org/conference/nsdi11/dominant-resource-fairness-fair-allocation-multiple-resource-types target=_blank rel=noreferrer>USENIX Symposium on Networked Systems Design and Implementation</a></li><li>Paper: <a href=https://www.cs.berkeley.edu/~alig/papers/mesos.pdf target=_blank rel=noreferrer>Mesos: A Platform for Fine-Grained Resource Sharing in the Data Center</a></li><li>Paper on Omega scheduler describing different from two-level scheduling approaches: <a href=http://static.googleusercontent.com/media/research.google.com/en//pubs/archive/41684.pdf target=_blank rel=noreferrer>Omega: flexible, scalable schedulers for large compute clusters</a></li><li>Project code and dockerized environment to work with at <a href=https://github.com/datastrophic/mesos-workshop target=_blank rel=noreferrer>github</a></li></ul></div></section><footer class="max-w-prose pt-8 print:hidden"><div class=flex><picture class="!mb-0 !mt-0 me-4 w-24 h-auto rounded-full"><img width=400 height=400 class="!mb-0 !mt-0 me-4 w-24 h-auto rounded-full" alt="Anton Kirillov" loading=lazy decoding=async src=https://datastrophic.io/img/author.jpg></picture><div class=place-self-center><div class="text-[0.6rem] uppercase leading-3 text-neutral-500 dark:text-neutral-400">Author</div><div class="font-semibold leading-6 text-neutral-800 dark:text-neutral-300">Anton Kirillov</div><div class="text-sm text-neutral-700 dark:text-neutral-400">Technical Leader. Compute and AI Infrastructure</div><div class="text-2xl sm:text-lg"><div class="flex flex-wrap text-neutral-400 dark:text-neutral-500"><a class="px-1 transition-transform hover:scale-125 hover:text-primary-700 dark:hover:text-primary-400" style=will-change:transform href=https://www.linkedin.com/in/datastrophic/ target=_blank aria-label=Linkedin rel="me noopener noreferrer"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 448 512"><path fill="currentColor" d="M416 32H31.9C14.3 32 0 46.5.0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6.0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3zM135.4 416H69V202.2h66.5V416zm-33.2-243c-21.3.0-38.5-17.3-38.5-38.5S80.9 96 102.2 96c21.2.0 38.5 17.3 38.5 38.5.0 21.3-17.2 38.5-38.5 38.5zm282.1 243h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6.0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2.0 79.7 44.3 79.7 101.9V416z"/></svg>
-</span></a><a class="px-1 transition-transform hover:scale-125 hover:text-primary-700 dark:hover:text-primary-400" style=will-change:transform href=https://github.com/datastrophic target=_blank aria-label=Github rel="me noopener noreferrer"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 496 512"><path fill="currentColor" d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6.0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6.0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3.0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1.0-6.2-.3-40.4-.3-61.4.0.0-70 15-84.7-29.8.0.0-11.4-29.1-27.8-36.6.0.0-22.9-15.7 1.6-15.4.0.0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5.0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9.0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4.0 33.7-.3 75.4-.3 83.6.0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6.0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9.0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span></a></div></div></div></div><div class=pt-8><hr class="border-dotted border-neutral-300 dark:border-neutral-600"><div class="flex justify-between pt-3"><span><a class="group flex" href=https://datastrophic.io/core-concepts-architecture-and-internals-of-apache-spark/><span class="me-2 text-neutral-700 transition-transform group-hover:-translate-x-[2px] group-hover:text-primary-600 dark:text-neutral dark:group-hover:text-primary-400"><span class="ltr:inline rtl:hidden">&larr;</span><span class="ltr:hidden rtl:inline">&rarr;</span></span>
-<span class="flex flex-col"><span class="mt-[0.1rem] leading-6 group-hover:underline group-hover:decoration-primary-500">Apache Spark: core concepts, architecture and internals</span>
-<span class="mt-[0.1rem] text-xs text-neutral-500 dark:text-neutral-400"><time datetime="2016-03-03 00:00:00 +0000 UTC">3 March 2016</time>
-</span></span></a></span><span><a class="group flex text-right" href=https://datastrophic.io/spark-jobserver-from-spark-standalone-to-mesos-marathon-and-docker-part-i/><span class="flex flex-col"><span class="mt-[0.1rem] leading-6 group-hover:underline group-hover:decoration-primary-500">Spark JobServer: from Spark Standalone to Mesos, Marathon and Docker</span>
-<span class="mt-[0.1rem] text-xs text-neutral-500 dark:text-neutral-400"><time datetime="2017-10-12 00:00:00 +0000 UTC">12 October 2017</time>
-</span></span><span class="ms-2 text-neutral-700 transition-transform group-hover:-translate-x-[-2px] group-hover:text-primary-600 dark:text-neutral dark:group-hover:text-primary-400"><span class="ltr:inline rtl:hidden">&rarr;</span><span class="ltr:hidden rtl:inline">&larr;</span></span></a></span></div></div></footer></article></main><div class="pointer-events-none absolute bottom-0 end-0 top-[100vh] w-12" id=to-top hidden=true><a href=#the-top class="pointer-events-auto sticky top-[calc(100vh-5.5rem)] flex h-12 w-12 items-center justify-center rounded-full bg-neutral/50 text-xl text-neutral-700 backdrop-blur hover:text-primary-600 dark:bg-neutral-800/50 dark:text-neutral dark:hover:text-primary-400" aria-label="Scroll to top" title="Scroll to top">&uarr;</a></div><footer class="py-10 print:hidden"><div class="flex items-center justify-between"><div><p class="text-sm text-neutral-500 dark:text-neutral-400">© 2025 datastrophic</p></div><div class="flex flex-row items-center"><div class="me-14 cursor-pointer text-sm text-neutral-700 hover:text-primary-600 dark:text-neutral dark:hover:text-primary-400"><button id=appearance-switcher-0 type=button aria-label="appearance switcher"><div class="flex h-12 w-12 items-center justify-center dark:hidden" title="Switch to dark appearance"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 512 512"><path fill="currentColor" d="M32 256C32 132.2 132.3 32 255.8 32c11.36.0 29.7 1.668 40.9 3.746 9.616 1.777 11.75 14.63 3.279 19.44C245 86.5 211.2 144.6 211.2 207.8c0 109.7 99.71 193 208.3 172.3 9.561-1.805 16.28 9.324 10.11 16.95C387.9 448.6 324.8 480 255.8 480 132.1 480 32 379.6 32 256z"/></svg></span></div><div class="hidden h-12 w-12 items-center justify-center dark:flex" title="Switch to light appearance"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 512 512"><path fill="currentColor" d="M256 159.1c-53.02.0-95.1 42.98-95.1 95.1s41.2 96.9 95.1 96.9 95.1-42.98 95.1-95.1S309 159.1 256 159.1zM509.3 347l-63.2-91.9 63.15-91.01c6.332-9.125 1.104-21.74-9.826-23.72l-109-19.7-19.7-109c-1.975-10.93-14.59-16.16-23.72-9.824L256 65.89 164.1 2.736c-9.125-6.332-21.74-1.107-23.72 9.824L121.6 121.6 12.56 141.3C1.633 143.2-3.596 155.9 2.736 164.1L65.89 256 2.74 347.01c-6.332 9.125-1.105 21.74 9.824 23.72l109 19.7 19.7 109c1.975 10.93 14.59 16.16 23.72 9.824L256 446.1l91.01 63.15c9.127 6.334 21.75 1.107 23.72-9.822l19.7-109 109-19.7C510.4 368.8 515.6 356.1 509.3 347zM256 383.1c-70.69.0-127.1-57.31-127.1-127.1.0-70.69 57.31-127.1 127.1-127.1S383.1 186.2 383.1 256c0 70.7-56.4 127.1-127.1 127.1z"/></svg></span></div></button></div></div></div></footer></div></body></html>
+</code></pre><p>Let&rsquo;s walk through the steps. The first resource offer goes to <strong>A</strong> (let&rsquo;s say it was executed first, so it receives the offer first). <strong>A</strong> accepts the offer and its dominant share becomes 33%, so the next offer goes to the framework with the smallest dominant share which is <strong>B</strong> (step 2). After accepting the offer dominant share of <strong>B</strong> becomes 25% which is less than the share of <strong>A</strong>, so it receives the next offer (step 3) and now its share is 50%. <strong>A</strong> becomes the framework with the smallest share and receives the next offer (step 4) and so on.</p>
+<p>In the end, there is only 1cpu and 1gb RAM available, so that cluster CPU is utilized for 90% and RAM for 95% which is pretty good saturation.</p>
+<p>Hopefully, the description was not very complicated, because the algorithm itself is very simple and sound. Please refer to the original paper <a href="https://www.cs.berkeley.edu/~alig/papers/drf.pdf" target="_blank" rel="noreferrer">&ldquo;Dominant Resource Fairness: Fair Allocation of Multiple Resource Types&rdquo;</a> for more details.</p>
+<p>There&rsquo;s not always that perfect cluster saturation in real life so the next part of the post will cover different use cases and how DRF addresses them. We&rsquo;re about to run several instances of simple Mesos Framework with different resource demands (configured at launch time) in parallel to observe DRF behavior and identify potential bottlenecks.</p>
+<h2 id="example-framework" class="relative group">Example Framework <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#example-framework" aria-label="Anchor">#</a></span></h2><p>For the purpose of observation of DRF behavior a simple Mesos framework is going to be used. The scheduler will submit one task per resource offer round, and the executor will emulate the processing by putting the task thread on sleep for a random amount of time. The main requirement of the framework is configurable task resource demands to properly set up different conditions for parallel execution with heterogeneous resource demands.</p>
+<p>Resource offers handling in the Scheduler code:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-scala" data-lang="scala"><span class="line"><span class="cl"><span class="k">override</span> <span class="k">def</span> <span class="n">resourceOffers</span><span class="o">(</span><span class="n">driver</span><span class="k">:</span> <span class="kt">SchedulerDriver</span><span class="o">,</span> <span class="n">offers</span><span class="k">:</span> <span class="kt">util.List</span><span class="o">[</span><span class="kt">Offer</span><span class="o">])</span><span class="k">:</span> <span class="kt">Unit</span> <span class="o">=</span> <span class="o">{</span>
+</span></span><span class="line"><span class="cl">  <span class="k">for</span><span class="o">(</span><span class="n">offer</span> <span class="k">&lt;-</span> <span class="n">offers</span><span class="o">){</span>
+</span></span><span class="line"><span class="cl">    <span class="n">stateLock</span><span class="o">.</span><span class="n">synchronized</span> <span class="o">{</span>
+</span></span><span class="line"><span class="cl">       <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="o">(</span><span class="s">s&#34;Received resource offer: cpus:</span><span class="si">${</span><span class="n">getCpus</span><span class="o">(</span><span class="n">offer</span><span class="o">)</span><span class="si">}</span><span class="s"> mem: </span><span class="si">${</span><span class="n">getMemory</span><span class="o">(</span><span class="n">offer</span><span class="o">)</span><span class="si">}</span><span class="s">&#34;</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">       <span class="k">if</span><span class="o">(</span><span class="n">isOfferValid</span><span class="o">(</span><span class="n">offer</span><span class="o">)){</span>
+</span></span><span class="line"><span class="cl">          <span class="k">val</span> <span class="n">executorInfo</span> <span class="k">=</span> <span class="n">executors</span><span class="o">.</span><span class="n">getOrElseUpdate</span><span class="o">(</span><span class="n">offer</span><span class="o">.</span><span class="n">getSlaveId</span><span class="o">.</span><span class="n">getValue</span><span class="o">,</span> <span class="n">buildExecutorInfo</span><span class="o">(</span><span class="n">driver</span><span class="o">,</span> <span class="s">&#34;DRFDemoExecutor&#34;</span><span class="o">))</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">          <span class="c1">//amount of tasks is calculated to fully use resources from the offer
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>          <span class="k">val</span> <span class="n">tasks</span> <span class="k">=</span> <span class="n">buildTasks</span><span class="o">(</span><span class="n">offer</span><span class="o">,</span> <span class="n">config</span><span class="o">,</span> <span class="n">executorInfo</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">          <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="o">(</span><span class="s">s&#34;Launching </span><span class="si">${</span><span class="n">tasks</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s"> tasks on slave </span><span class="si">${</span><span class="n">offer</span><span class="o">.</span><span class="n">getSlaveId</span><span class="o">.</span><span class="n">getValue</span><span class="si">}</span><span class="s">&#34;</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">          <span class="n">driver</span><span class="o">.</span><span class="n">launchTasks</span><span class="o">(</span><span class="nc">List</span><span class="o">(</span><span class="n">offer</span><span class="o">.</span><span class="n">getId</span><span class="o">),</span> <span class="n">tasks</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">       <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+</span></span><span class="line"><span class="cl">          <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="o">(</span><span class="s">s&#34;Offer provides insufficient resources. Declining.&#34;</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">          <span class="n">driver</span><span class="o">.</span><span class="n">declineOffer</span><span class="o">(</span><span class="n">offer</span><span class="o">.</span><span class="n">getId</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">       <span class="o">}</span>
+</span></span><span class="line"><span class="cl">    <span class="o">}</span>
+</span></span><span class="line"><span class="cl">  <span class="o">}</span>
+</span></span><span class="line"><span class="cl"><span class="o">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="n">buildTasks</span><span class="o">(</span><span class="n">offer</span><span class="k">:</span> <span class="kt">Offer</span><span class="o">,</span> <span class="n">config</span><span class="k">:</span> <span class="kt">Config</span><span class="o">,</span> <span class="n">executorInfo</span><span class="k">:</span> <span class="kt">ExecutorInfo</span><span class="o">)</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">TaskInfo</span><span class="o">]</span> <span class="k">=</span> <span class="o">{</span>
+</span></span><span class="line"><span class="cl"> <span class="k">val</span> <span class="n">amount</span> <span class="k">=</span> <span class="nc">Math</span><span class="o">.</span><span class="n">min</span><span class="o">(</span><span class="n">getCpus</span><span class="o">(</span><span class="n">offer</span><span class="o">)/</span><span class="n">config</span><span class="o">.</span><span class="n">cpus</span><span class="o">,</span> <span class="n">getMemory</span><span class="o">(</span><span class="n">offer</span><span class="o">)/</span><span class="n">config</span><span class="o">.</span><span class="n">mem</span><span class="o">).</span><span class="n">toInt</span>
+</span></span><span class="line"><span class="cl"> <span class="o">(</span><span class="mi">1</span> <span class="n">to</span> <span class="n">amount</span><span class="o">).</span><span class="n">map</span><span class="o">(</span><span class="k">_</span> <span class="k">=&gt;</span> 
+</span></span><span class="line"><span class="cl">    <span class="n">buildTask</span><span class="o">(</span><span class="n">offer</span><span class="o">,</span> <span class="n">config</span><span class="o">.</span><span class="n">cpus</span><span class="o">,</span> <span class="n">config</span><span class="o">.</span><span class="n">mem</span><span class="o">,</span> <span class="n">executorInfo</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl"> <span class="o">).</span><span class="n">toList</span>
+</span></span><span class="line"><span class="cl"><span class="o">}</span>
+</span></span></code></pre></div><p>An excerpt from the Executor task handling method:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-scala" data-lang="scala"><span class="line"><span class="cl"><span class="k">override</span> <span class="k">def</span> <span class="n">launchTask</span><span class="o">(</span><span class="n">driver</span><span class="k">:</span> <span class="kt">ExecutorDriver</span><span class="o">,</span> <span class="n">task</span><span class="k">:</span> <span class="kt">TaskInfo</span><span class="o">)</span><span class="k">:</span> <span class="kt">Unit</span> <span class="o">=</span> <span class="o">{</span>
+</span></span><span class="line"><span class="cl">  <span class="n">threadPool</span><span class="o">.</span><span class="n">execute</span><span class="o">(</span><span class="k">new</span> <span class="nc">Runnable</span><span class="o">()</span> <span class="o">{</span>
+</span></span><span class="line"><span class="cl">     <span class="k">override</span> <span class="k">def</span> <span class="n">run</span><span class="o">()</span><span class="k">:</span> <span class="kt">Unit</span> <span class="o">=</span> <span class="o">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">val</span> <span class="n">taskStatus</span> <span class="k">=</span> <span class="nc">TaskStatus</span><span class="o">.</span><span class="n">newBuilder</span><span class="o">().</span><span class="n">setTaskId</span><span class="o">(</span><span class="n">task</span><span class="o">.</span><span class="n">getTaskId</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">val</span> <span class="n">taskId</span> <span class="k">=</span> <span class="n">task</span><span class="o">.</span><span class="n">getTaskId</span><span class="o">.</span><span class="n">getValue</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="o">(</span><span class="s">s&#34;Task </span><span class="si">$taskId</span><span class="s"> received by executor: </span><span class="si">${</span><span class="n">task</span><span class="o">.</span><span class="n">getExecutor</span><span class="o">.</span><span class="n">getExecutorId</span><span class="o">.</span><span class="n">getValue</span><span class="si">}</span><span class="s">&#34;</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="n">driver</span><span class="o">.</span><span class="n">sendStatusUpdate</span><span class="o">(</span>
+</span></span><span class="line"><span class="cl">           <span class="n">taskStatus</span>
+</span></span><span class="line"><span class="cl">           <span class="o">.</span><span class="n">setState</span><span class="o">(</span><span class="nc">TaskState</span><span class="o">.</span><span class="nc">TASK_RUNNING</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">           <span class="o">.</span><span class="n">build</span><span class="o">()</span>
+</span></span><span class="line"><span class="cl">        <span class="o">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">val</span> <span class="n">delay</span> <span class="k">=</span> <span class="mi">20000</span> <span class="o">+</span> <span class="nc">Random</span><span class="o">.</span><span class="n">nextInt</span><span class="o">(</span><span class="mi">20000</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="o">(</span><span class="s">s&#34;Running task for </span><span class="si">${</span><span class="n">delay</span><span class="o">/</span><span class="mi">1000</span><span class="n">f</span><span class="si">}</span><span class="s"> sec.&#34;</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="nc">Thread</span><span class="o">.</span><span class="n">sleep</span><span class="o">(</span><span class="n">delay</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="k">val</span> <span class="n">msg</span> <span class="k">=</span> <span class="s">s&#34;Task </span><span class="si">$taskId</span><span class="s"> finished&#34;</span>
+</span></span><span class="line"><span class="cl">        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="o">(</span><span class="n">msg</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="n">driver</span><span class="o">.</span><span class="n">sendStatusUpdate</span><span class="o">(</span>
+</span></span><span class="line"><span class="cl">           <span class="n">taskStatus</span>
+</span></span><span class="line"><span class="cl">           <span class="o">.</span><span class="n">setState</span><span class="o">(</span><span class="nc">TaskState</span><span class="o">.</span><span class="nc">TASK_FINISHED</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">           <span class="o">.</span><span class="n">setData</span><span class="o">(</span><span class="nc">ByteString</span><span class="o">.</span><span class="n">copyFrom</span><span class="o">(</span><span class="n">serialize</span><span class="o">(</span><span class="n">msg</span><span class="o">)))</span>
+</span></span><span class="line"><span class="cl">           <span class="o">.</span><span class="n">build</span><span class="o">()</span>
+</span></span><span class="line"><span class="cl">        <span class="o">)</span>
+</span></span><span class="line"><span class="cl">     <span class="o">}</span>
+</span></span><span class="line"><span class="cl">  <span class="o">})</span>
+</span></span><span class="line"><span class="cl"><span class="o">}</span>
+</span></span></code></pre></div><p>And the framework&rsquo;s entrypoint looks like this:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-scala" data-lang="scala"><span class="line"><span class="cl"><span class="k">case</span> <span class="k">class</span> <span class="nc">Config</span><span class="o">(</span>
+</span></span><span class="line"><span class="cl">      <span class="n">mesosURL</span><span class="k">:</span> <span class="kt">String</span> <span class="o">=</span> <span class="s">&#34;&#34;</span><span class="o">,</span>
+</span></span><span class="line"><span class="cl">      <span class="n">name</span><span class="k">:</span> <span class="kt">String</span> <span class="o">=</span> <span class="s">&#34;&#34;</span><span class="o">,</span>
+</span></span><span class="line"><span class="cl">      <span class="n">cpus</span><span class="k">:</span> <span class="kt">Double</span> <span class="o">=</span> <span class="mf">0.1</span><span class="o">,</span>
+</span></span><span class="line"><span class="cl">      <span class="n">mem</span><span class="k">:</span> <span class="kt">Int</span> <span class="o">=</span> <span class="mi">512</span>
+</span></span><span class="line"><span class="cl"><span class="o">)</span>
+</span></span><span class="line"><span class="cl">   
+</span></span><span class="line"><span class="cl"><span class="o">...</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="n">run</span><span class="o">(</span><span class="n">config</span><span class="k">:</span> <span class="kt">Config</span><span class="o">)</span><span class="k">:</span> <span class="kt">Unit</span> <span class="o">={</span>
+</span></span><span class="line"><span class="cl">  <span class="k">val</span> <span class="n">framework</span> <span class="k">=</span> <span class="nc">FrameworkInfo</span><span class="o">.</span><span class="n">newBuilder</span>
+</span></span><span class="line"><span class="cl">                     <span class="o">.</span><span class="n">setName</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="n">name</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">                     <span class="o">.</span><span class="n">setUser</span><span class="o">(</span><span class="s">&#34;&#34;</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">                     <span class="o">.</span><span class="n">setRole</span><span class="o">(</span><span class="s">&#34;*&#34;</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">                     <span class="o">.</span><span class="n">setCheckpoint</span><span class="o">(</span><span class="kc">false</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">                     <span class="o">.</span><span class="n">setFailoverTimeout</span><span class="o">(</span><span class="mf">0.0d</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">                     <span class="o">.</span><span class="n">build</span><span class="o">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">  <span class="k">val</span> <span class="n">driver</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">MesosSchedulerDriver</span><span class="o">(</span><span class="k">new</span> <span class="nc">DRFDemoScheduler</span><span class="o">(</span><span class="n">config</span><span class="o">),</span> <span class="n">framework</span><span class="o">,</span> <span class="n">config</span><span class="o">.</span><span class="n">mesosURL</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">  <span class="n">driver</span><span class="o">.</span><span class="n">run</span><span class="o">()</span>
+</span></span><span class="line"><span class="cl"><span class="o">}</span>
+</span></span></code></pre></div><p>Full source code available on <a href="https://github.com/datastrophic/mesos-workshop/tree/master/src/main/scala/io/datastrophic/mesos/drf" target="_blank" rel="noreferrer">github</a>.</p>
+<p>The config case class is created with <em>scopt</em> (scala options parser) and the framework invocation code looks as follows:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">java -cp /throttle/throttle-framework.jar <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>-Dexecutor.path<span class="o">=</span>/throttle/drf-executor.sh <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>io.datastrophic.mesos.drf.DRFDemoFramework <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>--mesos-master zk://zookeeper:2181/mesos <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>--framework-name <span class="s1">&#39;Framework A&#39;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>--task-cpus <span class="m">2</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>--task-memory <span class="m">1000</span>
+</span></span></code></pre></div><p>This allows running the same framework code with different task resource demands to easily setup experimental use cases.</p>
+<h2 id="experiments" class="relative group">Experiments <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#experiments" aria-label="Anchor">#</a></span></h2><p>A small virtual cluster will be used for the experiment with a total capacity of 6 CPUs and 6.6 GB RAM. We&rsquo;re going to use small-sized dummy tasks (which simply sleep to emulate processing) so the total capacity is not big deal here. A dockerized environment is also available on <a href="https://github.com/datastrophic/mesos-workshop" target="_blank" rel="noreferrer">github</a>.</p>
+<h3 id="redistribution-of-resources-between-frameworks-with-same-demands" class="relative group">Redistribution of resources between frameworks with same demands <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#redistribution-of-resources-between-frameworks-with-same-demands" aria-label="Anchor">#</a></span></h3><p>Let&rsquo;s first look at how Mesos will redistribute resources when new frameworks with similar resource demands are added and removed from the cluster. We&rsquo;re going to use <em>&lt; 0.5 CPU, 512 RAM &gt;</em> (or <em>&lt; 8% CPU, 7.5% RAM &gt;</em>) as task resource demands and <code>20000 + Random.nextInt(20000) millis</code> as task duration to make tasks running for 20-40 seconds each because when tasks are too small the cluster will not be fully loaded (default resource offers round frequency is 5 seconds).</p>
+<p>First <em>Framework A</em> will be launched as the only application running on the cluster. After a while we&rsquo;ll see this picture in Mesos UI:
+
+
+
+
+
+
+
+  
+  
+<figure><img src="./frameworks-1.jpeg" alt="" class="mx-auto my-0 rounded-md" />
+</figure>
+</p>
+<p>Let&rsquo;s now launch competing <em>Framework B</em>. In most cases the behavior is as expected - equal sharing of resources:
+
+
+
+
+
+
+
+  
+  
+<figure><img src="./frameworks-2.jpeg" alt="" class="mx-auto my-0 rounded-md" />
+</figure>
+</p>
+<p>But for short periods of time one can observe this picture (disregarding the framework):
+
+
+
+
+
+
+
+  
+  
+<figure><img src="./frameworks-3.jpeg" alt="" class="mx-auto my-0 rounded-md" />
+</figure>
+</p>
+<p>This is a result of the transitional situation when both frameworks have been having equal dominant share (50/50) and when two of <em>Framework A&rsquo;s</em> tasks have finished close to each other in time (resulting in 4 running tasks). After that the first offer goes to A, it accepts and launches one task (now it&rsquo;s 5 running tasks). The next offer goes to B and it accepts it (having no tasks finished up to the moment, the total amount of tasks is 7). The next offer will go to <em>Framework A</em>. It&rsquo;s actually not an extraordinary situation though because these distortions are normal taking into account specifics of the framework implementations and how they work with resource offers.</p>
+<p>Now <em>Framework C</em> is launched in the cluster:
+
+
+
+
+
+
+
+  
+  
+<figure><img src="./frameworks-4.jpeg" alt="" class="mx-auto my-0 rounded-md" />
+</figure>
+</p>
+<p>For the reasons described above sometimes a different picture can be observed:
+
+
+
+
+
+
+
+  
+  
+<figure><img src="./frameworks-5.jpeg" alt="" class="mx-auto my-0 rounded-md" />
+</figure>
+</p>
+<p>From this, we can conclude that if more frameworks are running in parallel then these discrepancies would be observed more often, but none of the frameworks will occupy the majority of the resources forever. DRF defines the priorities in which frameworks are offered the resources, but within a single round, none of the frameworks are offered resources twice. There exists Weighted DRF implementation which changes this behavior.</p>
+<h3 id="redistribution-of-resources-between-frameworks-with-heterogeneous-resource-demands" class="relative group">Redistribution of resources between frameworks with heterogeneous resource demands <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#redistribution-of-resources-between-frameworks-with-heterogeneous-resource-demands" aria-label="Anchor">#</a></span></h3><p>Now <em>Framework A&rsquo;s</em> tasks will consume <em>&lt; 2 CPU, 1000 RAM &gt;</em> (or <em>&lt; 33% CPU, 15% RAM &gt;</em>) and <em>Framework B&rsquo;s</em> tasks will consume <em>&lt; 1 CPU, 2000 RAM &gt;</em> (or <em>&lt; 16% CPU, 30% RAM &gt;</em>).</p>
+<p>Let&rsquo;s see how it works:
+
+
+
+
+
+
+
+  
+  
+<figure><img src="./frameworks-6.jpeg" alt="" class="mx-auto my-0 rounded-md" />
+</figure>
+</p>
+<p>Looks awesome, but here&rsquo;s a trick in resource demands: frameworks together completely saturate the cluster and their dominant resources are not in the conflict. Two tasks of <em>Framework A</em> use ~60% of cluster CPU while two tasks of <em>Framework B</em> use ~67% of memory. But let&rsquo;s increase <em>Framework B&rsquo;s</em> memory demands up to 36% (2500MB), so to run two tasks it will need &gt;72% of the max share and more resources in the offer. Most of the time we&rsquo;ll be observing this picture:
+
+
+
+
+
+
+
+  
+  
+<figure><img src="./frameworks-7.jpeg" alt="" class="mx-auto my-0 rounded-md" />
+</figure>
+</p>
+<p>The picture could change when both tasks of <em>Framework A</em> are finished in between resource offer rounds and all freed resources are offered to <em>Framework B</em> which will launch two of its tasks. After that there are enough resources for launching only one task of <em>Framework A</em> :
+
+
+
+
+
+
+
+  
+  
+<figure><img src="./frameworks-8.jpeg" alt="" class="mx-auto my-0 rounded-md" />
+</figure>
+</p>
+<p>The conclusion is that running multiple small tasks is better than launching large ones in terms of time spent waiting for enough resources to be freed by other frameworks.</p>
+<h2 id="discussion" class="relative group">Discussion <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#discussion" aria-label="Anchor">#</a></span></h2><p>After a number of simulations with a different number of frameworks with different dominant resources the observations described above still hold. Corner cases still appear but within different time frames, and resource allocations converge to a fair distribution of resources.</p>
+<p>One important thing to note is that one resource offer represents the amount of resources available on one slave node. This means that if someone wants to execute a task that needs N cpus and M memory there should exist a physical node in the cluster which has this capacity.</p>
+<p>Mesos enforces incremental task execution to run the whole job (<em>fine-grained mode</em>), but if some sort of gang scheduling is needed then the framework could implement a <em>coarse-grained</em> approach (like Spark does) to run its executors with maximum available resources and schedule the job by means of the framework. Another important thing to mention is that frameworks don&rsquo;t have information about the total amount of cluster resources so it&rsquo;s hardly possible to allocate all the resources at once.</p>
+<h2 id="drf-properties" class="relative group">DRF Properties <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#drf-properties" aria-label="Anchor">#</a></span></h2><p>The Dominant Resource Fairness algorithm satisfies several important properties which are worth mentioning to have a full picture. Cites are from the original paper <a href="https://www.cs.berkeley.edu/~alig/papers/drf.pdf" target="_blank" rel="noreferrer">&ldquo;Dominant Resource Fairness: Fair Allocation of Multiple Resource Types&rdquo;</a>:</p>
+<ul>
+<li><em>Sharing incentive</em>: Each user should be better off sharing the cluster, than exclusively using her own partition of the cluster. Consider a cluster with identical nodes and <em>n</em> users. Then a user should not be able to allocate more tasks in a cluster partition consisting of <em>1/n</em> of all resources.</li>
+<li><em>Strategy-proofness</em>: Users should not be able to benefit by lying about their resource demands. This provides incentive compatibility, as a user cannot improve her allocation by lying.</li>
+<li><em>Envy-freeness</em>: A user should not prefer the allocation of another user. This property embodies the notion of fairness.</li>
+<li><em>Pareto efficiency</em>: It should not be possible to increase the allocation of a user without decreasing the allocation of at least another user. This property is important as it leads to maximizing system utilization subject to satisfying the other properties.</li>
+<li><em>Single resource</em>  fairness: For a single resource, the solution should reduce to max-min fairness.</li>
+<li><em>Bottleneck fairness</em>: If there is one resource that is percent-wise demanded most of by every user, then the solution should reduce to max-min fairness for that resource.</li>
+<li><em>Population monotonicity</em>: When a user leaves the system and relinquishes her resources, none of the allocations of the remaining users should decrease.</li>
+<li><em>Resource monotonicity</em>: If more resources are added to the system, none of the allocations of the existing users should decrease.</li>
+</ul>
+<p>Rephrasing a <em>sharing incentive</em> point: users are offered to share the whole cluster resources instead of exclusively owning their own partition. While in both cases the user has guaranteed minimum allocation of <em>1/n</em> of cluster resources (given that there&rsquo;re <em>n</em> users) in case of partition allocation user will not be able to allocate more tasks than <em>1/n</em> while with DRF it&rsquo;s possible to allocate more tasks using resources released by other frameworks.</p>
+<h2 id="where-to-go-from-here" class="relative group">Where to go from here <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#where-to-go-from-here" aria-label="Anchor">#</a></span></h2><ul>
+<li>The original Mesos paper: <a href="https://www.cs.berkeley.edu/~alig/papers/drf.pdf" target="_blank" rel="noreferrer">&ldquo;Dominant Resource Fairness: Fair Allocation of Multiple Resource Types&rdquo;</a></li>
+<li>Video of the DRF talk at <a href="https://www.usenix.org/conference/nsdi11/dominant-resource-fairness-fair-allocation-multiple-resource-types" target="_blank" rel="noreferrer">USENIX Symposium on Networked Systems Design and Implementation</a></li>
+<li>Paper: <a href="https://www.cs.berkeley.edu/~alig/papers/mesos.pdf" target="_blank" rel="noreferrer">Mesos: A Platform for Fine-Grained Resource Sharing in the Data Center</a></li>
+<li>Paper on Omega scheduler describing different from two-level scheduling approaches: <a href="http://static.googleusercontent.com/media/research.google.com/en//pubs/archive/41684.pdf" target="_blank" rel="noreferrer">Omega: flexible, scalable schedulers for large compute clusters</a></li>
+<li>Project code and dockerized environment to work with at <a href="https://github.com/datastrophic/mesos-workshop" target="_blank" rel="noreferrer">github</a></li>
+</ul>
+
+      </div>
+    </section>
+    <footer class="max-w-prose pt-8 print:hidden">
+      
+  <div class="flex">
+    
+    
+    
+      
+      
+        
+        
+
+
+
+
+
+
+
+
+  
+    <picture
+      class="!mb-0 !mt-0 me-4 w-24 h-auto rounded-full"
+      
+    >
+      
+      
+      
+      
+      <img
+        width="400"
+        height="400"
+        class="!mb-0 !mt-0 me-4 w-24 h-auto rounded-full"
+        alt="Anton Kirillov"
+        loading="lazy" decoding="async"
+        
+          src="https://datastrophic.io/img/author.jpg"
+        
+      />
+    </picture>
+  
+
+
+      
+    
+    <div class="place-self-center">
+      
+        <div class="text-[0.6rem] uppercase leading-3 text-neutral-500 dark:text-neutral-400">
+          Author
+        </div>
+        <div class="font-semibold leading-6 text-neutral-800 dark:text-neutral-300">
+          Anton Kirillov
+        </div>
+      
+      
+        <div class="text-sm text-neutral-700 dark:text-neutral-400">Technical Leader. Compute and AI Infrastructure</div>
+      
+      <div class="text-2xl sm:text-lg">
+  <div class="flex flex-wrap text-neutral-400 dark:text-neutral-500">
+    
+      
+        <a
+          class="px-1 transition-transform hover:scale-125 hover:text-primary-700 dark:hover:text-primary-400"
+          style="will-change:transform;"
+          href="https://www.linkedin.com/in/datastrophic/"
+          target="_blank"
+          aria-label="Linkedin"
+          rel="me noopener noreferrer"
+          ><span class="icon relative inline-block px-1 align-text-bottom"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentColor" d="M416 32H31.9C14.3 32 0 46.5 0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6 0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3zM135.4 416H69V202.2h66.5V416zm-33.2-243c-21.3 0-38.5-17.3-38.5-38.5S80.9 96 102.2 96c21.2 0 38.5 17.3 38.5 38.5 0 21.3-17.2 38.5-38.5 38.5zm282.1 243h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6 0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2 0 79.7 44.3 79.7 101.9V416z"/></svg>
+</span></a
+        >
+      
+    
+      
+        <a
+          class="px-1 transition-transform hover:scale-125 hover:text-primary-700 dark:hover:text-primary-400"
+          style="will-change:transform;"
+          href="https://github.com/datastrophic"
+          target="_blank"
+          aria-label="Github"
+          rel="me noopener noreferrer"
+          ><span class="icon relative inline-block px-1 align-text-bottom"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path fill="currentColor" d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+</span></a
+        >
+      
+    
+  </div>
+
+</div>
+    </div>
+  </div>
+
+
+      
+
+      
+  
+    
+    
+    
+    <div class="pt-8">
+      <hr class="border-dotted border-neutral-300 dark:border-neutral-600" />
+      <div class="flex justify-between pt-3">
+        <span>
+          
+            <a class="group flex" href="https://datastrophic.io/core-concepts-architecture-and-internals-of-apache-spark/">
+              <span
+                class="me-2 text-neutral-700 transition-transform group-hover:-translate-x-[2px] group-hover:text-primary-600 dark:text-neutral dark:group-hover:text-primary-400"
+                ><span class="ltr:inline rtl:hidden">&larr;</span
+                ><span class="ltr:hidden rtl:inline">&rarr;</span></span
+              >
+              <span class="flex flex-col">
+                <span
+                  class="mt-[0.1rem] leading-6 group-hover:underline group-hover:decoration-primary-500"
+                  >Apache Spark: core concepts, architecture and internals</span
+                >
+                <span class="mt-[0.1rem] text-xs text-neutral-500 dark:text-neutral-400">
+                  
+                    <time datetime="2016-03-03 00:00:00 &#43;0000 UTC">3 March 2016</time>
+                  
+                </span>
+              </span>
+            </a>
+          
+        </span>
+        <span>
+          
+            <a class="group flex text-right" href="https://datastrophic.io/spark-jobserver-from-spark-standalone-to-mesos-marathon-and-docker-part-i/">
+              <span class="flex flex-col">
+                <span
+                  class="mt-[0.1rem] leading-6 group-hover:underline group-hover:decoration-primary-500"
+                  >Spark JobServer: from Spark Standalone to Mesos, Marathon and Docker</span
+                >
+                <span class="mt-[0.1rem] text-xs text-neutral-500 dark:text-neutral-400">
+                  
+                    <time datetime="2017-10-12 00:00:00 &#43;0000 UTC">12 October 2017</time>
+                  
+                </span>
+              </span>
+              <span
+                class="ms-2 text-neutral-700 transition-transform group-hover:-translate-x-[-2px] group-hover:text-primary-600 dark:text-neutral dark:group-hover:text-primary-400"
+                ><span class="ltr:inline rtl:hidden">&rarr;</span
+                ><span class="ltr:hidden rtl:inline">&larr;</span></span
+              >
+            </a>
+          
+        </span>
+      </div>
+    </div>
+  
+
+
+      
+    </footer>
+  </article>
+
+      </main>
+      
+        <div
+          class="pointer-events-none absolute bottom-0 end-0 top-[100vh] w-12"
+          id="to-top"
+          hidden="true"
+        >
+          <a
+            href="#the-top"
+            class="pointer-events-auto sticky top-[calc(100vh-5.5rem)] flex h-12 w-12 items-center justify-center rounded-full bg-neutral/50 text-xl text-neutral-700 backdrop-blur hover:text-primary-600 dark:bg-neutral-800/50 dark:text-neutral dark:hover:text-primary-400"
+            aria-label="Scroll to top"
+            title="Scroll to top"
+          >
+            &uarr;
+          </a>
+        </div>
+      <footer class="py-10 print:hidden">
+  
+  
+  <div class="flex items-center justify-between">
+    <div>
+      
+      
+        <p class="text-sm text-neutral-500 dark:text-neutral-400">
+            © 2025 datastrophic
+        </p>
+      
+      
+      
+    </div>
+    <div class="flex flex-row items-center">
+      
+      
+      
+      
+        <div
+          class="me-14 cursor-pointer text-sm text-neutral-700 hover:text-primary-600 dark:text-neutral dark:hover:text-primary-400"
+        >
+          <button id="appearance-switcher-0" type="button" aria-label="appearance switcher">
+            <div
+              class="flex h-12 w-12 items-center justify-center dark:hidden"
+              title="Switch to dark appearance"
+            >
+              <span class="icon relative inline-block px-1 align-text-bottom"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M32 256c0-123.8 100.3-224 223.8-224c11.36 0 29.7 1.668 40.9 3.746c9.616 1.777 11.75 14.63 3.279 19.44C245 86.5 211.2 144.6 211.2 207.8c0 109.7 99.71 193 208.3 172.3c9.561-1.805 16.28 9.324 10.11 16.95C387.9 448.6 324.8 480 255.8 480C132.1 480 32 379.6 32 256z"/></svg>
+</span>
+            </div>
+            <div
+              class="hidden h-12 w-12 items-center justify-center dark:flex"
+              title="Switch to light appearance"
+            >
+              <span class="icon relative inline-block px-1 align-text-bottom"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M256 159.1c-53.02 0-95.1 42.98-95.1 95.1S202.1 351.1 256 351.1s95.1-42.98 95.1-95.1S309 159.1 256 159.1zM509.3 347L446.1 255.1l63.15-91.01c6.332-9.125 1.104-21.74-9.826-23.72l-109-19.7l-19.7-109c-1.975-10.93-14.59-16.16-23.72-9.824L256 65.89L164.1 2.736c-9.125-6.332-21.74-1.107-23.72 9.824L121.6 121.6L12.56 141.3C1.633 143.2-3.596 155.9 2.736 164.1L65.89 256l-63.15 91.01c-6.332 9.125-1.105 21.74 9.824 23.72l109 19.7l19.7 109c1.975 10.93 14.59 16.16 23.72 9.824L256 446.1l91.01 63.15c9.127 6.334 21.75 1.107 23.72-9.822l19.7-109l109-19.7C510.4 368.8 515.6 356.1 509.3 347zM256 383.1c-70.69 0-127.1-57.31-127.1-127.1c0-70.69 57.31-127.1 127.1-127.1s127.1 57.3 127.1 127.1C383.1 326.7 326.7 383.1 256 383.1z"/></svg>
+</span>
+            </div>
+          </button>
+        </div>
+      
+    </div>
+  </div>
+  
+  
+</footer>
+
+    </div>
+  </body>
+</html>

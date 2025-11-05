@@ -1,1 +1,20 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Mlops on datastrophic</title><link>https://datastrophic.io/tags/mlops/</link><description>Recent content in Mlops on datastrophic</description><generator>Hugo</generator><language>en</language><copyright>© 2025 datastrophic</copyright><lastBuildDate>Mon, 04 Oct 2021 00:00:00 +0000</lastBuildDate><atom:link href="https://datastrophic.io/tags/mlops/index.xml" rel="self" type="application/rss+xml"/><item><title>Kubeflow Training Operators and Istio: solving the proxy sidecar lifecycle problem for AI/ML workloads</title><link>https://datastrophic.io/kubeflow-training-operators-and-istio-solving-the-proxy-sidecar-lifecycle-problem-for-aiml-workloads/</link><pubDate>Mon, 04 Oct 2021 00:00:00 +0000</pubDate><guid>https://datastrophic.io/kubeflow-training-operators-and-istio-solving-the-proxy-sidecar-lifecycle-problem-for-aiml-workloads/</guid><description>With Kubeflow gaining traction in the community and its early adoption in enterprises, security and observability concerns become more and more important. Many organizations that are running AI/ML workloads, operate with sensitive personal or financial data and have stricter requirements for data encryption, traceability, and access control. Quite often, we can see the use of the Istio service mesh for solving these problems and gaining other benefits of the rich functionality it provides.</description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Mlops on datastrophic</title>
+    <link>https://datastrophic.io/tags/mlops/</link>
+    <description>Recent content in Mlops on datastrophic</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <copyright>© 2025 datastrophic</copyright>
+    <lastBuildDate>Mon, 04 Oct 2021 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://datastrophic.io/tags/mlops/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Kubeflow Training Operators and Istio: solving the proxy sidecar lifecycle problem for AI/ML workloads</title>
+      <link>https://datastrophic.io/kubeflow-training-operators-and-istio-solving-the-proxy-sidecar-lifecycle-problem-for-aiml-workloads/</link>
+      <pubDate>Mon, 04 Oct 2021 00:00:00 +0000</pubDate>
+      <guid>https://datastrophic.io/kubeflow-training-operators-and-istio-solving-the-proxy-sidecar-lifecycle-problem-for-aiml-workloads/</guid>
+      <description>With Kubeflow gaining traction in the community and its early adoption in enterprises, security and observability concerns become more and more important. Many organizations that are running AI/ML workloads, operate with sensitive personal or financial data and have stricter requirements for data encryption, traceability, and access control. Quite often, we can see the use of the Istio service mesh for solving these problems and gaining other benefits of the rich functionality it provides.</description>
+    </item>
+  </channel>
+</rss>

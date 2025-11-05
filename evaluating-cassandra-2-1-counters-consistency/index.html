@@ -1,28 +1,550 @@
-<!doctype html><html lang=en dir=ltr class=scroll-smooth data-default-appearance=light data-auto-appearance=true><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=theme-color content="#FFFFFF"><title>Cassandra 2.1 Counters: Testing Consistency During Node Failures &#183; datastrophic</title><meta name=title content="Cassandra 2.1 Counters: Testing Consistency During Node Failures &#183; datastrophic"><script type=text/javascript src=https://datastrophic.io/js/appearance.min.8a082f81b27f3cb2ee528df0b0bdc39787034cf2cc34d4669fbc9977c929023c.js integrity="sha256-iggvgbJ/PLLuUo3wsL3Dl4cDTPLMNNRmn7yZd8kpAjw="></script><link type=text/css rel=stylesheet href=https://datastrophic.io/css/main.bundle.min.8ddd6ca5d23ba630c6633e1e51f0ac292850c4d2af977565a9c52e2a3179e5c9.css integrity="sha256-jd1spdI7pjDGYz4eUfCsKShQxNKvl3VlqcUuKjF55ck="><script defer type=text/javascript id=script-bundle src=https://datastrophic.io/js/main.bundle.min.d4b727caf411cb5c3b421d0d427ed1e3daeafe0d04840327efad4978430edb8c.js integrity="sha256-1LcnyvQRy1w7Qh0NQn7R49rq/g0EhAMn761JeEMO24w=" data-copy=Copy data-copied=Copied></script><meta name=description content="
+
+
+
+
+
+
+
+<!doctype html>
+<html
+  lang="en"
+  dir="ltr"
+  class="scroll-smooth"
+  data-default-appearance="light"
+  data-auto-appearance="true"
+><head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#FFFFFF" />
+  
+  <title>Cassandra 2.1 Counters: Testing Consistency During Node Failures &middot; datastrophic</title>
+    <meta name="title" content="Cassandra 2.1 Counters: Testing Consistency During Node Failures &middot; datastrophic" />
+  
+  
+  
+  
+  
+  <script
+    type="text/javascript"
+    src="https://datastrophic.io/js/appearance.min.8a082f81b27f3cb2ee528df0b0bdc39787034cf2cc34d4669fbc9977c929023c.js"
+    integrity="sha256-iggvgbJ/PLLuUo3wsL3Dl4cDTPLMNNRmn7yZd8kpAjw="
+  ></script>
+  
+  
+  
+  
+  
+  
+  
+    
+  
+  
+  <link
+    type="text/css"
+    rel="stylesheet"
+    href="https://datastrophic.io/css/main.bundle.min.8ddd6ca5d23ba630c6633e1e51f0ac292850c4d2af977565a9c52e2a3179e5c9.css"
+    integrity="sha256-jd1spdI7pjDGYz4eUfCsKShQxNKvl3VlqcUuKjF55ck="
+  />
+  
+  
+  
+  
+    
+    
+  
+  
+  
+    
+    <script
+      defer
+      type="text/javascript"
+      id="script-bundle"
+      src="https://datastrophic.io/js/main.bundle.min.d4b727caf411cb5c3b421d0d427ed1e3daeafe0d04840327efad4978430edb8c.js"
+      integrity="sha256-1LcnyvQRy1w7Qh0NQn7R49rq/g0EhAMn761JeEMO24w="
+      data-copy="Copy"
+      data-copied="Copied"
+    ></script>
+  
+  
+  <meta
+    name="description"
+    content="
       
         For some cases such as the ones present in AdServing, the counters come really handy to accumulate totals for events coming into a system compared to batch aggregates. While distributed counters consistency is a well-known problem Cassandra counters in version 2.1 are claimed to be more accurate compared to the prior ones. This post describes the approach and the results of Cassandra counters consistency testing in different failure scenarios such as rolling restarts, abnormal termination of nodes, and network splits.
       
-    "><link rel=canonical href=https://datastrophic.io/evaluating-cassandra-2-1-counters-consistency/><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/site.webmanifest><meta property="og:url" content="https://datastrophic.io/evaluating-cassandra-2-1-counters-consistency/"><meta property="og:site_name" content="datastrophic"><meta property="og:title" content="Cassandra 2.1 Counters: Testing Consistency During Node Failures"><meta property="og:description" content="For some cases such as the ones present in AdServing, the counters come really handy to accumulate totals for events coming into a system compared to batch aggregates. While distributed counters consistency is a well-known problem Cassandra counters in version 2.1 are claimed to be more accurate compared to the prior ones. This post describes the approach and the results of Cassandra counters consistency testing in different failure scenarios such as rolling restarts, abnormal termination of nodes, and network splits."><meta property="og:locale" content="en"><meta property="og:type" content="article"><meta property="article:section" content="posts"><meta property="article:published_time" content="2015-09-03T00:00:00+00:00"><meta property="article:modified_time" content="2015-09-03T00:00:00+00:00"><meta property="article:tag" content="Akka"><meta property="article:tag" content="Cassandra"><meta name=twitter:card content="summary"><meta name=twitter:title content="Cassandra 2.1 Counters: Testing Consistency During Node Failures"><meta name=twitter:description content="For some cases such as the ones present in AdServing, the counters come really handy to accumulate totals for events coming into a system compared to batch aggregates. While distributed counters consistency is a well-known problem Cassandra counters in version 2.1 are claimed to be more accurate compared to the prior ones. This post describes the approach and the results of Cassandra counters consistency testing in different failure scenarios such as rolling restarts, abnormal termination of nodes, and network splits."><script type=application/ld+json>{"@context":"https://schema.org","@type":"Article","articleSection":"","name":"Cassandra 2.1 Counters: Testing Consistency During Node Failures","headline":"Cassandra 2.1 Counters: Testing Consistency During Node Failures","abstract":"For some cases such as the ones present in AdServing, the counters come really handy to accumulate totals for events coming into a system compared to batch aggregates. While distributed counters consistency is a well-known problem Cassandra counters in version 2.1 are claimed to be more accurate compared to the prior ones. This post describes the approach and the results of Cassandra counters consistency testing in different failure scenarios such as rolling restarts, abnormal termination of nodes, and network splits.","inLanguage":"en","url":"https:\/\/datastrophic.io\/evaluating-cassandra-2-1-counters-consistency\/","author":{"@type":"Person","name":"Anton Kirillov"},"copyrightYear":"2015","dateCreated":"2015-09-03T00:00:00\u002b00:00","datePublished":"2015-09-03T00:00:00\u002b00:00","dateModified":"2015-09-03T00:00:00\u002b00:00","keywords":["akka","cassandra"],"mainEntityOfPage":"true","wordCount":"1843"}</script><script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","item":"https://datastrophic.io/","name":"","position":1},{"@type":"ListItem","item":"https://datastrophic.io/posts/","name":"","position":2},{"@type":"ListItem","name":"Cassandra 2.1 Counters Testing Consistency During Node Failures","position":3}]}</script><meta name=author content="Anton Kirillov"><link href=https://www.linkedin.com/in/datastrophic/ rel=me><link href=https://github.com/datastrophic rel=me><script async src="https://www.googletagmanager.com/gtag/js?id=G-Z9WG27GT0G"></script><script>var dnt,doNotTrack=!1;if(!1&&(dnt=navigator.doNotTrack||window.doNotTrack||navigator.msDoNotTrack,doNotTrack=dnt=="1"||dnt=="yes"),!doNotTrack){window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-Z9WG27GT0G")}</script></head><body class="m-auto flex h-screen max-w-7xl flex-col bg-neutral px-6 text-lg leading-7 text-neutral-900 dark:bg-neutral-800 dark:text-neutral sm:px-14 md:px-24 lg:px-32"><div id=the-top class="absolute flex self-center"><a class="-translate-y-8 rounded-b-lg bg-primary-200 px-3 py-1 text-sm focus:translate-y-0 dark:bg-neutral-600" href=#main-content><span class="pe-2 font-bold text-primary-600 dark:text-primary-400">&darr;</span>Skip to main content</a></div><header class="py-6 font-semibold text-neutral-900 dark:text-neutral sm:py-10 print:hidden"><nav class="flex items-start justify-between sm:items-center"><div class="z-40 flex flex-row items-center"><a class="decoration-primary-500 hover:underline hover:decoration-2 hover:underline-offset-2" rel=me href=/>datastrophic</a></div><label id=menu-button for=menu-controller class="block sm:hidden"><input type=checkbox id=menu-controller class=hidden><div class="cursor-pointer hover:text-primary-600 dark:hover:text-primary-400"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 448 512"><path fill="currentColor" d="M0 96C0 78.33 14.33 64 32 64H416c17.7.0 32 14.33 32 32 0 17.7-14.3 32-32 32H32C14.33 128 0 113.7.0 96zM0 256c0-17.7 14.33-32 32-32H416c17.7.0 32 14.3 32 32s-14.3 32-32 32H32c-17.67.0-32-14.3-32-32zM416 448H32c-17.67.0-32-14.3-32-32s14.33-32 32-32H416c17.7.0 32 14.3 32 32s-14.3 32-32 32z"/></svg></span></div><div id=menu-wrapper class="invisible fixed inset-0 z-30 m-auto h-full w-full cursor-default overflow-auto bg-neutral-100/50 opacity-0 backdrop-blur-sm transition-opacity dark:bg-neutral-900/50"><ul class="mx-auto flex w-full max-w-7xl list-none flex-col overflow-visible px-6 py-6 text-end sm:px-14 sm:py-10 sm:pt-10 md:px-24 lg:px-32"><li class=mb-1><span class="cursor-pointer hover:text-primary-600 dark:hover:text-primary-400"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 320 512"><path fill="currentColor" d="M310.6 361.4c12.5 12.5 12.5 32.75.0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3 54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75.0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75.0-45.25s32.75-12.5 45.25.0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25.0s12.5 32.75.0 45.25l-105.4 105.4L310.6 361.4z"/></svg></span></span></li><li class="group mb-1"><a href=/posts/ title onclick=close_menu()><span class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2">archive</span></a></li><li class="group mb-1"><a href=/about/ title onclick=close_menu()><span class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2">about</span></a></li></ul></div></label><ul class="hidden list-none flex-row text-end sm:flex"><li class="group mb-1 sm:mb-0 sm:me-7 sm:last:me-0"><a href=/posts/ title><span class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2">archive</span></a></li><li class="group mb-1 sm:mb-0 sm:me-7 sm:last:me-0"><a href=/about/ title><span class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2">about</span></a></li></ul></nav></header><div class="relative flex grow flex-col"><main id=main-content class=grow><article><header class=max-w-prose><h1 class="mb-8 mt-0 text-4xl font-extrabold text-neutral-900 dark:text-neutral">Cassandra 2.1 Counters: Testing Consistency During Node Failures</h1><div class="mb-10 text-base text-neutral-500 dark:text-neutral-400 print:hidden"><div class="flex flex-row flex-wrap items-center"><time datetime="2015-09-03 00:00:00 +0000 UTC">3 September 2015</time><span class="px-2 text-primary-500">&#183;</span><span title="Reading time">9 mins</span></div><div class="my-1 flex flex-wrap text-xs leading-relaxed text-neutral-500 dark:text-neutral-400"><a href=https://datastrophic.io/tags/akka/ class="mx-1 my-1 rounded-md border border-neutral-200 px-1 py-[1px] hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:hover:border-primary-600 dark:hover:text-primary-400">Akka</a>
-<a href=https://datastrophic.io/tags/cassandra/ class="mx-1 my-1 rounded-md border border-neutral-200 px-1 py-[1px] hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:hover:border-primary-600 dark:hover:text-primary-400">Cassandra</a></div></div></header><section class="prose mt-0 flex max-w-full flex-col dark:prose-invert lg:flex-row"><div class="min-h-0 min-w-0 max-w-prose grow"><p>For some cases such as the ones present in AdServing, the counters come really handy to accumulate totals for events coming into a system compared to batch aggregates. While distributed counters consistency is a well-known problem Cassandra counters in version 2.1 are claimed to be more accurate compared to the prior ones. This post describes the approach and the results of Cassandra counters consistency testing in different failure scenarios such as rolling restarts, abnormal termination of nodes, and network splits.</p><p><figure><img src=./cassandra-ring.png alt class="mx-auto my-0 rounded-md"></figure></p><p>Here&rsquo;s the initial <a href=http://www.datastax.com/dev/blog/whats-new-in-cassandra-2-1-a-better-implementation-of-counters target=_blank rel=noreferrer>blog post</a> by DataStax describing the internals of new Cassandra counters implementation. There exist really good counters consistency tests during network splits performed by Jepsen and published in <a href=https://aphyr.com/posts/294-call-me-maybe-cassandra/ target=_blank rel=noreferrer>Aphyr&rsquo;s blog</a>. While there are a wide variety of stress test tools, with counters it would be nice to verify their behavior for business-specific cases, emulating production workload. For this purpose, a simple Akka-based application has been implemented allowing to produce a high write rate while using the problem domain data model.</p><h2 id=the-load-testing-tool class="relative group">The Load Testing Tool <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#the-load-testing-tool aria-label=Anchor>#</a></span></h2><p>The main idea behind the tool is in providing highly concurrent writes with respect to the data model (which reflects a particular business case) and a simple feedback loop to verify the results. The feedback loop is implemented with a configurable number of retries to wait for eventually consistent writes being propagated to all nodes.</p><h4 id=actor-system-overview class="relative group">Actor System Overview <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#actor-system-overview aria-label=Anchor>#</a></span></h4><p><figure><img src=./actor-system.png alt class="mx-auto my-0 rounded-md"></figure></p><h3 id=actors-responsibilities-and-relationships class="relative group">Actors responsibilities and relationships <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#actors-responsibilities-and-relationships aria-label=Anchor>#</a></span></h3><ul><li><code>Coordinator</code> controls interactions between the rest of the actors, waits for initialization, executes broadcast load start command, etc. when all writes are sent to the cluster, Coordinator executes feedback loop to compare actual counter values with expected result</li><li><code>Generator</code>s are domain-aware random insert queries generators that take into account the number of unique rows and counters per row to generate the full path to counters. The total number of counters thus equals the number of unique rows times the number of counters per row</li><li><code>Processor</code>s are Actors controlling execution for a specific table and sub sum of total counter value. Total number of processors equal
-<code>number_of_entities * parallelism_factor</code>. Each processor is responsible for providing writes for <code>totalSum/parallelism</code> subtotal of target total value for each counter. <strong>Number of processors affects the number of concurrent writes to the same counters.</strong></li><li><code>Worker</code>s are needed for generating increments and coordinating writes to generated keys. Each worker holds a subset of the Processor&rsquo;s keys for a specific table thus providing faster iterations over smaller insert batches. The number of writers influences the parallelism of writes to different keys providing intermixed writes with other workers. But generally, it is a performance optimization for processing a smaller number of keys per write</li><li><code>CassandraWriter</code> is a short-living actor which dies after all work is done. These actors live on a dedicated dispatcher with a separate thread pool due to <code>datastax-java-driver</code> specifics: it becomes enormously slow on a shared thread pool for some reason.</li></ul><h3 id=data-model class="relative group">Data model <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#data-model aria-label=Anchor>#</a></span></h3><p>A replication factor of 3 will be used in tests against 5-node C* cluster:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-sql data-lang=sql><span class=line><span class=cl><span class=k>CREATE</span><span class=w> </span><span class=n>KEYSPACE</span><span class=w> </span><span class=k>IF</span><span class=w> </span><span class=k>NOT</span><span class=w> </span><span class=k>EXISTS</span><span class=w> </span><span class=err>$</span><span class=n>keyspaceName</span><span class=w> </span><span class=k>WITH</span><span class=w> </span><span class=n>replication</span><span class=o>=</span><span class=w> </span><span class=err>{</span><span class=s1>&#39;class&#39;</span><span class=p>:</span><span class=s1>&#39;SimpleStrategy&#39;</span><span class=p>,</span><span class=w> </span><span class=s1>&#39;replication_factor&#39;</span><span class=p>:</span><span class=mi>3</span><span class=err>}</span><span class=p>;</span><span class=w>
-</span></span></span></code></pre></div><p>During the tests, the data will be written independently representing 3 different entities (e.g. views, clicks, and campaigns). Each of these entities looks as follows:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-sql data-lang=sql><span class=line><span class=cl><span class=k>CREATE</span><span class=w> </span><span class=k>TABLE</span><span class=w> </span><span class=k>IF</span><span class=w> </span><span class=k>NOT</span><span class=w> </span><span class=k>EXISTS</span><span class=w> </span><span class=err>$</span><span class=n>keyspaceName</span><span class=p>.</span><span class=err>$</span><span class=n>name</span><span class=w> </span><span class=p>(</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=w>           </span><span class=n>id</span><span class=w> </span><span class=n>uuid</span><span class=p>,</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=w>           </span><span class=n>u</span><span class=w> </span><span class=n>ascii</span><span class=p>,</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=w>           </span><span class=n>e</span><span class=w> </span><span class=n>ascii</span><span class=p>,</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=w>           </span><span class=n>d</span><span class=w> </span><span class=nb>int</span><span class=p>,</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=w>           </span><span class=k>c</span><span class=w> </span><span class=n>counter</span><span class=p>,</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=w>           </span><span class=k>PRIMARY</span><span class=w> </span><span class=k>KEY</span><span class=p>((</span><span class=n>id</span><span class=p>,</span><span class=w> </span><span class=n>u</span><span class=p>,</span><span class=w> </span><span class=n>e</span><span class=p>),</span><span class=w> </span><span class=n>d</span><span class=p>));</span><span class=w>
-</span></span></span></code></pre></div><p>But for one of the entities, two column families will be created to reflect the case with different read paths (same fields, different row keys).</p><h2 id=test-setup class="relative group">Test Setup <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#test-setup aria-label=Anchor>#</a></span></h2><h3 id=cassandra-cluster-configuration class="relative group">Cassandra cluster configuration <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#cassandra-cluster-configuration aria-label=Anchor>#</a></span></h3><p>Tests are performed against 5 node Cassandra 2.1.9 cluster. Each node has 32Gb of RAM and 4-core 8-threads 3.70GHz Xeon CPU.</p><p>Cassandra heap size: 8Gb</p><h3 id=test-configuration class="relative group">Test configuration <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#test-configuration aria-label=Anchor>#</a></span></h3><p>Here&rsquo;s an example of tool invocation:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>java -jar counters-test.jar -h 10.120.0.252 -k test_keyspace -p <span class=m>10</span> -w <span class=m>100</span> -s <span class=m>50</span> -r <span class=m>1000</span> -c <span class=m>100</span>
-</span></span></code></pre></div><p>Details:</p><ul><li>counter total value 50</li><li>parallelism 10</li><li>100 workers, keys per worker 1000 (sequentially fed to async writes)</li><li>1000 rows</li><li>100 counters per row</li></ul><p>The tool is configured to write +1 increments which result in 5M of total writes to every table (views, clicks, 2x campaign). Write throughput after warmup fluctuates around 30K writes/sec. Generally</p><p>Network partitions and rolling restarts are implemented with <a href=https://github.com/mchlstckl/siafu target=_blank rel=noreferrer>Siafu: fabric-based python tool</a></p><h3 id=cassandra-client-configuration class="relative group">Cassandra client configuration <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#cassandra-client-configuration aria-label=Anchor>#</a></span></h3><p>Client configured with:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-scala data-lang=scala><span class=line><span class=cl><span class=k>implicit</span> <span class=k>val</span> <span class=n>cluster</span> <span class=k>=</span> <span class=nc>Cluster</span><span class=o>.</span><span class=n>builder</span><span class=o>()</span>
-</span></span><span class=line><span class=cl>      <span class=o>.</span><span class=n>addContactPoint</span><span class=o>(</span><span class=n>config</span><span class=o>.</span><span class=n>clusterNode</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>      <span class=o>.</span><span class=n>withQueryOptions</span><span class=o>(</span><span class=k>new</span> <span class=nc>QueryOptions</span><span class=o>()</span>
-</span></span><span class=line><span class=cl>         <span class=o>.</span><span class=n>setConsistencyLevel</span><span class=o>(</span><span class=nc>ConsistencyLevel</span><span class=o>.</span><span class=nc>QUORUM</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>      <span class=o>).</span><span class=n>build</span><span class=o>()</span>
-</span></span></code></pre></div><p>All writes are executed in sync mode, i.e.:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-scala data-lang=scala><span class=line><span class=cl><span class=nc>Try</span><span class=o>(</span><span class=n>msg</span><span class=o>.</span><span class=n>session</span><span class=o>.</span><span class=n>execute</span><span class=o>(</span><span class=n>statement</span><span class=o>))</span> <span class=k>match</span> <span class=o>{</span>
-</span></span><span class=line><span class=cl>  <span class=k>case</span> <span class=nc>Failure</span><span class=o>(</span><span class=n>ex</span><span class=o>)</span> <span class=k>=&gt;</span> <span class=n>log</span><span class=o>.</span><span class=n>error</span><span class=o>(</span><span class=n>ex</span><span class=o>,</span> <span class=s>&#34;ERROR DURING WRITE&#34;</span><span class=o>)</span>
-</span></span><span class=line><span class=cl>  <span class=k>case</span> <span class=k>_</span> <span class=k>=&gt;</span>
-</span></span><span class=line><span class=cl><span class=o>}</span>
-</span></span></code></pre></div><h2 id=the-test class="relative group">The Test <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#the-test aria-label=Anchor>#</a></span></h2><h3 id=scenarios-overview-and-results-interpretation class="relative group">Scenarios Overview and Results Interpretation <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#scenarios-overview-and-results-interpretation aria-label=Anchor>#</a></span></h3><p>The counters consistency is going to be evaluated in the following scenarios while writes are executed against the cluster:</p><ul><li>node normally stops</li><li>node normally restarts</li><li>cluster rolling restart</li><li>node dies (<code>kill -9</code>)</li><li>node dies, starts again and <code>nodetool repair</code> is executed</li><li>node is lost due to network split and then comes back</li></ul><h3 id=interpretation-of-results class="relative group">Interpretation of results <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#interpretation-of-results aria-label=Anchor>#</a></span></h3><p>Results for each entity contain the following set of fields:</p><ul><li><code>overcounts</code> - the total number of counters holding value greater than expected</li><li><code>maxOverCount</code> - maximum overcount value for a single counter</li><li><code>totalOverCount</code> - the total number of queries with overcount</li><li><code>undercounts</code> - the total number of counters holding value less than expected</li><li><code>maxUnderCount</code> - maximum undercount value for a single counter</li><li><code>totalUnderCount</code> - the total number of queries with undercount</li></ul><h3 id=load-stats class="relative group">Load stats <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#load-stats aria-label=Anchor>#</a></span></h3><p>Here&rsquo;s an example of throughput stats for the test being executed without incidents:<figure><img src=./stats-normal-execution.jpeg alt class="mx-auto my-0 rounded-md"></figure>The spike in the beginning is due to several minutes of warmup done before the actual writes.</p><p>And here&rsquo;s an example of throughput deviation while node fails and gets back:<figure><img src=./stats-node-down.jpeg alt class="mx-auto my-0 rounded-md"></figure></p><p>One really important thing during interpretation of the test results is that the test is pretty synthetic and the amount of failed under- or overcounts will vary depending on the throughput and amount of failures per test. But for the initial evaluation of C* counters behavior in the most common failure scenarios, this should be enough to grasp the whole picture.</p><h2 id=the-results class="relative group">The Results <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#the-results aria-label=Anchor>#</a></span></h2><h3 id=scenario-a-normal-node-stop class="relative group">Scenario: a normal node stop <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#scenario-a-normal-node-stop aria-label=Anchor>#</a></span></h3><pre tabindex=0><code>DEVIATION STATS:
+    "
+  />
+  
+  
+  
+  
+    <link rel="canonical" href="https://datastrophic.io/evaluating-cassandra-2-1-counters-consistency/" />
+  
+  
+  
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+  
+  
+  
+  
+  
+  
+  
+  
+  <meta property="og:url" content="https://datastrophic.io/evaluating-cassandra-2-1-counters-consistency/">
+  <meta property="og:site_name" content="datastrophic">
+  <meta property="og:title" content="Cassandra 2.1 Counters: Testing Consistency During Node Failures">
+  <meta property="og:description" content="For some cases such as the ones present in AdServing, the counters come really handy to accumulate totals for events coming into a system compared to batch aggregates. While distributed counters consistency is a well-known problem Cassandra counters in version 2.1 are claimed to be more accurate compared to the prior ones. This post describes the approach and the results of Cassandra counters consistency testing in different failure scenarios such as rolling restarts, abnormal termination of nodes, and network splits.">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2015-09-03T00:00:00+00:00">
+    <meta property="article:modified_time" content="2015-09-03T00:00:00+00:00">
+    <meta property="article:tag" content="Akka">
+    <meta property="article:tag" content="Cassandra">
+
+  
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Cassandra 2.1 Counters: Testing Consistency During Node Failures">
+  <meta name="twitter:description" content="For some cases such as the ones present in AdServing, the counters come really handy to accumulate totals for events coming into a system compared to batch aggregates. While distributed counters consistency is a well-known problem Cassandra counters in version 2.1 are claimed to be more accurate compared to the prior ones. This post describes the approach and the results of Cassandra counters consistency testing in different failure scenarios such as rolling restarts, abnormal termination of nodes, and network splits.">
+
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "articleSection": "",
+    "name": "Cassandra 2.1 Counters: Testing Consistency During Node Failures",
+    "headline": "Cassandra 2.1 Counters: Testing Consistency During Node Failures",
+    
+    "abstract": "For some cases such as the ones present in AdServing, the counters come really handy to accumulate totals for events coming into a system compared to batch aggregates. While distributed counters consistency is a well-known problem Cassandra counters in version 2.1 are claimed to be more accurate compared to the prior ones. This post describes the approach and the results of Cassandra counters consistency testing in different failure scenarios such as rolling restarts, abnormal termination of nodes, and network splits.",
+    "inLanguage": "en",
+    "url" : "https:\/\/datastrophic.io\/evaluating-cassandra-2-1-counters-consistency\/",
+    "author" : {
+      "@type": "Person",
+      "name": "Anton Kirillov"
+    },
+    "copyrightYear": "2015",
+    "dateCreated": "2015-09-03T00:00:00\u002b00:00",
+    "datePublished": "2015-09-03T00:00:00\u002b00:00",
+    
+    "dateModified": "2015-09-03T00:00:00\u002b00:00",
+    
+    "keywords": ["akka","cassandra"],
+    
+    "mainEntityOfPage": "true",
+    "wordCount": "1843"
+  }
+  </script>
+    
+    <script type="application/ld+json">
+    {
+   "@context": "https://schema.org",
+   "@type": "BreadcrumbList",
+   "itemListElement": [
+     {
+       "@type": "ListItem",
+       "item": "https://datastrophic.io/",
+       "name": "",
+       "position": 1
+     },
+     {
+       "@type": "ListItem",
+       "item": "https://datastrophic.io/posts/",
+       "name": "",
+       "position": 2
+     },
+     {
+       "@type": "ListItem",
+       "name": "Cassandra 2.1 Counters Testing Consistency During Node Failures",
+       "position": 3
+     }
+   ]
+ }
+  </script>
+
+  
+  
+    <meta name="author" content="Anton Kirillov" />
+  
+  
+    
+      <link href="https://www.linkedin.com/in/datastrophic/" rel="me" />
+    
+      <link href="https://github.com/datastrophic" rel="me" />
+    
+  
+  
+  
+
+
+
+
+
+
+
+  
+  
+  
+  
+  
+  
+      <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z9WG27GT0G"></script>
+      <script>
+        var doNotTrack = false;
+        if ( false ) {
+          var dnt = (navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack);
+          var doNotTrack = (dnt == "1" || dnt == "yes");
+        }
+        if (!doNotTrack) {
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-Z9WG27GT0G');
+        }
+      </script>
+
+
+  
+  
+</head>
+<body
+    class="m-auto flex h-screen max-w-7xl flex-col bg-neutral px-6 text-lg leading-7 text-neutral-900 dark:bg-neutral-800 dark:text-neutral sm:px-14 md:px-24 lg:px-32"
+  >
+    <div id="the-top" class="absolute flex self-center">
+      <a
+        class="-translate-y-8 rounded-b-lg bg-primary-200 px-3 py-1 text-sm focus:translate-y-0 dark:bg-neutral-600"
+        href="#main-content"
+        ><span class="pe-2 font-bold text-primary-600 dark:text-primary-400">&darr;</span
+        >Skip to main content</a
+      >
+    </div>
+    
+    
+      <header class="py-6 font-semibold text-neutral-900 dark:text-neutral sm:py-10 print:hidden">
+  <nav class="flex items-start justify-between sm:items-center">
+    
+    <div class="z-40 flex flex-row items-center">
+      
+  <a
+    class="decoration-primary-500 hover:underline hover:decoration-2 hover:underline-offset-2"
+    rel="me"
+    href="/"
+    >datastrophic</a
+  >
+
+    </div>
+    
+      
+      <label id="menu-button" for="menu-controller" class="block sm:hidden">
+        <input type="checkbox" id="menu-controller" class="hidden" />
+        <div class="cursor-pointer hover:text-primary-600 dark:hover:text-primary-400">
+          <span class="icon relative inline-block px-1 align-text-bottom"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentColor" d="M0 96C0 78.33 14.33 64 32 64H416C433.7 64 448 78.33 448 96C448 113.7 433.7 128 416 128H32C14.33 128 0 113.7 0 96zM0 256C0 238.3 14.33 224 32 224H416C433.7 224 448 238.3 448 256C448 273.7 433.7 288 416 288H32C14.33 288 0 273.7 0 256zM416 448H32C14.33 448 0 433.7 0 416C0 398.3 14.33 384 32 384H416C433.7 384 448 398.3 448 416C448 433.7 433.7 448 416 448z"/></svg>
+</span>
+        </div>
+        <div
+          id="menu-wrapper"
+          class="invisible fixed inset-0 z-30 m-auto h-full w-full cursor-default overflow-auto bg-neutral-100/50 opacity-0 backdrop-blur-sm transition-opacity dark:bg-neutral-900/50"
+        >
+          <ul
+            class="mx-auto flex w-full max-w-7xl list-none flex-col overflow-visible px-6 py-6 text-end sm:px-14 sm:py-10 sm:pt-10 md:px-24 lg:px-32"
+          >
+            <li class="mb-1">
+              <span class="cursor-pointer hover:text-primary-600 dark:hover:text-primary-400"
+                ><span class="icon relative inline-block px-1 align-text-bottom"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path fill="currentColor" d="M310.6 361.4c12.5 12.5 12.5 32.75 0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3L54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75 0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25l-105.4 105.4L310.6 361.4z"/></svg>
+</span></span
+              >
+            </li>
+            
+              
+                
+                <li class="group mb-1">
+                  
+                    <a
+                      href="/posts/"
+                      title=""
+                      onclick="close_menu()"
+                      
+                      ><span
+                          class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2"
+                          >archive</span
+                        >
+                      </a
+                    >
+                  
+                </li>
+              
+                
+                <li class="group mb-1">
+                  
+                    <a
+                      href="/about/"
+                      title=""
+                      onclick="close_menu()"
+                      
+                      ><span
+                          class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2"
+                          >about</span
+                        >
+                      </a
+                    >
+                  
+                </li>
+              
+              
+            
+          </ul>
+        </div>
+      </label>
+      
+      <ul class="hidden list-none flex-row text-end sm:flex">
+        
+          
+            
+            <li class="group mb-1 sm:mb-0 sm:me-7 sm:last:me-0">
+              
+                <a
+                  href="/posts/"
+                  title=""
+                  
+                  ><span
+                      class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2"
+                      >archive</span
+                    >
+                  </a
+                >
+              
+            </li>
+          
+            
+            <li class="group mb-1 sm:mb-0 sm:me-7 sm:last:me-0">
+              
+                <a
+                  href="/about/"
+                  title=""
+                  
+                  ><span
+                      class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2"
+                      >about</span
+                    >
+                  </a
+                >
+              
+            </li>
+          
+          
+
+        
+      </ul>
+    
+  </nav>
+</header>
+
+    
+    <div class="relative flex grow flex-col">
+      <main id="main-content" class="grow">
+        
+  <article>
+    <header class="max-w-prose">
+      
+      <h1 class="mb-8 mt-0 text-4xl font-extrabold text-neutral-900 dark:text-neutral">
+        Cassandra 2.1 Counters: Testing Consistency During Node Failures
+      </h1>
+      
+        <div class="mb-10 text-base text-neutral-500 dark:text-neutral-400 print:hidden">
+          
+
+
+
+
+
+  
+  
+
+
+
+  
+
+  
+  
+    
+  
+
+  
+
+  
+
+  
+    
+  
+
+  
+
+
+  <div class="flex flex-row flex-wrap items-center">
+    
+    
+      <time datetime="2015-09-03 00:00:00 &#43;0000 UTC">3 September 2015</time><span class="px-2 text-primary-500">&middot;</span><span title="Reading time">9 mins</span>
+    
+
+    
+    
+  </div>
+
+  
+  
+    <div class="my-1 flex flex-wrap text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
+      
+        
+      
+        
+          
+            <a
+              href="https://datastrophic.io/tags/akka/"
+              class="mx-1 my-1 rounded-md border border-neutral-200 px-1 py-[1px] hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:hover:border-primary-600 dark:hover:text-primary-400"
+              >Akka</a
+            >
+          
+            <a
+              href="https://datastrophic.io/tags/cassandra/"
+              class="mx-1 my-1 rounded-md border border-neutral-200 px-1 py-[1px] hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:hover:border-primary-600 dark:hover:text-primary-400"
+              >Cassandra</a
+            >
+          
+        
+      
+    </div>
+  
+
+
+        </div>
+      
+      
+    </header>
+    <section class="prose mt-0 flex max-w-full flex-col dark:prose-invert lg:flex-row">
+      
+      <div class="min-h-0 min-w-0 max-w-prose grow">
+        <p>For some cases such as the ones present in AdServing, the counters come really handy to accumulate totals for events coming into a system compared to batch aggregates. While distributed counters consistency is a well-known problem Cassandra counters in version 2.1 are claimed to be more accurate compared to the prior ones. This post describes the approach and the results of Cassandra counters consistency testing in different failure scenarios such as rolling restarts, abnormal termination of nodes, and network splits.</p>
+<p>
+
+
+
+
+
+
+  
+  
+<figure><img src="./cassandra-ring.png" alt="" class="mx-auto my-0 rounded-md" />
+</figure>
+</p>
+<p>Here&rsquo;s the initial <a href="http://www.datastax.com/dev/blog/whats-new-in-cassandra-2-1-a-better-implementation-of-counters" target="_blank" rel="noreferrer">blog post</a> by DataStax describing the internals of new Cassandra counters implementation. There exist really good counters consistency tests during network splits performed by Jepsen and published in <a href="https://aphyr.com/posts/294-call-me-maybe-cassandra/" target="_blank" rel="noreferrer">Aphyr&rsquo;s blog</a>. While there are a wide variety of stress test tools, with counters it would be nice to verify their behavior for business-specific cases, emulating production workload. For this purpose, a simple Akka-based application has been implemented allowing to produce a high write rate while using the problem domain data model.</p>
+<h2 id="the-load-testing-tool" class="relative group">The Load Testing Tool <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#the-load-testing-tool" aria-label="Anchor">#</a></span></h2><p>The main idea behind the tool is in providing highly concurrent writes with respect to the data model (which reflects a particular business case) and a simple feedback loop to verify the results. The feedback loop is implemented with a configurable number of retries to wait for eventually consistent writes being propagated to all nodes.</p>
+<h4 id="actor-system-overview" class="relative group">Actor System Overview <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#actor-system-overview" aria-label="Anchor">#</a></span></h4><p>
+
+
+
+
+
+
+  
+  
+<figure><img src="./actor-system.png" alt="" class="mx-auto my-0 rounded-md" />
+</figure>
+</p>
+<h3 id="actors-responsibilities-and-relationships" class="relative group">Actors responsibilities and relationships <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#actors-responsibilities-and-relationships" aria-label="Anchor">#</a></span></h3><ul>
+<li><code>Coordinator</code> controls interactions between the rest of the actors, waits for initialization, executes broadcast load start command, etc. when all writes are sent to the cluster, Coordinator executes feedback loop to compare actual counter values with expected result</li>
+<li><code>Generator</code>s are domain-aware random insert queries generators that take into account the number of unique rows and counters per row to generate the full path to counters. The total number of counters thus equals the number of unique rows times the number of counters per row</li>
+<li><code>Processor</code>s are Actors controlling execution for a specific table and sub sum of total counter value. Total number of processors equal
+<code>number_of_entities * parallelism_factor</code>. Each processor is responsible for providing writes for <code>totalSum/parallelism</code> subtotal of target total value for each counter. <strong>Number of processors affects the number of concurrent writes to the same counters.</strong></li>
+<li><code>Worker</code>s are needed for generating increments and coordinating writes to generated keys. Each worker holds a subset of the Processor&rsquo;s keys for a specific table thus providing faster iterations over smaller insert batches. The number of writers influences the parallelism of writes to different keys providing intermixed writes with other workers. But generally, it is a performance optimization for processing a smaller number of keys per write</li>
+<li><code>CassandraWriter</code> is a short-living actor which dies after all work is done. These actors live on a dedicated dispatcher with a separate thread pool due to <code>datastax-java-driver</code> specifics: it becomes enormously slow on a shared thread pool for some reason.</li>
+</ul>
+<h3 id="data-model" class="relative group">Data model <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#data-model" aria-label="Anchor">#</a></span></h3><p>A replication factor of 3 will be used in tests against 5-node C* cluster:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">CREATE</span><span class="w"> </span><span class="n">KEYSPACE</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="err">$</span><span class="n">keyspaceName</span><span class="w"> </span><span class="k">WITH</span><span class="w"> </span><span class="n">replication</span><span class="o">=</span><span class="w"> </span><span class="err">{</span><span class="s1">&#39;class&#39;</span><span class="p">:</span><span class="s1">&#39;SimpleStrategy&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;replication_factor&#39;</span><span class="p">:</span><span class="mi">3</span><span class="err">}</span><span class="p">;</span><span class="w">
+</span></span></span></code></pre></div><p>During the tests, the data will be written independently representing 3 different entities (e.g. views, clicks, and campaigns). Each of these entities looks as follows:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="err">$</span><span class="n">keyspaceName</span><span class="p">.</span><span class="err">$</span><span class="n">name</span><span class="w"> </span><span class="p">(</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">           </span><span class="n">id</span><span class="w"> </span><span class="n">uuid</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">           </span><span class="n">u</span><span class="w"> </span><span class="n">ascii</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">           </span><span class="n">e</span><span class="w"> </span><span class="n">ascii</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">           </span><span class="n">d</span><span class="w"> </span><span class="nb">int</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">           </span><span class="k">c</span><span class="w"> </span><span class="n">counter</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">           </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">((</span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="n">u</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="p">),</span><span class="w"> </span><span class="n">d</span><span class="p">));</span><span class="w">
+</span></span></span></code></pre></div><p>But for one of the entities, two column families will be created to reflect the case with different read paths (same fields, different row keys).</p>
+<h2 id="test-setup" class="relative group">Test Setup <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#test-setup" aria-label="Anchor">#</a></span></h2><h3 id="cassandra-cluster-configuration" class="relative group">Cassandra cluster configuration <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#cassandra-cluster-configuration" aria-label="Anchor">#</a></span></h3><p>Tests are performed against 5 node Cassandra 2.1.9 cluster. Each node has 32Gb of RAM and 4-core 8-threads 3.70GHz Xeon CPU.</p>
+<p>Cassandra heap size: 8Gb</p>
+<h3 id="test-configuration" class="relative group">Test configuration <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#test-configuration" aria-label="Anchor">#</a></span></h3><p>Here&rsquo;s an example of tool invocation:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">java -jar counters-test.jar -h 10.120.0.252 -k test_keyspace -p <span class="m">10</span> -w <span class="m">100</span> -s <span class="m">50</span> -r <span class="m">1000</span> -c <span class="m">100</span>
+</span></span></code></pre></div><p>Details:</p>
+<ul>
+<li>counter total value 50</li>
+<li>parallelism 10</li>
+<li>100 workers, keys per worker 1000 (sequentially fed to async writes)</li>
+<li>1000 rows</li>
+<li>100 counters per row</li>
+</ul>
+<p>The tool is configured to write +1 increments which result in 5M of total writes to every table (views, clicks, 2x campaign). Write throughput after warmup fluctuates around 30K writes/sec. Generally</p>
+<p>Network partitions and rolling restarts are implemented with <a href="https://github.com/mchlstckl/siafu" target="_blank" rel="noreferrer">Siafu: fabric-based python tool</a></p>
+<h3 id="cassandra-client-configuration" class="relative group">Cassandra client configuration <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#cassandra-client-configuration" aria-label="Anchor">#</a></span></h3><p>Client configured with:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-scala" data-lang="scala"><span class="line"><span class="cl"><span class="k">implicit</span> <span class="k">val</span> <span class="n">cluster</span> <span class="k">=</span> <span class="nc">Cluster</span><span class="o">.</span><span class="n">builder</span><span class="o">()</span>
+</span></span><span class="line"><span class="cl">      <span class="o">.</span><span class="n">addContactPoint</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="n">clusterNode</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">      <span class="o">.</span><span class="n">withQueryOptions</span><span class="o">(</span><span class="k">new</span> <span class="nc">QueryOptions</span><span class="o">()</span>
+</span></span><span class="line"><span class="cl">         <span class="o">.</span><span class="n">setConsistencyLevel</span><span class="o">(</span><span class="nc">ConsistencyLevel</span><span class="o">.</span><span class="nc">QUORUM</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">      <span class="o">).</span><span class="n">build</span><span class="o">()</span>
+</span></span></code></pre></div><p>All writes are executed in sync mode, i.e.:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-scala" data-lang="scala"><span class="line"><span class="cl"><span class="nc">Try</span><span class="o">(</span><span class="n">msg</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="o">(</span><span class="n">statement</span><span class="o">))</span> <span class="k">match</span> <span class="o">{</span>
+</span></span><span class="line"><span class="cl">  <span class="k">case</span> <span class="nc">Failure</span><span class="o">(</span><span class="n">ex</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="o">(</span><span class="n">ex</span><span class="o">,</span> <span class="s">&#34;ERROR DURING WRITE&#34;</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">  <span class="k">case</span> <span class="k">_</span> <span class="k">=&gt;</span>
+</span></span><span class="line"><span class="cl"><span class="o">}</span>
+</span></span></code></pre></div><h2 id="the-test" class="relative group">The Test <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#the-test" aria-label="Anchor">#</a></span></h2><h3 id="scenarios-overview-and-results-interpretation" class="relative group">Scenarios Overview and Results Interpretation <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#scenarios-overview-and-results-interpretation" aria-label="Anchor">#</a></span></h3><p>The counters consistency is going to be evaluated in the following scenarios while writes are executed against the cluster:</p>
+<ul>
+<li>node normally stops</li>
+<li>node normally restarts</li>
+<li>cluster rolling restart</li>
+<li>node dies (<code>kill -9</code>)</li>
+<li>node dies, starts again and <code>nodetool repair</code> is executed</li>
+<li>node is lost due to network split and then comes back</li>
+</ul>
+<h3 id="interpretation-of-results" class="relative group">Interpretation of results <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#interpretation-of-results" aria-label="Anchor">#</a></span></h3><p>Results for each entity contain the following set of fields:</p>
+<ul>
+<li><code>overcounts</code> - the total number of counters holding value greater than expected</li>
+<li><code>maxOverCount</code> - maximum overcount value for a single counter</li>
+<li><code>totalOverCount</code> - the total number of queries with overcount</li>
+<li><code>undercounts</code> - the total number of counters holding value less than expected</li>
+<li><code>maxUnderCount</code> - maximum undercount value for a single counter</li>
+<li><code>totalUnderCount</code> - the total number of queries with undercount</li>
+</ul>
+<h3 id="load-stats" class="relative group">Load stats <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#load-stats" aria-label="Anchor">#</a></span></h3><p>Here&rsquo;s an example of throughput stats for the test being executed without incidents:
+
+
+
+
+
+
+
+  
+  
+<figure><img src="./stats-normal-execution.jpeg" alt="" class="mx-auto my-0 rounded-md" />
+</figure>
+
+The spike in the beginning is due to several minutes of warmup done before the actual writes.</p>
+<p>And here&rsquo;s an example of throughput deviation while node fails and gets back:
+
+
+
+
+
+
+
+  
+  
+<figure><img src="./stats-node-down.jpeg" alt="" class="mx-auto my-0 rounded-md" />
+</figure>
+</p>
+<p>One really important thing during interpretation of the test results is that the test is pretty synthetic and the amount of failed under- or overcounts will vary depending on the throughput and amount of failures per test. But for the initial evaluation of C* counters behavior in the most common failure scenarios, this should be enough to grasp the whole picture.</p>
+<h2 id="the-results" class="relative group">The Results <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#the-results" aria-label="Anchor">#</a></span></h2><h3 id="scenario-a-normal-node-stop" class="relative group">Scenario: a normal node stop <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#scenario-a-normal-node-stop" aria-label="Anchor">#</a></span></h3><pre tabindex="0"><code>DEVIATION STATS:
 overcounts: 4
 maxOverCount: 1
 totalOverCount: 4
@@ -46,7 +568,7 @@ totalOverCount: 2
 undercounts: 0
 maxUnderCount: 0
 totalUnderCount: 0
-</code></pre><h3 id=scenario-a-normal-node-restart class="relative group">Scenario: a normal node restart <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#scenario-a-normal-node-restart aria-label=Anchor>#</a></span></h3><pre tabindex=0><code>DEVIATION STATS:
+</code></pre><h3 id="scenario-a-normal-node-restart" class="relative group">Scenario: a normal node restart <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#scenario-a-normal-node-restart" aria-label="Anchor">#</a></span></h3><pre tabindex="0"><code>DEVIATION STATS:
 overcounts: 4
 maxOverCount: 1
 totalOverCount: 4
@@ -69,7 +591,7 @@ totalOverCount: 1
 undercounts: 6
 maxUnderCount: 1
 totalUnderCount: 6
-</code></pre><h3 id=scenario-cluster-rolling-restart class="relative group">Scenario: cluster rolling restart <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#scenario-cluster-rolling-restart aria-label=Anchor>#</a></span></h3><pre tabindex=0><code>DEVIATION STATS:
+</code></pre><h3 id="scenario-cluster-rolling-restart" class="relative group">Scenario: cluster rolling restart <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#scenario-cluster-rolling-restart" aria-label="Anchor">#</a></span></h3><pre tabindex="0"><code>DEVIATION STATS:
 overcounts: 8
 maxOverCount: 1
 totalOverCount: 8
@@ -92,7 +614,8 @@ totalOverCount: 22
 undercounts: 30
 maxUnderCount: 1
 totalUnderCount: 30
-</code></pre><h3 id=normal-termination-operations-conclusion class="relative group">Normal termination operations conclusion <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#normal-termination-operations-conclusion aria-label=Anchor>#</a></span></h3><p>During normal operations like service stops, restarts, and cluster rolling restarts the amount of failed counters is not exceeded 0.000007% which is a pretty acceptable deviation for most of the cases. The results may vary depending on load/throughput but the fact is that even during normal cluster operations some undercounts (and what&rsquo;s even worse overcounts) are registered.</p><h3 id=scenario-node-dies-kill--9 class="relative group">Scenario: node dies (<code>kill -9</code>) <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#scenario-node-dies-kill--9 aria-label=Anchor>#</a></span></h3><pre tabindex=0><code>DEVIATION STATS:
+</code></pre><h3 id="normal-termination-operations-conclusion" class="relative group">Normal termination operations conclusion <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#normal-termination-operations-conclusion" aria-label="Anchor">#</a></span></h3><p>During normal operations like service stops, restarts, and cluster rolling restarts the amount of failed counters is not exceeded 0.000007% which is a pretty acceptable deviation for most of the cases. The results may vary depending on load/throughput but the fact is that even during normal cluster operations some undercounts (and what&rsquo;s even worse overcounts) are registered.</p>
+<h3 id="scenario-node-dies-kill--9" class="relative group">Scenario: node dies (<code>kill -9</code>) <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#scenario-node-dies-kill--9" aria-label="Anchor">#</a></span></h3><pre tabindex="0"><code>DEVIATION STATS:
 overcounts: 0
 maxOverCount: 0
 totalOverCount: 0
@@ -115,7 +638,7 @@ totalOverCount: 0
 undercounts: 28
 maxUnderCount: 1
 totalUnderCount: 28
-</code></pre><h3 id=scenario-network-partition class="relative group">Scenario: network partition <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#scenario-network-partition aria-label=Anchor>#</a></span></h3><pre tabindex=0><code>DEVIATION STATS:
+</code></pre><h3 id="scenario-network-partition" class="relative group">Scenario: network partition <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#scenario-network-partition" aria-label="Anchor">#</a></span></h3><pre tabindex="0"><code>DEVIATION STATS:
 overcounts: 0
 maxOverCount: 0
 totalOverCount: 0
@@ -138,7 +661,8 @@ totalOverCount: 0
 undercounts: 57
 maxUnderCount: 1
 totalUnderCount: 57
-</code></pre><h3 id=scenario-2-new-nodes-are-added-to-5-node-cluster-while-writing class="relative group">Scenario: 2 new nodes are added to 5-node cluster while writing <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#scenario-2-new-nodes-are-added-to-5-node-cluster-while-writing aria-label=Anchor>#</a></span></h3><p>No over- or under-counts registered</p><h3 id=scenario-node-dies-starts-again-and-nodetool-repair-is-executed class="relative group">Scenario: node dies, starts again and <code>nodetool repair</code> is executed <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#scenario-node-dies-starts-again-and-nodetool-repair-is-executed aria-label=Anchor>#</a></span></h3><pre tabindex=0><code>DEVIATION STATS:
+</code></pre><h3 id="scenario-2-new-nodes-are-added-to-5-node-cluster-while-writing" class="relative group">Scenario: 2 new nodes are added to 5-node cluster while writing <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#scenario-2-new-nodes-are-added-to-5-node-cluster-while-writing" aria-label="Anchor">#</a></span></h3><p>No over- or under-counts registered</p>
+<h3 id="scenario-node-dies-starts-again-and-nodetool-repair-is-executed" class="relative group">Scenario: node dies, starts again and <code>nodetool repair</code> is executed <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#scenario-node-dies-starts-again-and-nodetool-repair-is-executed" aria-label="Anchor">#</a></span></h3><pre tabindex="0"><code>DEVIATION STATS:
 overcounts: 1
 maxOverCount: 1
 totalOverCount: 1
@@ -161,14 +685,27 @@ totalOverCount: 1
 undercounts: 4588
 maxUnderCount: 4
 totalUnderCount: 6027
-</code></pre><h3 id=abnormal-termination-observations class="relative group">Abnormal termination observations <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#abnormal-termination-observations aria-label=Anchor>#</a></span></h3><p>All cases except abnormal termination with consequent restart (with or without repair) went pretty same to normal termination while node coming back to the cluster after failure has shown major undercounts.</p><p>The interesting part here is that with consistency level configured to <code>QUORUM</code> there&rsquo;s a repeatable exception appearing in the logs: <code>Cassandra timeout during write query at consistency ONE (1 replica were required but only 0 acknowledged the write)</code></p><pre tabindex=0><code>2015-08-31 15:02:07,336 ERROR [akka://counter-consistency/user/$b/$m/$S/$b] - ERROR DURING WRITE
+</code></pre><h3 id="abnormal-termination-observations" class="relative group">Abnormal termination observations <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#abnormal-termination-observations" aria-label="Anchor">#</a></span></h3><p>All cases except abnormal termination with consequent restart (with or without repair) went pretty same to normal termination while node coming back to the cluster after failure has shown major undercounts.</p>
+<p>The interesting part here is that with consistency level configured to <code>QUORUM</code> there&rsquo;s a repeatable exception appearing in the logs: <code>Cassandra timeout during write query at consistency ONE (1 replica were required but only 0 acknowledged the write)</code></p>
+<pre tabindex="0"><code>2015-08-31 15:02:07,336 ERROR [akka://counter-consistency/user/$b/$m/$S/$b] - ERROR DURING WRITE
 com.datastax.driver.core.exceptions.WriteTimeoutException: Cassandra timeout during write query at consistency ONE (1 replica were required but only 0 acknowledged the write)
         at com.datastax.driver.core.exceptions.WriteTimeoutException.copy(WriteTimeoutException.java:54) ~[cassandra-tools.jar:1.0]
         at com.datastax.driver.core.DefaultResultSetFuture.extractCauseFromExecutionException(DefaultResultSetFuture.java:269) ~[cassandra-tools.jar:1.0]
         at com.datastax.driver.core.DefaultResultSetFuture.getUninterruptibly(DefaultResultSetFuture.java:183) ~[cassandra-tools.jar:1.0]
         at com.datastax.driver.core.AbstractSession.execute(AbstractSession.java:52) ~[cassandra-tools.jar:1.0]
         ...
-</code></pre><p>It looks like it relates to <a href=https://issues.apache.org/jira/browse/CASSANDRA-10041 target=_blank rel=noreferrer>[CASSANDRA-10041]: &ldquo;timeout during write query at consistency ONE&rdquo; when updating counter at consistency QUORUM and 2 of 3 nodes alive</a> Jira issue which was unresolved at the moment of performing tests.</p><p>In the node death-then-restart scenario, the observed behavior is that one can&rsquo;t just restart the failed node. It&rsquo;s a bit strange because this situation could happen and it looks cumbersome to re-bootstrap the node wiping out all the data. But it looks like a reasonable tradeoff for the given counter functionality. The next test scenario checks the re-bootstrapping approach.</p><h3 id=scenario-node-killed-then-rebootstrapped class="relative group">Scenario: node killed, then rebootstrapped <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#scenario-node-killed-then-rebootstrapped aria-label=Anchor>#</a></span></h3><p>Actions performed:</p><ul><li>one of the nodes is killed (<code>kill -9</code>)</li><li>dead node removed <code>nodetool removenode &lt;node uid></code></li><li>data dirs wiped out on failed node machine</li><li><code>JVM_OPTS="$JVM_OPTS -Dcassandra.replace_address=&lt;node self address></code> added to <code>cassandra-env.sh</code> on the dead node</li><li>node started</li></ul><p>The results:</p><pre tabindex=0><code>DEVIATION STATS:
+</code></pre><p>It looks like it relates to <a href="https://issues.apache.org/jira/browse/CASSANDRA-10041" target="_blank" rel="noreferrer">[CASSANDRA-10041]: &ldquo;timeout during write query at consistency ONE&rdquo; when updating counter at consistency QUORUM and 2 of 3 nodes alive</a> Jira issue which was unresolved at the moment of performing tests.</p>
+<p>In the node death-then-restart scenario, the observed behavior is that one can&rsquo;t just restart the failed node. It&rsquo;s a bit strange because this situation could happen and it looks cumbersome to re-bootstrap the node wiping out all the data. But it looks like a reasonable tradeoff for the given counter functionality. The next test scenario checks the re-bootstrapping approach.</p>
+<h3 id="scenario-node-killed-then-rebootstrapped" class="relative group">Scenario: node killed, then rebootstrapped <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#scenario-node-killed-then-rebootstrapped" aria-label="Anchor">#</a></span></h3><p>Actions performed:</p>
+<ul>
+<li>one of the nodes is killed (<code>kill -9</code>)</li>
+<li>dead node removed <code>nodetool removenode &lt;node uid&gt;</code></li>
+<li>data dirs wiped out on failed node machine</li>
+<li><code>JVM_OPTS=&quot;$JVM_OPTS -Dcassandra.replace_address=&lt;node self address&gt;</code> added to <code>cassandra-env.sh</code> on the dead node</li>
+<li>node started</li>
+</ul>
+<p>The results:</p>
+<pre tabindex="0"><code>DEVIATION STATS:
 overcounts: 2
 maxOverCount: 1
 totalOverCount: 2
@@ -191,10 +728,231 @@ totalOverCount: 0
 undercounts: 0
 maxUnderCount: 0
 totalUnderCount: 0
-</code></pre><p>After the total wipeout of the commitlog and data directories deviations are of the same magnitude as in the other scenarios.</p><h2 id=conclusion class="relative group">Conclusion <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line:none !important" href=#conclusion aria-label=Anchor>#</a></span></h2><p>The results are pretty clear: Cassandra 2.1 counters are not totally consistent. But. The deviation and amount of undercounts are really small in the total amount of writes per test(5M) while the amount of overcounts is even smaller (not exceeding 10 per test). One thing to mention here again is that results randomly vary depending on which node to restart due to row key distribution across the nodes and write throughput. One still can&rsquo;t use the counters in banking but the amount of failed counters is quite acceptable in other cases where strict accuracy is not a mandatory requirement(e.g. adserving). Combined with some sort of aggregates as a part of Lambda Architecture Cassandra counters can be used without big risks. But there are still two open questions after the tests:</p><ul><li>why in the case of normal operations like stop/restart some counters are inconsistent? This basically means that in case of any Cassandra operation which needs service restart it will lose some increments</li><li>why one can&rsquo;t simply restart failed node without major undercounts? Counters operations are completely different from the regular ones in Cassandra and <code>nodetool repair</code> simply doesn&rsquo;t work as expected.</li></ul></div></section><footer class="max-w-prose pt-8 print:hidden"><div class=flex><picture class="!mb-0 !mt-0 me-4 w-24 h-auto rounded-full"><img width=400 height=400 class="!mb-0 !mt-0 me-4 w-24 h-auto rounded-full" alt="Anton Kirillov" loading=lazy decoding=async src=https://datastrophic.io/img/author.jpg></picture><div class=place-self-center><div class="text-[0.6rem] uppercase leading-3 text-neutral-500 dark:text-neutral-400">Author</div><div class="font-semibold leading-6 text-neutral-800 dark:text-neutral-300">Anton Kirillov</div><div class="text-sm text-neutral-700 dark:text-neutral-400">Technical Leader. Compute and AI Infrastructure</div><div class="text-2xl sm:text-lg"><div class="flex flex-wrap text-neutral-400 dark:text-neutral-500"><a class="px-1 transition-transform hover:scale-125 hover:text-primary-700 dark:hover:text-primary-400" style=will-change:transform href=https://www.linkedin.com/in/datastrophic/ target=_blank aria-label=Linkedin rel="me noopener noreferrer"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 448 512"><path fill="currentColor" d="M416 32H31.9C14.3 32 0 46.5.0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6.0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3zM135.4 416H69V202.2h66.5V416zm-33.2-243c-21.3.0-38.5-17.3-38.5-38.5S80.9 96 102.2 96c21.2.0 38.5 17.3 38.5 38.5.0 21.3-17.2 38.5-38.5 38.5zm282.1 243h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6.0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2.0 79.7 44.3 79.7 101.9V416z"/></svg>
-</span></a><a class="px-1 transition-transform hover:scale-125 hover:text-primary-700 dark:hover:text-primary-400" style=will-change:transform href=https://github.com/datastrophic target=_blank aria-label=Github rel="me noopener noreferrer"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 496 512"><path fill="currentColor" d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6.0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6.0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3.0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1.0-6.2-.3-40.4-.3-61.4.0.0-70 15-84.7-29.8.0.0-11.4-29.1-27.8-36.6.0.0-22.9-15.7 1.6-15.4.0.0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5.0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9.0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4.0 33.7-.3 75.4-.3 83.6.0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6.0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9.0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span></a></div></div></div></div><div class=pt-8><hr class="border-dotted border-neutral-300 dark:border-neutral-600"><div class="flex justify-between pt-3"><span><a class="group flex" href=https://datastrophic.io/in-the-wake-of-scala-days-2015/><span class="me-2 text-neutral-700 transition-transform group-hover:-translate-x-[2px] group-hover:text-primary-600 dark:text-neutral dark:group-hover:text-primary-400"><span class="ltr:inline rtl:hidden">&larr;</span><span class="ltr:hidden rtl:inline">&rarr;</span></span>
-<span class="flex flex-col"><span class="mt-[0.1rem] leading-6 group-hover:underline group-hover:decoration-primary-500">In the Wake of Scala Days 2015</span>
-<span class="mt-[0.1rem] text-xs text-neutral-500 dark:text-neutral-400"><time datetime="2015-07-01 00:00:00 +0000 UTC">1 July 2015</time>
-</span></span></a></span><span><a class="group flex text-right" href=https://datastrophic.io/data-processing-platforms-architectures-with-spark-mesos-akka-cassandra-and-kafka/><span class="flex flex-col"><span class="mt-[0.1rem] leading-6 group-hover:underline group-hover:decoration-primary-500">Data processing platforms architectures with SMACK: Spark, Mesos, Akka, Cassandra and Kafka</span>
-<span class="mt-[0.1rem] text-xs text-neutral-500 dark:text-neutral-400"><time datetime="2015-09-16 00:00:00 +0000 UTC">16 September 2015</time>
-</span></span><span class="ms-2 text-neutral-700 transition-transform group-hover:-translate-x-[-2px] group-hover:text-primary-600 dark:text-neutral dark:group-hover:text-primary-400"><span class="ltr:inline rtl:hidden">&rarr;</span><span class="ltr:hidden rtl:inline">&larr;</span></span></a></span></div></div></footer></article></main><div class="pointer-events-none absolute bottom-0 end-0 top-[100vh] w-12" id=to-top hidden=true><a href=#the-top class="pointer-events-auto sticky top-[calc(100vh-5.5rem)] flex h-12 w-12 items-center justify-center rounded-full bg-neutral/50 text-xl text-neutral-700 backdrop-blur hover:text-primary-600 dark:bg-neutral-800/50 dark:text-neutral dark:hover:text-primary-400" aria-label="Scroll to top" title="Scroll to top">&uarr;</a></div><footer class="py-10 print:hidden"><div class="flex items-center justify-between"><div><p class="text-sm text-neutral-500 dark:text-neutral-400">© 2025 datastrophic</p></div><div class="flex flex-row items-center"><div class="me-14 cursor-pointer text-sm text-neutral-700 hover:text-primary-600 dark:text-neutral dark:hover:text-primary-400"><button id=appearance-switcher-0 type=button aria-label="appearance switcher"><div class="flex h-12 w-12 items-center justify-center dark:hidden" title="Switch to dark appearance"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 512 512"><path fill="currentColor" d="M32 256C32 132.2 132.3 32 255.8 32c11.36.0 29.7 1.668 40.9 3.746 9.616 1.777 11.75 14.63 3.279 19.44C245 86.5 211.2 144.6 211.2 207.8c0 109.7 99.71 193 208.3 172.3 9.561-1.805 16.28 9.324 10.11 16.95C387.9 448.6 324.8 480 255.8 480 132.1 480 32 379.6 32 256z"/></svg></span></div><div class="hidden h-12 w-12 items-center justify-center dark:flex" title="Switch to light appearance"><span class="icon relative inline-block px-1 align-text-bottom"><svg viewBox="0 0 512 512"><path fill="currentColor" d="M256 159.1c-53.02.0-95.1 42.98-95.1 95.1s41.2 96.9 95.1 96.9 95.1-42.98 95.1-95.1S309 159.1 256 159.1zM509.3 347l-63.2-91.9 63.15-91.01c6.332-9.125 1.104-21.74-9.826-23.72l-109-19.7-19.7-109c-1.975-10.93-14.59-16.16-23.72-9.824L256 65.89 164.1 2.736c-9.125-6.332-21.74-1.107-23.72 9.824L121.6 121.6 12.56 141.3C1.633 143.2-3.596 155.9 2.736 164.1L65.89 256 2.74 347.01c-6.332 9.125-1.105 21.74 9.824 23.72l109 19.7 19.7 109c1.975 10.93 14.59 16.16 23.72 9.824L256 446.1l91.01 63.15c9.127 6.334 21.75 1.107 23.72-9.822l19.7-109 109-19.7C510.4 368.8 515.6 356.1 509.3 347zM256 383.1c-70.69.0-127.1-57.31-127.1-127.1.0-70.69 57.31-127.1 127.1-127.1S383.1 186.2 383.1 256c0 70.7-56.4 127.1-127.1 127.1z"/></svg></span></div></button></div></div></div></footer></div></body></html>
+</code></pre><p>After the total wipeout of the commitlog and data directories deviations are of the same magnitude as in the other scenarios.</p>
+<h2 id="conclusion" class="relative group">Conclusion <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#conclusion" aria-label="Anchor">#</a></span></h2><p>The results are pretty clear: Cassandra 2.1 counters are not totally consistent. But. The deviation and amount of undercounts are really small in the total amount of writes per test(5M) while the amount of overcounts is even smaller (not exceeding 10 per test). One thing to mention here again is that results randomly vary depending on which node to restart due to row key distribution across the nodes and write throughput. One still can&rsquo;t use the counters in banking but the amount of failed counters is quite acceptable in other cases where strict accuracy is not a mandatory requirement(e.g. adserving). Combined with some sort of aggregates as a part of Lambda Architecture Cassandra counters can be used without big risks. But there are still two open questions after the tests:</p>
+<ul>
+<li>why in the case of normal operations like stop/restart some counters are inconsistent? This basically means that in case of any Cassandra operation which needs service restart it will lose some increments</li>
+<li>why one can&rsquo;t simply restart failed node without major undercounts? Counters operations are completely different from the regular ones in Cassandra and <code>nodetool repair</code> simply doesn&rsquo;t work as expected.</li>
+</ul>
+
+      </div>
+    </section>
+    <footer class="max-w-prose pt-8 print:hidden">
+      
+  <div class="flex">
+    
+    
+    
+      
+      
+        
+        
+
+
+
+
+
+
+
+
+  
+    <picture
+      class="!mb-0 !mt-0 me-4 w-24 h-auto rounded-full"
+      
+    >
+      
+      
+      
+      
+      <img
+        width="400"
+        height="400"
+        class="!mb-0 !mt-0 me-4 w-24 h-auto rounded-full"
+        alt="Anton Kirillov"
+        loading="lazy" decoding="async"
+        
+          src="https://datastrophic.io/img/author.jpg"
+        
+      />
+    </picture>
+  
+
+
+      
+    
+    <div class="place-self-center">
+      
+        <div class="text-[0.6rem] uppercase leading-3 text-neutral-500 dark:text-neutral-400">
+          Author
+        </div>
+        <div class="font-semibold leading-6 text-neutral-800 dark:text-neutral-300">
+          Anton Kirillov
+        </div>
+      
+      
+        <div class="text-sm text-neutral-700 dark:text-neutral-400">Technical Leader. Compute and AI Infrastructure</div>
+      
+      <div class="text-2xl sm:text-lg">
+  <div class="flex flex-wrap text-neutral-400 dark:text-neutral-500">
+    
+      
+        <a
+          class="px-1 transition-transform hover:scale-125 hover:text-primary-700 dark:hover:text-primary-400"
+          style="will-change:transform;"
+          href="https://www.linkedin.com/in/datastrophic/"
+          target="_blank"
+          aria-label="Linkedin"
+          rel="me noopener noreferrer"
+          ><span class="icon relative inline-block px-1 align-text-bottom"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentColor" d="M416 32H31.9C14.3 32 0 46.5 0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6 0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3zM135.4 416H69V202.2h66.5V416zm-33.2-243c-21.3 0-38.5-17.3-38.5-38.5S80.9 96 102.2 96c21.2 0 38.5 17.3 38.5 38.5 0 21.3-17.2 38.5-38.5 38.5zm282.1 243h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6 0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2 0 79.7 44.3 79.7 101.9V416z"/></svg>
+</span></a
+        >
+      
+    
+      
+        <a
+          class="px-1 transition-transform hover:scale-125 hover:text-primary-700 dark:hover:text-primary-400"
+          style="will-change:transform;"
+          href="https://github.com/datastrophic"
+          target="_blank"
+          aria-label="Github"
+          rel="me noopener noreferrer"
+          ><span class="icon relative inline-block px-1 align-text-bottom"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path fill="currentColor" d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+</span></a
+        >
+      
+    
+  </div>
+
+</div>
+    </div>
+  </div>
+
+
+      
+
+      
+  
+    
+    
+    
+    <div class="pt-8">
+      <hr class="border-dotted border-neutral-300 dark:border-neutral-600" />
+      <div class="flex justify-between pt-3">
+        <span>
+          
+            <a class="group flex" href="https://datastrophic.io/in-the-wake-of-scala-days-2015/">
+              <span
+                class="me-2 text-neutral-700 transition-transform group-hover:-translate-x-[2px] group-hover:text-primary-600 dark:text-neutral dark:group-hover:text-primary-400"
+                ><span class="ltr:inline rtl:hidden">&larr;</span
+                ><span class="ltr:hidden rtl:inline">&rarr;</span></span
+              >
+              <span class="flex flex-col">
+                <span
+                  class="mt-[0.1rem] leading-6 group-hover:underline group-hover:decoration-primary-500"
+                  >In the Wake of Scala Days 2015</span
+                >
+                <span class="mt-[0.1rem] text-xs text-neutral-500 dark:text-neutral-400">
+                  
+                    <time datetime="2015-07-01 00:00:00 &#43;0000 UTC">1 July 2015</time>
+                  
+                </span>
+              </span>
+            </a>
+          
+        </span>
+        <span>
+          
+            <a class="group flex text-right" href="https://datastrophic.io/data-processing-platforms-architectures-with-spark-mesos-akka-cassandra-and-kafka/">
+              <span class="flex flex-col">
+                <span
+                  class="mt-[0.1rem] leading-6 group-hover:underline group-hover:decoration-primary-500"
+                  >Data processing platforms architectures with SMACK: Spark, Mesos, Akka, Cassandra and Kafka</span
+                >
+                <span class="mt-[0.1rem] text-xs text-neutral-500 dark:text-neutral-400">
+                  
+                    <time datetime="2015-09-16 00:00:00 &#43;0000 UTC">16 September 2015</time>
+                  
+                </span>
+              </span>
+              <span
+                class="ms-2 text-neutral-700 transition-transform group-hover:-translate-x-[-2px] group-hover:text-primary-600 dark:text-neutral dark:group-hover:text-primary-400"
+                ><span class="ltr:inline rtl:hidden">&rarr;</span
+                ><span class="ltr:hidden rtl:inline">&larr;</span></span
+              >
+            </a>
+          
+        </span>
+      </div>
+    </div>
+  
+
+
+      
+    </footer>
+  </article>
+
+      </main>
+      
+        <div
+          class="pointer-events-none absolute bottom-0 end-0 top-[100vh] w-12"
+          id="to-top"
+          hidden="true"
+        >
+          <a
+            href="#the-top"
+            class="pointer-events-auto sticky top-[calc(100vh-5.5rem)] flex h-12 w-12 items-center justify-center rounded-full bg-neutral/50 text-xl text-neutral-700 backdrop-blur hover:text-primary-600 dark:bg-neutral-800/50 dark:text-neutral dark:hover:text-primary-400"
+            aria-label="Scroll to top"
+            title="Scroll to top"
+          >
+            &uarr;
+          </a>
+        </div>
+      <footer class="py-10 print:hidden">
+  
+  
+  <div class="flex items-center justify-between">
+    <div>
+      
+      
+        <p class="text-sm text-neutral-500 dark:text-neutral-400">
+            © 2025 datastrophic
+        </p>
+      
+      
+      
+    </div>
+    <div class="flex flex-row items-center">
+      
+      
+      
+      
+        <div
+          class="me-14 cursor-pointer text-sm text-neutral-700 hover:text-primary-600 dark:text-neutral dark:hover:text-primary-400"
+        >
+          <button id="appearance-switcher-0" type="button" aria-label="appearance switcher">
+            <div
+              class="flex h-12 w-12 items-center justify-center dark:hidden"
+              title="Switch to dark appearance"
+            >
+              <span class="icon relative inline-block px-1 align-text-bottom"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M32 256c0-123.8 100.3-224 223.8-224c11.36 0 29.7 1.668 40.9 3.746c9.616 1.777 11.75 14.63 3.279 19.44C245 86.5 211.2 144.6 211.2 207.8c0 109.7 99.71 193 208.3 172.3c9.561-1.805 16.28 9.324 10.11 16.95C387.9 448.6 324.8 480 255.8 480C132.1 480 32 379.6 32 256z"/></svg>
+</span>
+            </div>
+            <div
+              class="hidden h-12 w-12 items-center justify-center dark:flex"
+              title="Switch to light appearance"
+            >
+              <span class="icon relative inline-block px-1 align-text-bottom"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M256 159.1c-53.02 0-95.1 42.98-95.1 95.1S202.1 351.1 256 351.1s95.1-42.98 95.1-95.1S309 159.1 256 159.1zM509.3 347L446.1 255.1l63.15-91.01c6.332-9.125 1.104-21.74-9.826-23.72l-109-19.7l-19.7-109c-1.975-10.93-14.59-16.16-23.72-9.824L256 65.89L164.1 2.736c-9.125-6.332-21.74-1.107-23.72 9.824L121.6 121.6L12.56 141.3C1.633 143.2-3.596 155.9 2.736 164.1L65.89 256l-63.15 91.01c-6.332 9.125-1.105 21.74 9.824 23.72l109 19.7l19.7 109c1.975 10.93 14.59 16.16 23.72 9.824L256 446.1l91.01 63.15c9.127 6.334 21.75 1.107 23.72-9.822l19.7-109l109-19.7C510.4 368.8 515.6 356.1 509.3 347zM256 383.1c-70.69 0-127.1-57.31-127.1-127.1c0-70.69 57.31-127.1 127.1-127.1s127.1 57.3 127.1 127.1C383.1 326.7 326.7 383.1 256 383.1z"/></svg>
+</span>
+            </div>
+          </button>
+        </div>
+      
+    </div>
+  </div>
+  
+  
+</footer>
+
+    </div>
+  </body>
+</html>

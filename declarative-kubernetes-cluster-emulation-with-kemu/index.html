@@ -1,0 +1,1348 @@
+
+
+
+
+
+
+
+<!doctype html>
+<html
+  lang="en"
+  dir="ltr"
+  class="scroll-smooth"
+  data-default-appearance="light"
+  data-auto-appearance="true"
+><head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#FFFFFF" />
+  
+  <title>KEMU: A Declarative Approach to Emulating Kubernetes Clusters at Scale &middot; datastrophic</title>
+    <meta name="title" content="KEMU: A Declarative Approach to Emulating Kubernetes Clusters at Scale &middot; datastrophic" />
+  
+  
+  
+  
+  
+  <script
+    type="text/javascript"
+    src="https://datastrophic.io/js/appearance.min.8a082f81b27f3cb2ee528df0b0bdc39787034cf2cc34d4669fbc9977c929023c.js"
+    integrity="sha256-iggvgbJ/PLLuUo3wsL3Dl4cDTPLMNNRmn7yZd8kpAjw="
+  ></script>
+  
+  
+  
+  
+  
+  
+  
+    
+  
+  
+  <link
+    type="text/css"
+    rel="stylesheet"
+    href="https://datastrophic.io/css/main.bundle.min.8ddd6ca5d23ba630c6633e1e51f0ac292850c4d2af977565a9c52e2a3179e5c9.css"
+    integrity="sha256-jd1spdI7pjDGYz4eUfCsKShQxNKvl3VlqcUuKjF55ck="
+  />
+  
+  
+  
+  
+    
+    
+  
+  
+  
+    
+    <script
+      defer
+      type="text/javascript"
+      id="script-bundle"
+      src="https://datastrophic.io/js/main.bundle.min.d4b727caf411cb5c3b421d0d427ed1e3daeafe0d04840327efad4978430edb8c.js"
+      integrity="sha256-1LcnyvQRy1w7Qh0NQn7R49rq/g0EhAMn761JeEMO24w="
+      data-copy="Copy"
+      data-copied="Copied"
+    ></script>
+  
+  
+  <meta
+    name="description"
+    content="
+      
+        Optimizing AI workload scheduling requires extensive experimentation and observation, but testing scheduler modifications in production is risky — configuration errors can cause multi-day delays and wasted capacity. This post introduces KEMU, a declarative Kubernetes Emulator Utility that replaces fragmented multi-tool cluster setups with a single configuration specification, enabling safe experimentation with large-scale GPU clusters on minimal resources.
+      
+    "
+  />
+  
+  
+  
+  
+    <link rel="canonical" href="https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/" />
+  
+  
+  
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+  
+  
+  
+  
+  
+  
+  
+  
+  <meta property="og:url" content="https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/">
+  <meta property="og:site_name" content="datastrophic">
+  <meta property="og:title" content="KEMU: A Declarative Approach to Emulating Kubernetes Clusters at Scale">
+  <meta property="og:description" content="Optimizing AI workload scheduling requires extensive experimentation and observation, but testing scheduler modifications in production is risky — configuration errors can cause multi-day delays and wasted capacity. This post introduces KEMU, a declarative Kubernetes Emulator Utility that replaces fragmented multi-tool cluster setups with a single configuration specification, enabling safe experimentation with large-scale GPU clusters on minimal resources.">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2025-11-04T00:00:00+00:00">
+    <meta property="article:modified_time" content="2025-11-04T00:00:00+00:00">
+    <meta property="article:tag" content="Kubernetes">
+    <meta property="article:tag" content="Emulation">
+    <meta property="article:tag" content="Kind">
+    <meta property="article:tag" content="Kwok">
+    <meta property="article:tag" content="Kemu">
+
+  
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="KEMU: A Declarative Approach to Emulating Kubernetes Clusters at Scale">
+  <meta name="twitter:description" content="Optimizing AI workload scheduling requires extensive experimentation and observation, but testing scheduler modifications in production is risky — configuration errors can cause multi-day delays and wasted capacity. This post introduces KEMU, a declarative Kubernetes Emulator Utility that replaces fragmented multi-tool cluster setups with a single configuration specification, enabling safe experimentation with large-scale GPU clusters on minimal resources.">
+
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "articleSection": "",
+    "name": "KEMU: A Declarative Approach to Emulating Kubernetes Clusters at Scale",
+    "headline": "KEMU: A Declarative Approach to Emulating Kubernetes Clusters at Scale",
+    
+    "abstract": "Optimizing AI workload scheduling requires extensive experimentation and observation, but testing scheduler modifications in production is risky — configuration errors can cause multi-day delays and wasted capacity. This post introduces KEMU, a declarative Kubernetes Emulator Utility that replaces fragmented multi-tool cluster setups with a single configuration specification, enabling safe experimentation with large-scale GPU clusters on minimal resources.",
+    "inLanguage": "en",
+    "url" : "https:\/\/datastrophic.io\/declarative-kubernetes-cluster-emulation-with-kemu\/",
+    "author" : {
+      "@type": "Person",
+      "name": "Anton Kirillov"
+    },
+    "copyrightYear": "2025",
+    "dateCreated": "2025-11-04T00:00:00\u002b00:00",
+    "datePublished": "2025-11-04T00:00:00\u002b00:00",
+    
+    "dateModified": "2025-11-04T00:00:00\u002b00:00",
+    
+    "keywords": ["kubernetes","emulation","kind","kwok","kemu"],
+    
+    "mainEntityOfPage": "true",
+    "wordCount": "2568"
+  }
+  </script>
+    
+    <script type="application/ld+json">
+    {
+   "@context": "https://schema.org",
+   "@type": "BreadcrumbList",
+   "itemListElement": [
+     {
+       "@type": "ListItem",
+       "item": "https://datastrophic.io/",
+       "name": "",
+       "position": 1
+     },
+     {
+       "@type": "ListItem",
+       "item": "https://datastrophic.io/posts/",
+       "name": "",
+       "position": 2
+     },
+     {
+       "@type": "ListItem",
+       "name": "Kemu a Declarative Approach to Emulating Kubernetes Clusters at Scale",
+       "position": 3
+     }
+   ]
+ }
+  </script>
+
+  
+  
+    <meta name="author" content="Anton Kirillov" />
+  
+  
+    
+      <link href="https://www.linkedin.com/in/datastrophic/" rel="me" />
+    
+      <link href="https://github.com/datastrophic" rel="me" />
+    
+  
+  
+  
+
+
+
+
+
+
+
+  
+  
+  
+  
+  
+  
+      <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z9WG27GT0G"></script>
+      <script>
+        var doNotTrack = false;
+        if ( false ) {
+          var dnt = (navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack);
+          var doNotTrack = (dnt == "1" || dnt == "yes");
+        }
+        if (!doNotTrack) {
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-Z9WG27GT0G');
+        }
+      </script>
+
+
+  
+  
+</head>
+<body
+    class="m-auto flex h-screen max-w-7xl flex-col bg-neutral px-6 text-lg leading-7 text-neutral-900 dark:bg-neutral-800 dark:text-neutral sm:px-14 md:px-24 lg:px-32"
+  >
+    <div id="the-top" class="absolute flex self-center">
+      <a
+        class="-translate-y-8 rounded-b-lg bg-primary-200 px-3 py-1 text-sm focus:translate-y-0 dark:bg-neutral-600"
+        href="#main-content"
+        ><span class="pe-2 font-bold text-primary-600 dark:text-primary-400">&darr;</span
+        >Skip to main content</a
+      >
+    </div>
+    
+    
+      <header class="py-6 font-semibold text-neutral-900 dark:text-neutral sm:py-10 print:hidden">
+  <nav class="flex items-start justify-between sm:items-center">
+    
+    <div class="z-40 flex flex-row items-center">
+      
+  <a
+    class="decoration-primary-500 hover:underline hover:decoration-2 hover:underline-offset-2"
+    rel="me"
+    href="/"
+    >datastrophic</a
+  >
+
+    </div>
+    
+      
+      <label id="menu-button" for="menu-controller" class="block sm:hidden">
+        <input type="checkbox" id="menu-controller" class="hidden" />
+        <div class="cursor-pointer hover:text-primary-600 dark:hover:text-primary-400">
+          <span class="icon relative inline-block px-1 align-text-bottom"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentColor" d="M0 96C0 78.33 14.33 64 32 64H416C433.7 64 448 78.33 448 96C448 113.7 433.7 128 416 128H32C14.33 128 0 113.7 0 96zM0 256C0 238.3 14.33 224 32 224H416C433.7 224 448 238.3 448 256C448 273.7 433.7 288 416 288H32C14.33 288 0 273.7 0 256zM416 448H32C14.33 448 0 433.7 0 416C0 398.3 14.33 384 32 384H416C433.7 384 448 398.3 448 416C448 433.7 433.7 448 416 448z"/></svg>
+</span>
+        </div>
+        <div
+          id="menu-wrapper"
+          class="invisible fixed inset-0 z-30 m-auto h-full w-full cursor-default overflow-auto bg-neutral-100/50 opacity-0 backdrop-blur-sm transition-opacity dark:bg-neutral-900/50"
+        >
+          <ul
+            class="mx-auto flex w-full max-w-7xl list-none flex-col overflow-visible px-6 py-6 text-end sm:px-14 sm:py-10 sm:pt-10 md:px-24 lg:px-32"
+          >
+            <li class="mb-1">
+              <span class="cursor-pointer hover:text-primary-600 dark:hover:text-primary-400"
+                ><span class="icon relative inline-block px-1 align-text-bottom"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path fill="currentColor" d="M310.6 361.4c12.5 12.5 12.5 32.75 0 45.25C304.4 412.9 296.2 416 288 416s-16.38-3.125-22.62-9.375L160 301.3L54.63 406.6C48.38 412.9 40.19 416 32 416S15.63 412.9 9.375 406.6c-12.5-12.5-12.5-32.75 0-45.25l105.4-105.4L9.375 150.6c-12.5-12.5-12.5-32.75 0-45.25s32.75-12.5 45.25 0L160 210.8l105.4-105.4c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25l-105.4 105.4L310.6 361.4z"/></svg>
+</span></span
+              >
+            </li>
+            
+              
+                
+                <li class="group mb-1">
+                  
+                    <a
+                      href="/posts/"
+                      title=""
+                      onclick="close_menu()"
+                      
+                      ><span
+                          class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2"
+                          >archive</span
+                        >
+                      </a
+                    >
+                  
+                </li>
+              
+                
+                <li class="group mb-1">
+                  
+                    <a
+                      href="/about/"
+                      title=""
+                      onclick="close_menu()"
+                      
+                      ><span
+                          class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2"
+                          >about</span
+                        >
+                      </a
+                    >
+                  
+                </li>
+              
+              
+            
+          </ul>
+        </div>
+      </label>
+      
+      <ul class="hidden list-none flex-row text-end sm:flex">
+        
+          
+            
+            <li class="group mb-1 sm:mb-0 sm:me-7 sm:last:me-0">
+              
+                <a
+                  href="/posts/"
+                  title=""
+                  
+                  ><span
+                      class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2"
+                      >archive</span
+                    >
+                  </a
+                >
+              
+            </li>
+          
+            
+            <li class="group mb-1 sm:mb-0 sm:me-7 sm:last:me-0">
+              
+                <a
+                  href="/about/"
+                  title=""
+                  
+                  ><span
+                      class="decoration-primary-500 group-hover:underline group-hover:decoration-2 group-hover:underline-offset-2"
+                      >about</span
+                    >
+                  </a
+                >
+              
+            </li>
+          
+          
+
+        
+      </ul>
+    
+  </nav>
+</header>
+
+    
+    <div class="relative flex grow flex-col">
+      <main id="main-content" class="grow">
+        
+  <article>
+    <header class="max-w-prose">
+      
+      <h1 class="mb-8 mt-0 text-4xl font-extrabold text-neutral-900 dark:text-neutral">
+        KEMU: A Declarative Approach to Emulating Kubernetes Clusters at Scale
+      </h1>
+      
+        <div class="mb-10 text-base text-neutral-500 dark:text-neutral-400 print:hidden">
+          
+
+
+
+
+
+  
+  
+
+
+
+  
+
+  
+  
+    
+  
+
+  
+
+  
+
+  
+    
+  
+
+  
+
+
+  <div class="flex flex-row flex-wrap items-center">
+    
+    
+      <time datetime="2025-11-04 00:00:00 &#43;0000 UTC">4 November 2025</time><span class="px-2 text-primary-500">&middot;</span><span title="Reading time">13 mins</span>
+    
+
+    
+    
+  </div>
+
+  
+  
+    <div class="my-1 flex flex-wrap text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
+      
+        
+      
+        
+          
+            <a
+              href="https://datastrophic.io/tags/kubernetes/"
+              class="mx-1 my-1 rounded-md border border-neutral-200 px-1 py-[1px] hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:hover:border-primary-600 dark:hover:text-primary-400"
+              >Kubernetes</a
+            >
+          
+            <a
+              href="https://datastrophic.io/tags/emulation/"
+              class="mx-1 my-1 rounded-md border border-neutral-200 px-1 py-[1px] hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:hover:border-primary-600 dark:hover:text-primary-400"
+              >Emulation</a
+            >
+          
+            <a
+              href="https://datastrophic.io/tags/kind/"
+              class="mx-1 my-1 rounded-md border border-neutral-200 px-1 py-[1px] hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:hover:border-primary-600 dark:hover:text-primary-400"
+              >Kind</a
+            >
+          
+            <a
+              href="https://datastrophic.io/tags/kwok/"
+              class="mx-1 my-1 rounded-md border border-neutral-200 px-1 py-[1px] hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:hover:border-primary-600 dark:hover:text-primary-400"
+              >Kwok</a
+            >
+          
+            <a
+              href="https://datastrophic.io/tags/kemu/"
+              class="mx-1 my-1 rounded-md border border-neutral-200 px-1 py-[1px] hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:hover:border-primary-600 dark:hover:text-primary-400"
+              >Kemu</a
+            >
+          
+        
+      
+    </div>
+  
+
+
+        </div>
+      
+      
+    </header>
+    <section class="prose mt-0 flex max-w-full flex-col dark:prose-invert lg:flex-row">
+      
+      <div class="min-h-0 min-w-0 max-w-prose grow">
+        <p>Optimizing scheduling efficiency for AI workloads requires extensive experimentation and observation.
+Extended GPU procurement lead times — often spanning months — mean existing infrastructure must be
+maximized for utilization to avoid capacity bottlenecks. For high-end GPUs, supply constraints
+eliminate cloud autoscaling advantages, making both cloud and on-premises environments equally
+constrained in their ability to rapidly expand capacity on demand.</p>
+<p>Maximizing infrastructure efficiency through optimized scheduling and high-density bin packing is
+critical for achieving high workload throughput and resource utilization. Introducing scheduler
+modifications at production scale is risky: configuration errors can render workloads unschedulable,
+causing multi-day delays for dozens or hundreds of AI practitioners, idling capacity, wasted on-demand
+resources, and delayed delivery. It is imperative that scheduler modifications with a big blast
+radius are tested and verified in a safe environment before shipping to production.</p>
+<p>This problem is not new, and virtual/emulated clusters for scheduling experimentation and workload
+right-sizing have been around for a long time. Emulated clusters provide a limited real cluster experience
+for the fraction of the price and compute resources required to run them. To understand what an
+effective emulation solution needs, let&rsquo;s first establish the requirements based on a typical
+production GPU cluster setup.</p>
+<h2 id="requirements" class="relative group">Requirements <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#requirements" aria-label="Anchor">#</a></span></h2><p>Let&rsquo;s consider the following cluster setup to provide background for the functionality of the emulated cluster:</p>
+<ul>
+<li>A Kubernetes cluster with 1,000+ GPU nodes of different types;</li>
+<li>The nodes are spread across several data centers/availability zones;</li>
+<li>Specialized scheduling and training operators are running on the cluster;</li>
+<li>Observability is provided via the Prometheus stack.</li>
+</ul>
+<p>Based on the provided example, we can derive the following high-level requirements for the emulated cluster:</p>
+<ul>
+<li>Large cluster emulation using few resources (e.g., it can be run on a laptop or as a part of a CI job);</li>
+<li>Ability to execute workloads and schedule pods on emulated nodes;</li>
+<li>Configurability of cluster shape and size: number of nodes, instance types, node resources, and placement;</li>
+<li>Ability to install, configure, and run unemulated applications such as Kubernetes operators and observability stack;</li>
+<li>Reproducibility of emulated clusters;</li>
+<li>Automation for cluster lifecycle management.</li>
+</ul>
+<p>There exist well-known technologies and techniques that address multiple (but not all) requirements
+from the list. The next section provides a brief overview.</p>
+<h2 id="prior-art" class="relative group">Prior art <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#prior-art" aria-label="Anchor">#</a></span></h2><p>The most frequently used solution for the given set of requirements is a combination of a
+<a href="https://kind.sigs.k8s.io/" target="_blank" rel="noreferrer">Kind</a> cluster with emulated <a href="https://kwok.sigs.k8s.io/" target="_blank" rel="noreferrer">KWOK</a> nodes.
+In such setups, Kind cluster is used for running the Kubernetes control plane components and,
+potentially, a data plane while KWOK is managing emulated data plane and pod lifecycle.
+Each technology alone doesn&rsquo;t solve the problem in full: Kind provides a fully conformant Kubernetes
+control plane and data plane in Docker but doesn&rsquo;t scale well, whereas KWOK scales to thousands
+of nodes but doesn&rsquo;t easily allow running real workloads (such as schedulers and operators) due to the
+fully emulated data plane.</p>
+<div class="flex rounded-md bg-primary-100 px-4 py-3 dark:bg-primary-900">
+  <span class="pe-3 text-primary-400">
+    <span class="icon relative inline-block px-1 align-text-bottom"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M256 0C114.6 0 0 114.6 0 256s114.6 256 256 256s256-114.6 256-256S397.4 0 256 0zM256 128c17.67 0 32 14.33 32 32c0 17.67-14.33 32-32 32S224 177.7 224 160C224 142.3 238.3 128 256 128zM296 384h-80C202.8 384 192 373.3 192 360s10.75-24 24-24h16v-64H224c-13.25 0-24-10.75-24-24S210.8 224 224 224h32c13.25 0 24 10.75 24 24v88h16c13.25 0 24 10.75 24 24S309.3 384 296 384z"/></svg>
+</span>
+  </span>
+  <span class="dark:text-neutral-300"><p>There exist other technologies in the emulation domain which are less applicable to
+this problem but are worth mentioning:</p>
+<ul>
+<li><a href="https://simkube.dev/" target="_blank" rel="noreferrer">SimKube</a>: a record-and-replay simulation environment for Kubernetes based on KWOK;</li>
+<li><a href="https://minikube.sigs.k8s.io/docs/" target="_blank" rel="noreferrer">Minikube</a>: similar to Kind but runs Kubernetes control plane in a VM instead of Docker;</li>
+<li><a href="https://virtual-kubelet.io/" target="_blank" rel="noreferrer">Virtual Kubelet</a>: an open-source Kubernetes kubelet implementation that masquerades as a kubelet.
+Can be used for implementing a highly customizable emulation of Kubelet behavior;</li>
+<li><a href="https://github.com/kubernetes/community/blob/master/contributors/devel/sig-scalability/kubemark-guide.md" target="_blank" rel="noreferrer">kubemark</a>: a performance testing tool which allows users to run experiments on simulated clusters.</li>
+</ul></span>
+</div>
+
+<p>Once the control plane and worker nodes are ready, required dependencies/addons can be installed
+using Helm Charts, kustomize, or raw Kubernetes manifests using <code>helm</code> or <code>kubectl</code> CLIs to provide
+desired component set for functionality under test and observability.</p>
+<p>The main problem with this approach is in configurability and automation of the cluster bootstrap.
+Every component used in the target setup is versioned and might require custom configuration
+(for example, Helm values file). Kind and KWOK might require custom configuration themselves too.
+The diagram below demonstrates an example of such a cluster bootstrap process:
+
+
+
+
+
+
+<figure>
+    
+    
+
+
+
+
+
+
+
+
+  
+    <picture
+      class="mx-auto my-0 rounded-md"
+      
+    >
+      
+      
+      
+      
+        <source
+          
+            srcset="https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/cluster-bootstrap-multi-tool_hu_2bcaecd6e9ee92a5.webp 330w,https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/cluster-bootstrap-multi-tool_hu_ca7c50d062f2e38f.webp 660w
+            
+              
+                ,https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/cluster-bootstrap-multi-tool_hu_f0d105552e17bad6.webp 765w
+              
+            
+            
+              
+                ,https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/cluster-bootstrap-multi-tool_hu_f0d105552e17bad6.webp 765w
+              
+            "
+          
+          sizes="100vw"
+          type="image/webp"
+        />
+      
+      <img
+        width="765"
+        height="741"
+        class="mx-auto my-0 rounded-md"
+        alt="Cluster bootstrap using multiple tools"
+        loading="lazy" decoding="async"
+        
+          src="https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/cluster-bootstrap-multi-tool_hu_e61fa8dca23a6545.png" srcset="https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/cluster-bootstrap-multi-tool_hu_b23261fc0d85d322.png 330w,https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/cluster-bootstrap-multi-tool_hu_e61fa8dca23a6545.png 660w
+          
+            ,https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/cluster-bootstrap-multi-tool.png 765w
+          
+          
+            ,https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/cluster-bootstrap-multi-tool.png 765w
+          "
+          sizes="100vw"
+        
+      />
+    </picture>
+  
+
+
+</figure>
+</p>
+<p>With a small number of components and infrequently changing control plane
+setup, the whole process could be automated with <code>Makefile</code>, helper scripts, and pre-defined
+configuration files. However, when it comes to the emulated data plane configuration and management,
+the automation becomes quite involved and might require excessive templating. A task of creating
+a thousand emulated nodes with varying capacity and different placement options depending
+on the desired cluster shape, and in a reproducible manner, can quickly become overwhelming
+using scripting and templating.</p>
+<p>For example, creating a 1,000-node cluster with 3 instance types across 3 availability zones
+using KWOK manifests requires:</p>
+<ul>
+<li>1,000 individual node YAML files or multiple application of predefined templates(<a href="https://kwok.sigs.k8s.io/docs/user/kwok-manage-nodes-and-pods/#create-a-node" target="_blank" rel="noreferrer">reference</a>);</li>
+<li>Custom scripts to manage naming, labeling, and placement;</li>
+<li>Manual coordination of Kind, KWOK, and Helm installations;</li>
+<li>Significant effort to modify cluster shape or rerun experiments.</li>
+</ul>
+<p>Automating this with Makefiles and shell scripts is fragile and difficult to maintain as
+cluster requirements evolve. Making this process repeatable, and clusters easily reconfigurable
+requires a programmatic solution driven by declarative configuration. KEMU
+(Kubernetes Emulator Utility) is a tool that was designed to eliminate this complexity entirely:
+one declarative specification replaces multiple node manifests and templates,
+coordination scripts, and fragmented configuration files.</p>
+<h2 id="introducing-kemu---a-declarative-kubernetes-emulator-utility" class="relative group">Introducing KEMU - A Declarative Kubernetes Emulator Utility <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#introducing-kemu---a-declarative-kubernetes-emulator-utility" aria-label="Anchor">#</a></span></h2><p>KEMU provides a single-spec declarative approach for configuring control plane nodes,
+installing cluster addons, and defining emulated cluster nodes with various capacity
+and placement options.</p>
+<p>KEMU builds on Kind for control plane and worker node deployment, which is
+used for running auxiliary software required for experimentation. Examples include Prometheus
+Operator for observability, custom schedulers (Volcano, YuniKorn), workload management
+operators (Kueue, KubeRay), etc. Running these components requires actual Kubelet(s) to
+be available for scheduling, and Kind provides sufficient functionality for this.</p>
+<p>The Kubelet emulation is based on KWOK, and KEMU provides a lightweight configuration
+scheme for defining node groups with various properties, and generates specified
+number of nodes automatically.
+
+
+
+
+
+
+<figure>
+    
+    
+
+
+
+
+
+
+
+
+  
+    <picture
+      class="mx-auto my-0 rounded-md"
+      
+    >
+      
+      
+      
+      
+        <source
+          
+            srcset="https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/cluster-bootstrap-kemu_hu_1131aa5f94e7ac6c.webp 330w,https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/cluster-bootstrap-kemu_hu_47764be4dee6a21b.webp 660w
+            
+              
+                ,https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/cluster-bootstrap-kemu_hu_9ae8a5a4042fc0af.webp 998w
+              
+            
+            
+              
+                ,https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/cluster-bootstrap-kemu_hu_9ae8a5a4042fc0af.webp 998w
+              
+            "
+          
+          sizes="100vw"
+          type="image/webp"
+        />
+      
+      <img
+        width="998"
+        height="741"
+        class="mx-auto my-0 rounded-md"
+        alt="Cluster bootstrap using KEMU"
+        loading="lazy" decoding="async"
+        
+          src="https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/cluster-bootstrap-kemu_hu_458913dfde112451.png" srcset="https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/cluster-bootstrap-kemu_hu_9c59986d4737eca1.png 330w,https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/cluster-bootstrap-kemu_hu_458913dfde112451.png 660w
+          
+            ,https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/cluster-bootstrap-kemu.png 998w
+          
+          
+            ,https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/cluster-bootstrap-kemu.png 998w
+          "
+          sizes="100vw"
+        
+      />
+    </picture>
+  
+
+
+</figure>
+</p>
+<p>Creating a cluster with KEMU is as easy as invoking the utility and providing it with
+a path or a URL to the cluster configuration file:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">go install github.com/datastrophic/kemu
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">kemu create-cluster  --kubeconfig <span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>/kemu.config --cluster-config https://raw.githubusercontent.com/datastrophic/kemu/refs/tags/v0.1.0/examples/gcp-small.yaml
+</span></span></code></pre></div><p>The cluster is accessible with standard Kubernetes tools and SDKs using the kubeconfig
+file:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl"><span class="nb">export</span> <span class="nv">KUBECONFIG</span><span class="o">=</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>/kemu.config
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">kubectl get nodes
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Example output:</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># NAME                    STATUS   ROLES           AGE     VERSION</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># a2-ultragpu-8g-use1-0   Ready    agent           99s     v1.33.1</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># a2-ultragpu-8g-use1-1   Ready    agent           99s     v1.33.1</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># a2-ultragpu-8g-use1-2   Ready    agent           99s     v1.33.1</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># a2-ultragpu-8g-use1-3   Ready    agent           99s     v1.33.1</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># a2-ultragpu-8g-use1-4   Ready    agent           99s     v1.33.1</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># a2-ultragpu-8g-use2-0   Ready    agent           99s     v1.33.1</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># a2-ultragpu-8g-use2-1   Ready    agent           99s     v1.33.1</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># a2-ultragpu-8g-use2-2   Ready    agent           99s     v1.33.1</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># a2-ultragpu-8g-use2-3   Ready    agent           99s     v1.33.1</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># a2-ultragpu-8g-use2-4   Ready    agent           99s     v1.33.1</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># a2-ultragpu-8g-use3-0   Ready    agent           99s     v1.33.1</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># a2-ultragpu-8g-use3-1   Ready    agent           99s     v1.33.1</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># a2-ultragpu-8g-use3-2   Ready    agent           99s     v1.33.1</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># a2-ultragpu-8g-use3-3   Ready    agent           99s     v1.33.1</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># a2-ultragpu-8g-use3-4   Ready    agent           98s     v1.33.1</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># a3-highgpu-8g-use1-0    Ready    agent           98s     v1.33.1</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># a3-highgpu-8g-use1-1    Ready    agent           98s     v1.33.1</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># a3-highgpu-8g-use1-2    Ready    agent           98s     v1.33.1</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># a3-highgpu-8g-use1-3    Ready    agent           98s     v1.33.1</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># a3-highgpu-8g-use1-4    Ready    agent           97s     v1.33.1</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># a3-highgpu-8g-use2-0    Ready    agent           97s     v1.33.1</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># a3-highgpu-8g-use2-1    Ready    agent           97s     v1.33.1</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># a3-highgpu-8g-use2-2    Ready    agent           97s     v1.33.1</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># a3-highgpu-8g-use2-3    Ready    agent           97s     v1.33.1</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># a3-highgpu-8g-use2-4    Ready    agent           96s     v1.33.1</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># a3-ultragpu-8g-use1-0   Ready    agent           96s     v1.33.1</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># a3-ultragpu-8g-use1-1   Ready    agent           96s     v1.33.1</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># a3-ultragpu-8g-use1-2   Ready    agent           96s     v1.33.1</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># a3-ultragpu-8g-use1-3   Ready    agent           96s     v1.33.1</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># a3-ultragpu-8g-use1-4   Ready    agent           95s     v1.33.1</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># kwok-control-plane      Ready    control-plane   7m58s   v1.33.1</span>
+</span></span></code></pre></div><h3 id="cluster-specification" class="relative group">Cluster Specification <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#cluster-specification" aria-label="Anchor">#</a></span></h3><p>The following example demonstrates key components of the KEMU cluster specification.
+The specification contains 3 main sections:</p>
+<ul>
+<li><code>kindConfig</code> - a YAML configuration file used for creating Kind Cluster. This is a standard
+<a href="https://kind.sigs.k8s.io/docs/user/configuration/" target="_blank" rel="noreferrer">Kind Configuration</a> which is passed to the Kind cluster provisioner without any modifications.</li>
+<li><code>clusterAddons</code> define a list of Helm Charts to be installed as a part of cluster
+bootstrap process. Each cluster addon can be parameterized with <code>valuesObject</code> containing
+Helm Chart values for the installation.</li>
+<li><code>nodeGroups</code> define emulated node groups sharing similar properties (instance type, capacity)
+and the placement of the nodes. Node placement allows configuring number of nodes in different
+availability zones.</li>
+</ul>
+<p>Example specification:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">kemu.datastrophic.io/v1alpha1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">ClusterConfig</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">kindConfig</span><span class="p">:</span><span class="w"> </span><span class="p">|</span><span class="sd">
+</span></span></span><span class="line"><span class="cl"><span class="sd">    kind: Cluster
+</span></span></span><span class="line"><span class="cl"><span class="sd">    apiVersion: kind.x-k8s.io/v1alpha4
+</span></span></span><span class="line"><span class="cl"><span class="sd">    nodes:
+</span></span></span><span class="line"><span class="cl"><span class="sd">      - role: control-plane
+</span></span></span><span class="line"><span class="cl"><span class="sd">      - role: worker
+</span></span></span><span class="line"><span class="cl"><span class="sd">      - role: worker</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">clusterAddons</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">prometheus</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">repoName</span><span class="p">:</span><span class="w"> </span><span class="l">prometheus-community</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">repoURL</span><span class="p">:</span><span class="w"> </span><span class="l">https://prometheus-community.github.io/helm-charts</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">monitoring</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">chart</span><span class="p">:</span><span class="w"> </span><span class="l">prometheus-community/kube-prometheus-stack</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="m">75.16.1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">valuesObject</span><span class="p">:</span><span class="w"> </span><span class="p">|</span><span class="sd">
+</span></span></span><span class="line"><span class="cl"><span class="sd">        alertmanager:
+</span></span></span><span class="line"><span class="cl"><span class="sd">          enabled: false</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">nodeGroups</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">a2-ultragpu-8g</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">placement</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span>- <span class="nt">availabilityZone</span><span class="p">:</span><span class="w"> </span><span class="l">use1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="m">50</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span>- <span class="nt">availabilityZone</span><span class="p">:</span><span class="w"> </span><span class="l">use2</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="m">50</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span>- <span class="nt">availabilityZone</span><span class="p">:</span><span class="w"> </span><span class="l">use3</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="m">50</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">nodeTemplate</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">labels</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="nt">datastrophic.io/gpu-type</span><span class="p">:</span><span class="w"> </span><span class="l">nvidia-a100-80gb</span><span class="w"> </span><span class="c"># Custom label for GPU targeting.</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">capacity</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">cpu</span><span class="p">:</span><span class="w"> </span><span class="m">96</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l">1360Gi</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">ephemeralStorage</span><span class="p">:</span><span class="w"> </span><span class="l">3Ti</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">nvidia.com/gpu</span><span class="p">:</span><span class="w"> </span><span class="m">8</span><span class="w">
+</span></span></span></code></pre></div><h2 id="scheduling-and-monitoring-of-workloads" class="relative group">Scheduling and monitoring of workloads <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#scheduling-and-monitoring-of-workloads" aria-label="Anchor">#</a></span></h2><p>A typical scheduling experimentation workflow consists of a cluster bootstrap, scheduling and
+monitoring of the workloads, iteration on the cluster or workload configuration, and tearing down
+the cluster once experiments are complete.</p>
+<p>To demonstrate how KEMU helps with the experimentation, we will create a 2,500 node cluster with
+A100, H100, and H200 Nvidia GPUs distributed across 3 availability zones (cluster specification
+is available in <a href="https://github.com/datastrophic/kemu/examples/gcp-large.yaml" target="_blank" rel="noreferrer">kemu/examples/gcp-large.yaml</a> in GitHub). Once the cluster is
+up and running, we will create a number of jobs to saturate the cluster, observe the allocation,
+and modify scheduling constraints to understand the impact they have on scheduling efficiency.</p>
+<p>To create a cluster and explore it using Prometheus stack, follow these steps:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl"><span class="c1"># Create KEMU cluster:</span>
+</span></span><span class="line"><span class="cl">kemu create-cluster --name gcp-large --kubeconfig <span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>/kemu.config --cluster-config https://raw.githubusercontent.com/datastrophic/kemu/refs/tags/v0.1.0/examples/gcp-large.yaml
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Retrieve Grafana password:</span>
+</span></span><span class="line"><span class="cl">kubectl --kubeconfig <span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>/kemu.config get secret prometheus-grafana -n monitoring -o <span class="nv">jsonpath</span><span class="o">=</span><span class="s1">&#39;{.data.admin-password}&#39;</span> <span class="p">|</span> base64 -d
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Expose Grafana port on the localhost:</span>
+</span></span><span class="line"><span class="cl">kubectl --kubeconfig <span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>/kemu.config port-forward --namespace monitoring svc/prometheus-grafana 8080:80
+</span></span></code></pre></div><p>After the cluster bootstrap is complete and port forwarding is enabled, a Grafana instance will become available at
+<a href="http://localhost:8080/" target="_blank" rel="noreferrer">http://localhost:8080/</a> and will require authentication with username <code>admin</code>
+and the retrieved password. Navigate to the pre-installed
+<a href="http://localhost:8080/d/kemu-cluster-overview/kemu-cluster-overview" target="_blank" rel="noreferrer">cluster overview dashboard</a> for
+cluster-level information about cluster composition, available and allocated capacity, and their distribution
+across availability zones and device types:</p>
+<p>
+
+
+
+
+
+<figure>
+    
+    
+
+
+
+
+
+
+
+
+  
+    <picture
+      class="mx-auto my-0 rounded-md"
+      
+    >
+      
+      
+      
+      
+        <source
+          
+            srcset="https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/kemu-cluster-overview-dashboard_hu_52a3001d8449737c.webp 330w,https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/kemu-cluster-overview-dashboard_hu_7cda29a8ce92dc9e.webp 660w
+            
+              ,https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/kemu-cluster-overview-dashboard_hu_8b11ed639f6990fa.webp 1024w
+            
+            
+              ,https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/kemu-cluster-overview-dashboard_hu_87656b7469006eed.webp 1320w
+            "
+          
+          sizes="100vw"
+          type="image/webp"
+        />
+      
+      <img
+        width="1621"
+        height="1066"
+        class="mx-auto my-0 rounded-md"
+        alt="KEMU Cluster Overview"
+        loading="lazy" decoding="async"
+        
+          src="https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/kemu-cluster-overview-dashboard_hu_cc57a7ec6ed2e1cf.png" srcset="https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/kemu-cluster-overview-dashboard_hu_f043bbc54dc5cb8e.png 330w,https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/kemu-cluster-overview-dashboard_hu_cc57a7ec6ed2e1cf.png 660w
+          
+            ,https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/kemu-cluster-overview-dashboard_hu_cc1db99c862b34ed.png 1024w
+          
+          
+            ,https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/kemu-cluster-overview-dashboard_hu_dcd7061eec7d4a5d.png 1320w
+          "
+          sizes="100vw"
+        
+      />
+    </picture>
+  
+
+
+</figure>
+</p>
+<h3 id="optimal-scheduling-example" class="relative group">Optimal scheduling example <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#optimal-scheduling-example" aria-label="Anchor">#</a></span></h3><p>Let&rsquo;s create some synthetic <code>Jobs</code> that require different GPU types and observe the cluster saturation.
+The number of jobs, their parallelism, and resource requirements are designed to demonstrate
+100% GPU allocation (2,550 pods × 8 GPUs = 20,400 GPUs allocated out of 20,400 available).</p>
+<p>Below is an example job manifest for a distributed A100 job with 100 workers. Note the annotation
+<code>pod-complete.stage.kwok.x-k8s.io/delay: &quot;10m&quot;</code> that instructs KWOK for how long it should maintain pods in
+running state before marking them completed. Note, there&rsquo;s no scheduling constraints specified for this
+job beyond node affinity and tolerations to land its pods on KWOK nodes with a particular GPU type.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">batch/v1</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">Job</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">generateName</span><span class="p">:</span><span class="w"> </span><span class="l">job-a100-no-az-affinity-</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">completions</span><span class="p">:</span><span class="w"> </span><span class="m">100</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">parallelism</span><span class="p">:</span><span class="w"> </span><span class="m">100</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">template</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">annotations</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">pod-complete.stage.kwok.x-k8s.io/delay</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;10m&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">restartPolicy</span><span class="p">:</span><span class="w"> </span><span class="l">Never</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">affinity</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">nodeAffinity</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">requiredDuringSchedulingIgnoredDuringExecution</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="nt">nodeSelectorTerms</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">              </span>- <span class="nt">matchExpressions</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">                  </span>- <span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l">datastrophic.io/gpu-type</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">                    </span><span class="nt">operator</span><span class="p">:</span><span class="w"> </span><span class="l">In</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">                    </span><span class="nt">values</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&#34;nvidia-a100-80gb&#34;</span><span class="p">]</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">                  </span>- <span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l">type</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">                    </span><span class="nt">operator</span><span class="p">:</span><span class="w"> </span><span class="l">In</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">                    </span><span class="nt">values</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&#34;kwok&#34;</span><span class="p">]</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">tolerations</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span>- <span class="nt">effect</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;NoSchedule&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;kwok.x-k8s.io/node&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;fake&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">containers</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span>- <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">fake-container</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l">fake-image</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">resources</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="nt">requests</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">              </span><span class="nt">cpu</span><span class="p">:</span><span class="w"> </span><span class="m">180</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">              </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l">1100Gi</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">              </span><span class="nt">nvidia.com/gpu</span><span class="p">:</span><span class="w"> </span><span class="m">8</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="nt">limits</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">              </span><span class="nt">cpu</span><span class="p">:</span><span class="w"> </span><span class="m">180</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">              </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l">1100Gi</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">              </span><span class="nt">nvidia.com/gpu</span><span class="p">:</span><span class="w"> </span><span class="m">8</span><span class="w">
+</span></span></span></code></pre></div><p>For convenience, we will be using workload specs from
+<a href="https://github.com/datastrophic/kemu/tree/main/examples/workloads" target="_blank" rel="noreferrer">kemu/examples/workloads</a> and will create
+15 100-worker A100, 15 50-worker H100, and 12 25-worker H200 jobs.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl"><span class="c1"># Note: Pods will run for 10 minutes before completing (configured via KWOK annotation).</span>
+</span></span><span class="line"><span class="cl"><span class="k">for</span> i in <span class="o">{</span>1..15<span class="o">}</span><span class="p">;</span> <span class="k">do</span>
+</span></span><span class="line"><span class="cl">  kubectl --kubeconfig <span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>/kemu.config create -f https://raw.githubusercontent.com/datastrophic/kemu/refs/tags/v0.1.0/examples/workloads/job-a100-no-affinity-100-workers.yaml
+</span></span><span class="line"><span class="cl"><span class="k">done</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">for</span> i in <span class="o">{</span>1..15<span class="o">}</span><span class="p">;</span> <span class="k">do</span>
+</span></span><span class="line"><span class="cl">  kubectl --kubeconfig <span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>/kemu.config create -f https://raw.githubusercontent.com/datastrophic/kemu/refs/tags/v0.1.0/examples/workloads/job-h100-no-affinity-50-workers.yaml
+</span></span><span class="line"><span class="cl"><span class="k">done</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">for</span> i in <span class="o">{</span>1..12<span class="o">}</span><span class="p">;</span> <span class="k">do</span>
+</span></span><span class="line"><span class="cl">  kubectl --kubeconfig <span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>/kemu.config create -f https://raw.githubusercontent.com/datastrophic/kemu/refs/tags/v0.1.0/examples/workloads/job-h200-no-affinity-25-workers.yaml
+</span></span><span class="line"><span class="cl"><span class="k">done</span>
+</span></span></code></pre></div><p>Once the jobs are created, navigate to <a href="http://localhost:8080/d/kemu-cluster-overview/kemu-cluster-overview" target="_blank" rel="noreferrer">Grafana dashboard</a>
+to observe cluster saturation and workload status:
+
+
+
+
+
+
+<figure>
+    
+    
+
+
+
+
+
+
+
+
+  
+    <picture
+      class="mx-auto my-0 rounded-md"
+      
+    >
+      
+      
+      
+      
+        <source
+          
+            srcset="https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/jobs-fully-scheduled_hu_3132f951e8341fc9.webp 330w,https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/jobs-fully-scheduled_hu_cccad5e77922be64.webp 660w
+            
+              ,https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/jobs-fully-scheduled_hu_a7631a4e62b60276.webp 1024w
+            
+            
+              ,https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/jobs-fully-scheduled_hu_8d22c4644ee13b9c.webp 1320w
+            "
+          
+          sizes="100vw"
+          type="image/webp"
+        />
+      
+      <img
+        width="1328"
+        height="964"
+        class="mx-auto my-0 rounded-md"
+        alt="Workloads overview"
+        loading="lazy" decoding="async"
+        
+          src="https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/jobs-fully-scheduled_hu_7fad8493701e77f9.png" srcset="https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/jobs-fully-scheduled_hu_572b6a4cbf09643.png 330w,https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/jobs-fully-scheduled_hu_7fad8493701e77f9.png 660w
+          
+            ,https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/jobs-fully-scheduled_hu_2a0d68e38341bc88.png 1024w
+          
+          
+            ,https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/jobs-fully-scheduled_hu_931f4de34dc8640e.png 1320w
+          "
+          sizes="100vw"
+        
+      />
+    </picture>
+  
+
+
+</figure>
+</p>
+<p>As we can see, all jobs ran in parallel, resulting in 2,550 running pods distributed
+evenly across 3 availability zones. No pods were stuck in pending state, and overall cluster
+GPU allocation achieved 100%. This level of cluster allocation is rarely achieved in production
+environments, where scheduling constraints like availability zone affinity, anti-affinity
+rules, and resource fragmentation typically reduce utilization. The following section
+demonstrates the impact of adding just one common constraint.</p>
+<h3 id="suboptimal-scheduling-example" class="relative group">Suboptimal scheduling example <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#suboptimal-scheduling-example" aria-label="Anchor">#</a></span></h3><p>Availability zone affinity is a common requirement for distributed batch jobs
+for achieving better network performance and avoiding cross-AZ traffic costs
+overhead. We will apply the following <code>podAffinity</code> rule to jobs from the
+previous example and repeat the experiment:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nt">affinity</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">podAffinity</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">requiredDuringSchedulingIgnoredDuringExecution</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="nt">labelSelector</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="nt">matchExpressions</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span>- <span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;datastrophic.io/workload&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">              </span><span class="nt">operator</span><span class="p">:</span><span class="w"> </span><span class="l">In</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">              </span><span class="nt">values</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">                </span>- <span class="s2">&#34;JOB_ID&#34;</span><span class="w">
+</span></span></span></code></pre></div><div class="flex rounded-md bg-primary-100 px-4 py-3 dark:bg-primary-900">
+  <span class="pe-3 text-primary-400">
+    <span class="icon relative inline-block px-1 align-text-bottom"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M256 0C114.6 0 0 114.6 0 256s114.6 256 256 256s256-114.6 256-256S397.4 0 256 0zM256 128c17.67 0 32 14.33 32 32c0 17.67-14.33 32-32 32S224 177.7 224 160C224 142.3 238.3 128 256 128zM296 384h-80C202.8 384 192 373.3 192 360s10.75-24 24-24h16v-64H224c-13.25 0-24-10.75-24-24S210.8 224 224 224h32c13.25 0 24 10.75 24 24v88h16c13.25 0 24 10.75 24 24S309.3 384 296 384z"/></svg>
+</span>
+  </span>
+  <span class="dark:text-neutral-300">In order to configure pod affinity for a specific job, it is required
+to specify unique label and label selector in job template prior to applying
+manifests. We will use existing templates and substitute JOB_ID placeholder.</span>
+</div>
+
+<p>For convenience, workload templates are provided in <a href="https://github.com/datastrophic/kemu/tree/main/examples/workloads" target="_blank" rel="noreferrer">kemu/examples/workloads</a>.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl"><span class="c1"># Note: Pods will run for 10 minutes before completing (configured via KWOK annotation).</span>
+</span></span><span class="line"><span class="cl"><span class="k">for</span> i in <span class="o">{</span>1..15<span class="o">}</span><span class="p">;</span> <span class="k">do</span>
+</span></span><span class="line"><span class="cl">  curl -s https://raw.githubusercontent.com/datastrophic/kemu/refs/tags/v0.1.0/examples/workloads/job-a100-az-affinity-100-workers.tmpl <span class="p">|</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  sed <span class="s2">&#34;s/JOB_ID/a100-job-with-affinity-</span><span class="si">${</span><span class="nv">i</span><span class="si">}</span><span class="s2">/g&#34;</span> <span class="p">|</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  kubectl --kubeconfig <span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>/kemu.config create -f -
+</span></span><span class="line"><span class="cl"><span class="k">done</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">for</span> i in <span class="o">{</span>1..15<span class="o">}</span><span class="p">;</span> <span class="k">do</span>
+</span></span><span class="line"><span class="cl">  curl -s https://raw.githubusercontent.com/datastrophic/kemu/refs/tags/v0.1.0/examples/workloads/job-h100-az-affinity-50-workers.tmpl <span class="p">|</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  sed <span class="s2">&#34;s/JOB_ID/h100-job-with-affinity-</span><span class="si">${</span><span class="nv">i</span><span class="si">}</span><span class="s2">/g&#34;</span> <span class="p">|</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  kubectl --kubeconfig <span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>/kemu.config create -f -
+</span></span><span class="line"><span class="cl"><span class="k">done</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">for</span> i in <span class="o">{</span>1..12<span class="o">}</span><span class="p">;</span> <span class="k">do</span>
+</span></span><span class="line"><span class="cl">  curl -s https://raw.githubusercontent.com/datastrophic/kemu/refs/tags/v0.1.0/examples/workloads/job-h200-az-affinity-25-workers.tmpl <span class="p">|</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  sed <span class="s2">&#34;s/JOB_ID/h200-job-with-affinity-</span><span class="si">${</span><span class="nv">i</span><span class="si">}</span><span class="s2">/g&#34;</span> <span class="p">|</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  kubectl --kubeconfig <span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>/kemu.config create -f -
+</span></span><span class="line"><span class="cl"><span class="k">done</span>
+</span></span></code></pre></div><p>Once the jobs are created, navigate to <a href="http://localhost:8080/d/kemu-cluster-overview/kemu-cluster-overview" target="_blank" rel="noreferrer">Grafana dashboard</a>
+to observe cluster saturation and workload status:
+
+
+
+
+
+
+<figure>
+    
+    
+
+
+
+
+
+
+
+
+  
+    <picture
+      class="mx-auto my-0 rounded-md"
+      
+    >
+      
+      
+      
+      
+        <source
+          
+            srcset="https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/jobs-with-pending-pods_hu_f3f3855ddcbad4b8.webp 330w,https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/jobs-with-pending-pods_hu_a5ac11b19c23d528.webp 660w
+            
+              ,https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/jobs-with-pending-pods_hu_662c5c9d28d07d6e.webp 1024w
+            
+            
+              ,https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/jobs-with-pending-pods_hu_48da64ecc1cc655.webp 1320w
+            "
+          
+          sizes="100vw"
+          type="image/webp"
+        />
+      
+      <img
+        width="1327"
+        height="963"
+        class="mx-auto my-0 rounded-md"
+        alt="Workloads with pending pods"
+        loading="lazy" decoding="async"
+        
+          src="https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/jobs-with-pending-pods_hu_4babe95201d33fc3.png" srcset="https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/jobs-with-pending-pods_hu_73c3fe977449480a.png 330w,https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/jobs-with-pending-pods_hu_4babe95201d33fc3.png 660w
+          
+            ,https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/jobs-with-pending-pods_hu_7a6366f54b27ba63.png 1024w
+          
+          
+            ,https://datastrophic.io/declarative-kubernetes-cluster-emulation-with-kemu/jobs-with-pending-pods_hu_c99a4013714a769a.png 1320w
+          "
+          sizes="100vw"
+        
+      />
+    </picture>
+  
+
+
+</figure>
+</p>
+<p>From the dashboard, we can see that while all jobs are in the <code>Running</code> state, there are pods
+in the <code>Pending</code> state while unallocated capacity remains available.</p>
+<p>What we&rsquo;re observing is partial admission - a common scheduling problem in Kubernetes
+clusters. Pods created by jobs are not scheduled in batch but rather one-by-one
+resulting in fragmentation and inability to schedule all pods even if there is
+cluster capacity available.</p>
+<p>For distributed training workloads that require all workers to start simultaneously
+(all-or-nothing semantics), this partial admission creates a deadlock situation.
+This simple experiment reveals a scheduling issue that would be expensive to discover
+in production. With KEMU, you can:</p>
+<ul>
+<li>Test different node distributions across availability zones;</li>
+<li>Experiment with gang scheduling solutions (Volcano, YuniKorn);</li>
+<li>Measure the impact of scheduling policies on cluster allocation and utilization;</li>
+<li>Validate scheduler behavior under different constraint scenarios.</li>
+</ul>
+<p>To iterate on solutions, you could modify the cluster specification to adjust
+zone distribution, install a gang scheduler addon, or test different scheduling
+policies—all without touching production infrastructure. When you&rsquo;re done
+experimenting, clean up with <code>kemu delete-cluster</code>.</p>
+<h2 id="conclusion" class="relative group">Conclusion <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#conclusion" aria-label="Anchor">#</a></span></h2><p>Emulated clusters provide safe environments for testing scheduling optimizations at scale without imposing
+risks on production infrastructure. Existing solutions such as Kind and KWOK are battle tested and widely
+used by the community for solving this problem.</p>
+<p>However, the end-to-end cluster bootstrap using the existing technologies suffers from the proliferation of
+tools, fragmented configuration, the lack of native support for cluster addons, and the multi-step process
+required for configuring the desired cluster shape.</p>
+<p>KEMU addresses these problems with a single opinionated utility driven by declarative configuration.
+Once defined, an emulated cluster can be reliably recreated by a human or CI system in minutes without
+custom scripting or extensive templating. Changing cluster shape, size, capacity, or pre-installed
+software only requires updating the cluster specification.</p>
+<p>KEMU eliminates the complexity of emulated cluster management, freeing you from maintaining
+boilerplate scripts and configuration files so you can focus on experimentation and rapid iteration.
+Head over to the <a href="https://github.com/datastrophic/kemu" target="_blank" rel="noreferrer">KEMU GitHub repository</a>
+to get started. We&rsquo;d love your feedback and contributions!</p>
+<h2 id="references" class="relative group">References <span class="absolute top-0 w-6 transition-opacity opacity-0 -start-6 not-prose group-hover:opacity-100"><a class="group-hover:text-primary-300 dark:group-hover:text-neutral-700" style="text-decoration-line: none !important;" href="#references" aria-label="Anchor">#</a></span></h2><ul>
+<li><a href="https://www.youtube.com/watch?v=Ij5EAnuF-jk" target="_blank" rel="noreferrer">Scale Your Batch / Big Data / AI Workloads Beyond the Kubernetes Scheduler</a> - a
+KubeCon talk that brought original inspiration for my interest in automation of the emulated clusters.</li>
+<li><a href="https://github.com/kubernetes-sigs/e2e-framework" target="_blank" rel="noreferrer">Kubernetes E2E Framework</a> is an amazing
+work of the community in the Kubernetes testing space. KEMU relies on its API for Kind cluster
+management.</li>
+<li><a href="https://github.com/mittwald/go-helm-client" target="_blank" rel="noreferrer">Go Helm Client</a> is used in KEMU for managing Helm Chart installations.</li>
+<li><a href="https://kind.sigs.k8s.io/" target="_blank" rel="noreferrer">kind</a> and <a href="https://kwok.sigs.k8s.io/" target="_blank" rel="noreferrer">KWOK</a> are well-known tools for cluster emulation KEMU relies on.</li>
+</ul>
+
+      </div>
+    </section>
+    <footer class="max-w-prose pt-8 print:hidden">
+      
+  <div class="flex">
+    
+    
+    
+      
+      
+        
+        
+
+
+
+
+
+
+
+
+  
+    <picture
+      class="!mb-0 !mt-0 me-4 w-24 h-auto rounded-full"
+      
+    >
+      
+      
+      
+      
+      <img
+        width="400"
+        height="400"
+        class="!mb-0 !mt-0 me-4 w-24 h-auto rounded-full"
+        alt="Anton Kirillov"
+        loading="lazy" decoding="async"
+        
+          src="https://datastrophic.io/img/author.jpg"
+        
+      />
+    </picture>
+  
+
+
+      
+    
+    <div class="place-self-center">
+      
+        <div class="text-[0.6rem] uppercase leading-3 text-neutral-500 dark:text-neutral-400">
+          Author
+        </div>
+        <div class="font-semibold leading-6 text-neutral-800 dark:text-neutral-300">
+          Anton Kirillov
+        </div>
+      
+      
+        <div class="text-sm text-neutral-700 dark:text-neutral-400">Technical Leader. Compute and AI Infrastructure</div>
+      
+      <div class="text-2xl sm:text-lg">
+  <div class="flex flex-wrap text-neutral-400 dark:text-neutral-500">
+    
+      
+        <a
+          class="px-1 transition-transform hover:scale-125 hover:text-primary-700 dark:hover:text-primary-400"
+          style="will-change:transform;"
+          href="https://www.linkedin.com/in/datastrophic/"
+          target="_blank"
+          aria-label="Linkedin"
+          rel="me noopener noreferrer"
+          ><span class="icon relative inline-block px-1 align-text-bottom"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentColor" d="M416 32H31.9C14.3 32 0 46.5 0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6 0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3zM135.4 416H69V202.2h66.5V416zm-33.2-243c-21.3 0-38.5-17.3-38.5-38.5S80.9 96 102.2 96c21.2 0 38.5 17.3 38.5 38.5 0 21.3-17.2 38.5-38.5 38.5zm282.1 243h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6 0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2 0 79.7 44.3 79.7 101.9V416z"/></svg>
+</span></a
+        >
+      
+    
+      
+        <a
+          class="px-1 transition-transform hover:scale-125 hover:text-primary-700 dark:hover:text-primary-400"
+          style="will-change:transform;"
+          href="https://github.com/datastrophic"
+          target="_blank"
+          aria-label="Github"
+          rel="me noopener noreferrer"
+          ><span class="icon relative inline-block px-1 align-text-bottom"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path fill="currentColor" d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+</span></a
+        >
+      
+    
+  </div>
+
+</div>
+    </div>
+  </div>
+
+
+      
+
+      
+  
+    
+    
+    
+    <div class="pt-8">
+      <hr class="border-dotted border-neutral-300 dark:border-neutral-600" />
+      <div class="flex justify-between pt-3">
+        <span>
+          
+            <a class="group flex" href="https://datastrophic.io/secure-kubeflow-ingress-and-authentication/">
+              <span
+                class="me-2 text-neutral-700 transition-transform group-hover:-translate-x-[2px] group-hover:text-primary-600 dark:text-neutral dark:group-hover:text-primary-400"
+                ><span class="ltr:inline rtl:hidden">&larr;</span
+                ><span class="ltr:hidden rtl:inline">&rarr;</span></span
+              >
+              <span class="flex flex-col">
+                <span
+                  class="mt-[0.1rem] leading-6 group-hover:underline group-hover:decoration-primary-500"
+                  >Secure Kubeflow Ingress and Authentication with Istio External Auth, Dex, and OAuth2 Proxy</span
+                >
+                <span class="mt-[0.1rem] text-xs text-neutral-500 dark:text-neutral-400">
+                  
+                    <time datetime="2021-12-16 00:00:00 &#43;0000 UTC">16 December 2021</time>
+                  
+                </span>
+              </span>
+            </a>
+          
+        </span>
+        <span>
+          
+        </span>
+      </div>
+    </div>
+  
+
+
+      
+    </footer>
+  </article>
+
+      </main>
+      
+        <div
+          class="pointer-events-none absolute bottom-0 end-0 top-[100vh] w-12"
+          id="to-top"
+          hidden="true"
+        >
+          <a
+            href="#the-top"
+            class="pointer-events-auto sticky top-[calc(100vh-5.5rem)] flex h-12 w-12 items-center justify-center rounded-full bg-neutral/50 text-xl text-neutral-700 backdrop-blur hover:text-primary-600 dark:bg-neutral-800/50 dark:text-neutral dark:hover:text-primary-400"
+            aria-label="Scroll to top"
+            title="Scroll to top"
+          >
+            &uarr;
+          </a>
+        </div>
+      <footer class="py-10 print:hidden">
+  
+  
+  <div class="flex items-center justify-between">
+    <div>
+      
+      
+        <p class="text-sm text-neutral-500 dark:text-neutral-400">
+            © 2025 datastrophic
+        </p>
+      
+      
+      
+    </div>
+    <div class="flex flex-row items-center">
+      
+      
+      
+      
+        <div
+          class="me-14 cursor-pointer text-sm text-neutral-700 hover:text-primary-600 dark:text-neutral dark:hover:text-primary-400"
+        >
+          <button id="appearance-switcher-0" type="button" aria-label="appearance switcher">
+            <div
+              class="flex h-12 w-12 items-center justify-center dark:hidden"
+              title="Switch to dark appearance"
+            >
+              <span class="icon relative inline-block px-1 align-text-bottom"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M32 256c0-123.8 100.3-224 223.8-224c11.36 0 29.7 1.668 40.9 3.746c9.616 1.777 11.75 14.63 3.279 19.44C245 86.5 211.2 144.6 211.2 207.8c0 109.7 99.71 193 208.3 172.3c9.561-1.805 16.28 9.324 10.11 16.95C387.9 448.6 324.8 480 255.8 480C132.1 480 32 379.6 32 256z"/></svg>
+</span>
+            </div>
+            <div
+              class="hidden h-12 w-12 items-center justify-center dark:flex"
+              title="Switch to light appearance"
+            >
+              <span class="icon relative inline-block px-1 align-text-bottom"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M256 159.1c-53.02 0-95.1 42.98-95.1 95.1S202.1 351.1 256 351.1s95.1-42.98 95.1-95.1S309 159.1 256 159.1zM509.3 347L446.1 255.1l63.15-91.01c6.332-9.125 1.104-21.74-9.826-23.72l-109-19.7l-19.7-109c-1.975-10.93-14.59-16.16-23.72-9.824L256 65.89L164.1 2.736c-9.125-6.332-21.74-1.107-23.72 9.824L121.6 121.6L12.56 141.3C1.633 143.2-3.596 155.9 2.736 164.1L65.89 256l-63.15 91.01c-6.332 9.125-1.105 21.74 9.824 23.72l109 19.7l19.7 109c1.975 10.93 14.59 16.16 23.72 9.824L256 446.1l91.01 63.15c9.127 6.334 21.75 1.107 23.72-9.822l19.7-109l109-19.7C510.4 368.8 515.6 356.1 509.3 347zM256 383.1c-70.69 0-127.1-57.31-127.1-127.1c0-70.69 57.31-127.1 127.1-127.1s127.1 57.3 127.1 127.1C383.1 326.7 326.7 383.1 256 383.1z"/></svg>
+</span>
+            </div>
+          </button>
+        </div>
+      
+    </div>
+  </div>
+  
+  
+</footer>
+
+    </div>
+  </body>
+</html>
