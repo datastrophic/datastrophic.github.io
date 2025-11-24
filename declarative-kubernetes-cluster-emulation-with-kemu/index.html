@@ -139,7 +139,7 @@
     "keywords": ["kubernetes","emulation","kind","kwok","kemu"],
     
     "mainEntityOfPage": "true",
-    "wordCount": "2577"
+    "wordCount": "2543"
   }
   </script>
     
@@ -390,7 +390,7 @@
   <div class="flex flex-row flex-wrap items-center">
     
     
-      <time datetime="2025-11-04 00:00:00 &#43;0000 UTC">4 November 2025</time><span class="px-2 text-primary-500">&middot;</span><span title="Reading time">13 mins</span>
+      <time datetime="2025-11-04 00:00:00 &#43;0000 UTC">4 November 2025</time><span class="px-2 text-primary-500">&middot;</span><span title="Reading time">12 mins</span>
     
 
     
@@ -448,17 +448,14 @@
     <section class="prose mt-0 flex max-w-full flex-col dark:prose-invert lg:flex-row">
       
       <div class="min-h-0 min-w-0 max-w-prose grow">
-        <p>Optimizing scheduling efficiency for AI workloads requires extensive experimentation and observation.
-Extended GPU procurement lead times, often spanning months, mean existing infrastructure must be
-maximized for utilization to avoid capacity bottlenecks. For high-end GPUs, supply constraints
-eliminate cloud autoscaling advantages, making both cloud and on-premises environments equally
-constrained in their ability to rapidly expand capacity on demand.</p>
-<p>Maximizing infrastructure efficiency through optimized scheduling and high-density bin packing is
-critical for achieving high workload throughput and resource utilization. Introducing scheduler
-modifications at production scale is risky: configuration errors can render workloads unschedulable,
-causing multi-day delays for dozens or hundreds of ML engineers, idling capacity, wasted on-demand
-resources, and delayed delivery. It is imperative that scheduler modifications with a big blast
-radius are tested and verified in a safe environment before shipping to production.</p>
+        <p>Optimizing scheduling efficiency for AI workloads requires extensive experimentation and observation
+due to constrained supply and high costs of datacenter GPUs. Maximizing infrastructure efficiency through
+optimized scheduling and high-density bin packing is critical for achieving high workload throughput,
+resource utilization, and cost efficiency. Introducing scheduler modifications at production scale is risky:
+configuration errors can render workloads unschedulable, causing multi-day delays for dozens or hundreds
+of ML engineers, idling capacity, wasted on-demand resources, and delayed delivery. It is imperative that
+scheduler modifications with a big blast radius are tested and verified in a safe environment before
+shipping to production.</p>
 <p>This problem is not new, and virtual/emulated clusters for scheduling experimentation and workload
 right-sizing have been around for a long time. Emulated clusters provide a limited real cluster experience
 for the fraction of the price and compute resources required to run them. To understand what an
